@@ -2,7 +2,7 @@ let total = 0;
 let productosSeleccionados = [];
 let prendas = [];
 
-// ✅ Formato de moneda
+// ✅ Formato moneda
 const formatearSoles = (valor) => new Intl.NumberFormat("es-PE", {
   style: "currency",
   currency: "PEN"
@@ -17,7 +17,7 @@ function generarTallas(inicio, fin) {
   return tallas;
 }
 
-// ✅ Inventario inicial (con precios y tallas)
+// ✅ Inventario inicial
 const prendasIniciales = [
   { nombre: 'Polos 1', precioBase: 35, tallas: generarTallas(4, 18), stock: 30 },
   { nombre: 'Polos 2', precioBase: 30, tallas: generarTallas(4, 16), stock: 25 },
@@ -49,13 +49,12 @@ window.onload = () => {
   total = parseFloat(localStorage.getItem("total")) || 0;
   productosSeleccionados = JSON.parse(localStorage.getItem("productos")) || [];
 
-  // ✅ Cargar inventario desde localStorage o inicial
+  // ✅ Cargar inventario guardado o inicial
   let inventarioGuardado = JSON.parse(localStorage.getItem("inventario"));
 
   if (inventarioGuardado && inventarioGuardado.length > 0) {
-    // Mezclar datos guardados con tallas y precios originales
     prendas = prendasIniciales.map((item, i) => {
-      let guardado = inventarioGuardado.find(p => p.nombre.startsWith(item.nombre.split("(")[0]));
+      let guardado = inventarioGuardado[i];
       return {
         nombre: guardado ? guardado.nombre : item.nombre,
         precioBase: item.precioBase,
@@ -209,7 +208,7 @@ function borrarHistorial() {
   alert("🗑 Historial eliminado correctamente.");
 }
 
-// ✅ Descargar PDF
+// ✅ Descargar PDF corregido
 function descargarPDF() {
   const historial = obtenerHistorial();
   if (historial.length === 0) {
@@ -224,13 +223,13 @@ function descargarPDF() {
     contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n\n`;
   });
 
-  // ✅ Crear un elemento temporal invisible
+  // Crear elemento temporal invisible
   const elemento = document.createElement("div");
   elemento.style.display = "none";
   elemento.innerHTML = `<pre>${contenido}</pre>`;
   document.body.appendChild(elemento);
 
-  // ✅ Generar PDF después de agregar el elemento al DOM
+  // Generar PDF
   html2pdf().set({
     margin: 10,
     filename: `ventas_peru_${new Date().toLocaleDateString("es-PE")}.pdf`,
@@ -239,18 +238,6 @@ function descargarPDF() {
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   }).from(elemento).save()
     .then(() => {
-      document.body.removeChild(elemento); // ✅ Limpiar después
+      document.body.removeChild(elemento);
     });
-}
-
-  const elemento = document.createElement("pre");
-  elemento.textContent = contenido;
-
-  html2pdf().set({
-    margin: 10,
-    filename: `ventas_peru_${new Date().toLocaleDateString("es-PE")}.pdf`,
-    image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: { scale: 1 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).from(elemento).save();
 }
