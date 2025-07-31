@@ -212,14 +212,36 @@ function borrarHistorial() {
 // ✅ Descargar PDF
 function descargarPDF() {
   const historial = obtenerHistorial();
-  if (historial.length === 0) return alert("⚠️ No hay ventas para exportar.");
+  if (historial.length === 0) {
+    alert("⚠️ No hay ventas para exportar.");
+    return;
+  }
 
-  let contenido = `🛍️ Historial de Ventas - Tienda Perú\n\n`;
+  let contenido = `🛍️ Historial de Ventas - Frutisha Store\n\n`;
   historial.forEach((venta, i) => {
     contenido += `Venta ${i + 1}\nFecha: ${venta.fecha} - Hora: ${venta.hora}\nProductos:\n`;
     venta.productos.forEach(p => contenido += `  - ${p}\n`);
-    contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n`;
+    contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n\n`;
   });
+
+  // ✅ Crear un elemento temporal invisible
+  const elemento = document.createElement("div");
+  elemento.style.display = "none";
+  elemento.innerHTML = `<pre>${contenido}</pre>`;
+  document.body.appendChild(elemento);
+
+  // ✅ Generar PDF después de agregar el elemento al DOM
+  html2pdf().set({
+    margin: 10,
+    filename: `ventas_peru_${new Date().toLocaleDateString("es-PE")}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(elemento).save()
+    .then(() => {
+      document.body.removeChild(elemento); // ✅ Limpiar después
+    });
+}
 
   const elemento = document.createElement("pre");
   elemento.textContent = contenido;
