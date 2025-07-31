@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario - Frutisha Store</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .inventario-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .producto-item {
+      background: #fff;
+      border: 1px solid var(--rosa);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .producto-item input {
+      width: 90%;
+      padding: 6px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .guardar-btn {
+      background-color: var(--rosa);
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .guardar-btn:hover {
+      background-color: var(--rosa-oscuro);
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    const usuario = localStorage.getItem("usuarioActivo");
+    const rol = localStorage.getItem("rolActivo");
+    if (!usuario || rol !== "admin") {
+      alert("❌ Acceso denegado. Solo administradores pueden ver el inventario.");
+      window.location.href = "index.html";
+    }
+  </script>
+
+  <h1>📦 Inventario - Frutisha Store</h1>
+
+  <div class="inventario-container" id="contenedor-inventario"></div>
+
+  <div class="acciones">
+    <button class="guardar-btn" onclick="guardarCambios()">💾 Guardar Cambios</button>
+    <button class="boton" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
+  </div>
+
+  <script>
+    // ✅ Cargar inventario actual o inicial
+    let prendas = JSON.parse(localStorage.getItem("inventario")) || [];
+
+    // Si no hay inventario, crearlo con valores base
+    if (!prendas.length) {
+      prendas = [
+        { nombre: 'Polos 1', stock: 30 },
+        { nombre: 'Polos 2', stock: 25 },
+        { nombre: 'Polos mangalarga niño', stock: 20 },
+        { nombre: 'Polos mangacorta niño', stock: 15 },
+        { nombre: 'Polo mangalarga algodón niña', stock: 10 },
+        { nombre: 'Jean 1', stock: 18 },
+        { nombre: 'Jean 2', stock: 22 },
+        { nombre: 'Jean 3', stock: 12 },
+        { nombre: 'Jean bebé', stock: 9 },
+        { nombre: 'Conjunto jean', stock: 16 },
+        { nombre: 'Conjunto de piedrita', stock: 14 },
+        { nombre: 'Casaca tíoe', stock: 11 },
+        { nombre: 'Conjunto flores', stock: 10 },
+        { nombre: 'Casaca impermeable', stock: 12 },
+        { nombre: 'Casaca cuero niño', stock: 10 },
+        { nombre: 'Casaca cuero niña', stock: 9 },
+        { nombre: 'Chaleco cuero niña', stock: 13 },
+        { nombre: 'Cafarena', stock: 17 }
+      ];
+    }
+
+    const contenedor = document.getElementById("contenedor-inventario");
+
+    // ✅ Mostrar lista de productos
+    function renderInventario() {
+      contenedor.innerHTML = "";
+      prendas.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "producto-item";
+
+        div.innerHTML = `
+          <label><strong>Nombre:</strong></label>
+          <input type="text" id="nombre-${index}" value="${item.nombre}">
+          <label><strong>Stock:</strong></label>
+          <input type="number" id="stock-${index}" value="${item.stock}" min="0" placeholder="Stock">
+        `;
+        contenedor.appendChild(div);
+      });
+    }
+
+    renderInventario();
+
+    // ✅ Guardar cambios en inventario
+    function guardarCambios() {
+      prendas.forEach((item, index) => {
+        const nuevoNombre = document.getElementById(`nombre-${index}`).value.trim();
+        const nuevoStock = parseInt(document.getElementById(`stock-${index}`).value) || 0;
+        item.nombre = nuevoNombre;
+        item.stock = nuevoStock;
+      });
+      localStorage.setItem("inventario", JSON.stringify(prendas));
+      alert("✅ Inventario actualizado correctamente");
+      location.href = "index.html";
+    }
+  </script>
+
+</body>
+</html>

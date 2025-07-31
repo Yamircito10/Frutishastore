@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frutisha Store - Perú</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Verificación de sesión -->
+  <script>
+    const usuario = localStorage.getItem("usuarioActivo");
+    if (!usuario) {
+      window.location.href = "login.html";
+    }
+  </script>
+
+  <h1>🛍 Frutisha Store</h1>
+
+  <!-- Botones superiores -->
+  <div class="acciones" id="acciones-superiores"></div>
+
+  <!-- Contenedor de productos -->
+  <section class="productos" id="lista-prendas">
+    <!-- Aquí se cargarán las prendas dinámicamente -->
+  </section>
+
+  <!-- Total -->
+  <div id="total">Total: S/ 0.00</div>
+
+  <!-- Lista de productos seleccionados -->
+  <div id="lista">
+    <p><strong>Productos seleccionados:</strong></p>
+    <ul id="productos"></ul>
+  </div>
+
+  <!-- Acciones carrito -->
+  <div class="acciones">
+    <button onclick="finalizarVenta()">💾 Finalizar Venta</button>
+    <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
+  </div>
+
+  <!-- Historial -->
+  <div id="historial" style="margin-top:30px;">
+    <h2>📋 Historial del Día</h2>
+    <ul id="ventasDia"></ul>
+    <div class="acciones">
+      <button class="borrar-btn" onclick="borrarHistorial()">🗑 Borrar Historial</button>
+      <button onclick="descargarPDF()">📥 Descargar PDF</button>
+    </div>
+  </div>
+
+  <!-- Librería PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="app.js"></script>
+
+  <!-- Script botones según rol -->
+  <script>
+    const rol = localStorage.getItem("rolActivo");
+    const contenedor = document.getElementById("acciones-superiores");
+
+    if (rol === "admin") {
+      const btnInv = document.createElement("button");
+      btnInv.className = "boton";
+      btnInv.innerText = "📦 Inventario";
+      btnInv.onclick = () => location.href = "inventario.html";
+      contenedor.appendChild(btnInv);
+
+      const btnLimpiar = document.createElement("button");
+      btnLimpiar.className = "boton borrar-btn";
+      btnLimpiar.innerText = "🧹 Borrar Datos";
+      btnLimpiar.onclick = () => {
+        if (confirm("¿Deseas borrar todo el localStorage?")) {
+          localStorage.clear();
+          alert("Datos borrados. Se recargará la página.");
+          location.reload();
+        }
+      };
+      contenedor.appendChild(btnLimpiar);
+    }
+
+    const btnSalir = document.createElement("button");
+    btnSalir.className = "boton";
+    btnSalir.innerText = "🔐 Cerrar sesión";
+    btnSalir.onclick = () => {
+      localStorage.removeItem("usuarioActivo");
+      localStorage.removeItem("rolActivo");
+      location.href = "login.html";
+    };
+    contenedor.appendChild(btnSalir);
+  </script>
+
+</body>
+</html>
