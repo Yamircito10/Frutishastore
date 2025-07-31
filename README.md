@@ -1,2 +1,0 @@
-# Frutishastore
-Tiendavirtual
