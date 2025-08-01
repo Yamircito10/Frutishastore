@@ -2,7 +2,7 @@ let total = 0;
 let productosSeleccionados = [];
 let prendas = [];
 
-// ✅ Formato moneda
+// ✅ Formatear soles
 const formatearSoles = (valor) => new Intl.NumberFormat("es-PE", {
   style: "currency",
   currency: "PEN"
@@ -17,29 +17,21 @@ function generarTallas(inicio, fin) {
   return tallas;
 }
 
-// ✅ Inventario inicial
-const prendasIniciales = [
-  { nombre: 'Polos 1', precioBase: 35, tallas: generarTallas(4, 18), stock: 30 },
-  { nombre: 'Polos 2', precioBase: 30, tallas: generarTallas(4, 16), stock: 25 },
-  { nombre: 'Polos mangalarga niño', precioBase: 35, tallas: generarTallas(2, 16), stock: 20 },
-  { nombre: 'Polos mangacorta niño', precioBase: 28, tallas: generarTallas(4, 16), stock: 15 },
-  { nombre: 'Polo mangalarga algodón niña', precioBase: 30, tallas: generarTallas(4, 16), stock: 10 },
-  { nombre: 'Jean 1', precioBase: 55, tallas: generarTallas(4, 14).concat([{ talla: 16, precio: 60 }]), stock: 18 },
-  { nombre: 'Jean 2', precioBase: 60, tallas: generarTallas(4, 16), stock: 22 },
-  { nombre: 'Jean 3', precioBase: 65, tallas: generarTallas(4, 16), stock: 12 },
-  { nombre: 'Jean bebé', precioBase: 50, tallas: generarTallas(2, 8), stock: 9 },
-  { nombre: 'Conjunto jean', precioBase: 130, tallas: generarTallas(4, 14).concat([{ talla: 16, precio: 135 }]), stock: 16 },
-  { nombre: 'Conjunto de piedrita', precioBase: 70, tallas: generarTallas(4, 16), stock: 14 },
-  { nombre: 'Casaca tíoe', precioBase: 75, tallas: generarTallas(4, 16), stock: 11 },
-  { nombre: 'Conjunto flores', precioBase: 60, tallas: generarTallas(4, 16), stock: 10 },
-  { nombre: 'Casaca impermeable', precioBase: 50, tallas: generarTallas(6, 14), stock: 12 },
-  { nombre: 'Casaca cuero niño', precioBase: 60, tallas: generarTallas(4, 16), stock: 10 },
-  { nombre: 'Casaca cuero niña', precioBase: 50, tallas: generarTallas(4, 14), stock: 9 },
-  { nombre: 'Chaleco cuero niña', precioBase: 45, tallas: generarTallas(4, 16), stock: 13 },
-  { nombre: 'Cafarena', precioBase: 10, tallas: generarTallas(4, 14), stock: 17 }
-];
+// ✅ Cargar productos desde Firebase
+async function cargarPrendas() {
+  try {
+    const snapshot = await db.collection("inventario").get();
+    prendas = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    generarVistaPrendas();
+  } catch (error) {
+    console.error("Error cargando prendas:", error);
+  }
+}
 
-window.onload = () => {
+window.onload = async () => {
   const usuario = localStorage.getItem("usuarioActivo");
   if (!usuario) {
     window.location.href = "login.html";
@@ -49,25 +41,7 @@ window.onload = () => {
   total = parseFloat(localStorage.getItem("total")) || 0;
   productosSeleccionados = JSON.parse(localStorage.getItem("productos")) || [];
 
-  // ✅ Cargar inventario guardado o inicial
-  let inventarioGuardado = JSON.parse(localStorage.getItem("inventario"));
-
-  if (inventarioGuardado && inventarioGuardado.length > 0) {
-    prendas = prendasIniciales.map((item, i) => {
-      let guardado = inventarioGuardado[i];
-      return {
-        nombre: guardado ? guardado.nombre : item.nombre,
-        precioBase: item.precioBase,
-        tallas: item.tallas,
-        stock: guardado && guardado.stock !== undefined ? guardado.stock : item.stock
-      };
-    });
-  } else {
-    prendas = prendasIniciales;
-    localStorage.setItem("inventario", JSON.stringify(prendas));
-  }
-
-  generarVistaPrendas();
+  await cargarPrendas();
   actualizarInterfaz();
   mostrarHistorial(obtenerHistorial());
 };
@@ -88,7 +62,8 @@ function generarVistaPrendas() {
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
 
-    prenda.tallas.forEach((t) => {
+    let tallas = prenda.tallas || generarTallas(4, 16); // si no hay tallas en firebase
+    tallas.forEach((t) => {
       const btn = document.createElement("button");
       btn.className = "boton-talla";
       btn.innerText = `T${t.talla}`;
@@ -111,7 +86,7 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   const descDiv = contenedor.querySelector(".descuentos");
   descDiv.innerHTML = "";
 
-  const precioBase = tallaSel.precio ?? prenda.precioBase;
+  const precioBase = tallaSel.precio ?? prenda.precio;
   const descuentos = [0, 1, 2, 3];
 
   descuentos.forEach(d => {
@@ -123,8 +98,8 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   });
 }
 
-// ✅ Agregar producto al carrito
-function agregarProducto(prenda, tallaSel, precioFinal) {
+// ✅ Agregar producto al carrito y descontar stock en Firebase
+async function agregarProducto(prenda, tallaSel, precioFinal) {
   if (prenda.stock <= 0) {
     alert("⚠️ No hay stock disponible para este producto");
     return;
@@ -133,15 +108,16 @@ function agregarProducto(prenda, tallaSel, precioFinal) {
   total += precioFinal;
   productosSeleccionados.push(`${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`);
 
-  // Descontar 1 unidad del stock
-  const index = prendas.findIndex(p => p.nombre === prenda.nombre);
-  if (index !== -1) {
-    prendas[index].stock -= 1;
-    localStorage.setItem("inventario", JSON.stringify(prendas));
+  try {
+    await db.collection("inventario").doc(prenda.id).update({
+      stock: prenda.stock - 1
+    });
+    await cargarPrendas(); // refrescar lista
+  } catch (error) {
+    console.error("Error actualizando stock:", error);
   }
 
   guardarEnLocalStorage();
-  generarVistaPrendas();
   actualizarInterfaz();
 }
 
@@ -166,7 +142,7 @@ function reiniciarCarrito() {
   actualizarInterfaz();
 }
 
-// ✅ Finalizar venta
+// ✅ Finalizar venta (guarda en localStorage solo para historial del día)
 function finalizarVenta() {
   if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
   const historial = obtenerHistorial();
@@ -223,13 +199,11 @@ function descargarPDF() {
     contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n\n`;
   });
 
-  // Crear elemento temporal invisible
   const elemento = document.createElement("div");
   elemento.style.display = "none";
   elemento.innerHTML = `<pre>${contenido}</pre>`;
   document.body.appendChild(elemento);
 
-  // Generar PDF
   html2pdf().set({
     margin: 10,
     filename: `ventas_peru_${new Date().toLocaleDateString("es-PE")}.pdf`,
