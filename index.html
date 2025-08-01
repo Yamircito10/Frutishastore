@@ -8,60 +8,22 @@
 </head>
 <body>
 
-  <!-- Verificación de sesión -->
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
-    authDomain: "inventario-ab270.firebaseapp.com",
-    projectId: "inventario-ab270",
-    storageBucket: "inventario-ab270.firebasestorage.app",
-    messagingSenderId: "15388676345",
-    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-
-  <script>
-    const usuario = localStorage.getItem("usuarioActivo");
-    if (!usuario) {
-      window.location.href = "login.html";
-    }
-  </script>
-
   <h1>🛍 Frutisha Store</h1>
 
-  <!-- Botones superiores -->
-  <div class="acciones" id="acciones-superiores"></div>
+  <section id="lista-prendas" class="productos"></section>
 
-  <!-- Contenedor de productos -->
-  <section class="productos" id="lista-prendas">
-    <!-- Aquí se cargarán las prendas dinámicamente -->
-  </section>
-
-  <!-- Total -->
   <div id="total">Total: S/ 0.00</div>
 
-  <!-- Lista de productos seleccionados -->
   <div id="lista">
     <p><strong>Productos seleccionados:</strong></p>
     <ul id="productos"></ul>
   </div>
 
-  <!-- Acciones carrito -->
   <div class="acciones">
     <button onclick="finalizarVenta()">💾 Finalizar Venta</button>
     <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
   </div>
 
-  <!-- Historial -->
   <div id="historial" style="margin-top:30px;">
     <h2>📋 Historial del Día</h2>
     <ul id="ventasDia"></ul>
@@ -71,45 +33,27 @@
     </div>
   </div>
 
-  <!-- Librería PDF -->
+  <!-- Librería para PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="app.js"></script>
 
-  <!-- Script botones según rol -->
+  <!-- 🔹 Configuración Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
   <script>
-    const rol = localStorage.getItem("rolActivo");
-    const contenedor = document.getElementById("acciones-superiores");
-
-    if (rol === "admin") {
-      const btnInv = document.createElement("button");
-      btnInv.className = "boton";
-      btnInv.innerText = "📦 Inventario";
-      btnInv.onclick = () => location.href = "inventario.html";
-      contenedor.appendChild(btnInv);
-
-      const btnLimpiar = document.createElement("button");
-      btnLimpiar.className = "boton borrar-btn";
-      btnLimpiar.innerText = "🧹 Borrar Datos";
-      btnLimpiar.onclick = () => {
-        if (confirm("¿Deseas borrar todo el localStorage?")) {
-          localStorage.clear();
-          alert("Datos borrados. Se recargará la página.");
-          location.reload();
-        }
-      };
-      contenedor.appendChild(btnLimpiar);
-    }
-
-    const btnSalir = document.createElement("button");
-    btnSalir.className = "boton";
-    btnSalir.innerText = "🔐 Cerrar sesión";
-    btnSalir.onclick = () => {
-      localStorage.removeItem("usuarioActivo");
-      localStorage.removeItem("rolActivo");
-      location.href = "login.html";
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "frutisha-store",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "XXXXXXXX",
+      appId: "1:XXXX:web:XXXX"
     };
-    contenedor.appendChild(btnSalir);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
   </script>
+
+  <!-- Tu lógica principal -->
+  <script src="app.js"></script>
 
 </body>
 </html>
