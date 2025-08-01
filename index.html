@@ -9,6 +9,26 @@
 <body>
 
   <!-- Verificación de sesión -->
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+    authDomain: "inventario-ab270.firebaseapp.com",
+    projectId: "inventario-ab270",
+    storageBucket: "inventario-ab270.firebasestorage.app",
+    messagingSenderId: "15388676345",
+    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+
   <script>
     const usuario = localStorage.getItem("usuarioActivo");
     if (!usuario) {
