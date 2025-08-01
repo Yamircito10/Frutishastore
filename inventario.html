@@ -44,26 +44,6 @@
 </head>
 <body>
 
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
-    authDomain: "inventario-ab270.firebaseapp.com",
-    projectId: "inventario-ab270",
-    storageBucket: "inventario-ab270.firebasestorage.app",
-    messagingSenderId: "15388676345",
-    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-
   <script>
     const usuario = localStorage.getItem("usuarioActivo");
     const rol = localStorage.getItem("rolActivo");
@@ -82,39 +62,37 @@
     <button class="boton" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
   </div>
 
+  <!-- 🔹 Configuración Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
   <script>
-    // ✅ Cargar inventario actual o inicial
-    let prendas = JSON.parse(localStorage.getItem("inventario")) || [];
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "frutisha-store",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "XXXXXXXX",
+      appId: "1:XXXX:web:XXXX"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
 
-    // Si no hay inventario, crearlo con valores base
-    if (!prendas.length) {
-      prendas = [
-        { nombre: 'Polos 1', stock: 30 },
-        { nombre: 'Polos 2', stock: 25 },
-        { nombre: 'Polos mangalarga niño', stock: 20 },
-        { nombre: 'Polos mangacorta niño', stock: 15 },
-        { nombre: 'Polo mangalarga algodón niña', stock: 10 },
-        { nombre: 'Jean 1', stock: 18 },
-        { nombre: 'Jean 2', stock: 22 },
-        { nombre: 'Jean 3', stock: 12 },
-        { nombre: 'Jean bebé', stock: 9 },
-        { nombre: 'Conjunto jean', stock: 16 },
-        { nombre: 'Conjunto de piedrita', stock: 14 },
-        { nombre: 'Casaca tíoe', stock: 11 },
-        { nombre: 'Conjunto flores', stock: 10 },
-        { nombre: 'Casaca impermeable', stock: 12 },
-        { nombre: 'Casaca cuero niño', stock: 10 },
-        { nombre: 'Casaca cuero niña', stock: 9 },
-        { nombre: 'Chaleco cuero niña', stock: 13 },
-        { nombre: 'Cafarena', stock: 17 }
-      ];
+  <script>
+    let prendas = [];
+
+    // ✅ Cargar datos desde Firebase
+    async function cargarInventario() {
+      const snapshot = await db.collection("inventario").get();
+      prendas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderInventario();
     }
 
-    const contenedor = document.getElementById("contenedor-inventario");
-
-    // ✅ Mostrar lista de productos
+    // ✅ Mostrar productos en pantalla
     function renderInventario() {
+      const contenedor = document.getElementById("contenedor-inventario");
       contenedor.innerHTML = "";
+
       prendas.forEach((item, index) => {
         const div = document.createElement("div");
         div.className = "producto-item";
@@ -123,26 +101,29 @@
           <label><strong>Nombre:</strong></label>
           <input type="text" id="nombre-${index}" value="${item.nombre}">
           <label><strong>Stock:</strong></label>
-          <input type="number" id="stock-${index}" value="${item.stock}" min="0" placeholder="Stock">
+          <input type="number" id="stock-${index}" value="${item.stock}" min="0">
         `;
         contenedor.appendChild(div);
       });
     }
 
-    renderInventario();
+    // ✅ Guardar cambios en Firebase
+    async function guardarCambios() {
+      for (let i = 0; i < prendas.length; i++) {
+        const nuevoNombre = document.getElementById(`nombre-${i}`).value.trim();
+        const nuevoStock = parseInt(document.getElementById(`stock-${i}`).value) || 0;
 
-    // ✅ Guardar cambios en inventario
-    function guardarCambios() {
-      prendas.forEach((item, index) => {
-        const nuevoNombre = document.getElementById(`nombre-${index}`).value.trim();
-        const nuevoStock = parseInt(document.getElementById(`stock-${index}`).value) || 0;
-        item.nombre = nuevoNombre;
-        item.stock = nuevoStock;
-      });
-      localStorage.setItem("inventario", JSON.stringify(prendas));
+        await db.collection("inventario").doc(prendas[i].id).update({
+          nombre: nuevoNombre,
+          stock: nuevoStock
+        });
+      }
       alert("✅ Inventario actualizado correctamente");
-      location.href = "index.html";
+      cargarInventario(); // refrescar vista
     }
+
+    // ✅ Cargar inventario al abrir página
+    cargarInventario();
   </script>
 
 </body>
