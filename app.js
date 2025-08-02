@@ -30,6 +30,7 @@ async function cargarPrendas(reintento = 0) {
   try {
     const snapshot = await db.collection("inventario").get();
 
+    // Solo datos planos
     prendas = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -126,14 +127,19 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
   actualizarInterfaz();
 }
 
-// ✅ Guardar carrito en localStorage (datos planos)
+// ✅ Guardar carrito en localStorage (protección anti-objetos)
 function guardarEnLocalStorage() {
   try {
-    const productosPlanos = [...productosSeleccionados]; // solo strings
-    localStorage.setItem("total", total);
-    localStorage.setItem("productos", JSON.stringify(productosPlanos));
+    // Aseguramos que solo sean strings simples
+    const productosPlanos = productosSeleccionados.map(p => String(p));
+
+    // Validación: si algún elemento no es string, lo ignoramos
+    const datosSeguros = productosPlanos.filter(p => typeof p === "string");
+
+    localStorage.setItem("total", String(total));
+    localStorage.setItem("productos", JSON.stringify(datosSeguros));
   } catch (err) {
-    console.error("Error guardando en localStorage:", err);
+    console.warn("⚠️ No se pudo guardar en localStorage. Datos no válidos:", err);
   }
 }
 
@@ -164,7 +170,11 @@ function finalizarVenta() {
     productos: [...productosSeleccionados],
     total
   });
-  localStorage.setItem("historialVentas", JSON.stringify(historial));
+  try {
+    localStorage.setItem("historialVentas", JSON.stringify(historial));
+  } catch (err) {
+    console.warn("⚠️ No se pudo guardar historial:", err);
+  }
   total = 0;
   productosSeleccionados = [];
   localStorage.removeItem("total");
@@ -176,7 +186,11 @@ function finalizarVenta() {
 
 // ✅ Historial
 function obtenerHistorial() {
-  return JSON.parse(localStorage.getItem("historialVentas")) || [];
+  try {
+    return JSON.parse(localStorage.getItem("historialVentas")) || [];
+  } catch {
+    return [];
+  }
 }
 
 function mostrarHistorial(historial) {
@@ -235,8 +249,13 @@ window.onload = async () => {
     return;
   }
 
-  total = parseFloat(localStorage.getItem("total")) || 0;
-  productosSeleccionados = JSON.parse(localStorage.getItem("productos")) || [];
+  try {
+    total = parseFloat(localStorage.getItem("total")) || 0;
+    productosSeleccionados = JSON.parse(localStorage.getItem("productos")) || [];
+  } catch {
+    total = 0;
+    productosSeleccionados = [];
+  }
 
   await cargarPrendas();
   actualizarInterfaz();
