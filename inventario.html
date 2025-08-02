@@ -69,6 +69,7 @@
 <body>
 
 <script>
+  // ✅ Verificar que solo el admin pueda entrar
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
   if (!usuario || rol !== "admin") {
@@ -86,6 +87,7 @@
   <input type="text" id="nuevo-nombre" placeholder="Nombre de la prenda">
   <input type="number" id="nuevo-precio" placeholder="Precio (S/)" min="0">
   <input type="number" id="nuevo-stock" placeholder="Stock inicial" min="0">
+  <input type="text" id="nuevo-tallas" placeholder="Tallas (ej: 4-16)">
   <button class="guardar-btn" onclick="agregarPrenda()">Agregar</button>
 </div>
 
@@ -94,7 +96,7 @@
   <button class="guardar-btn" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
 </div>
 
-<!-- ✅ Firebase (compat) -->
+<!-- ✅ Firebase (Compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
@@ -113,6 +115,7 @@
 <script>
   let prendasInv = [];
 
+  // ✅ Cargar productos desde Firebase
   async function cargarInventario() {
     try {
       const snapshot = await db.collection("inventario").get();
@@ -123,6 +126,7 @@
     }
   }
 
+  // ✅ Mostrar productos existentes
   function renderInventario() {
     const contenedor = document.getElementById("contenedor-inventario");
     contenedor.innerHTML = "";
@@ -142,23 +146,28 @@
         <input type="number" id="precio-${index}" value="${item.precio}" min="0">
         <label><strong>Stock:</strong></label>
         <input type="number" id="stock-${index}" value="${item.stock}" min="0">
+        <label><strong>Tallas:</strong></label>
+        <input type="text" id="tallas-${index}" value="${item.tallas || ''}">
         <button class="eliminar-btn" onclick="eliminarPrenda('${item.id}')">🗑 Eliminar</button>
       `;
       contenedor.appendChild(div);
     });
   }
 
+  // ✅ Guardar cambios de todos los productos
   async function guardarCambios() {
     try {
       for (let i = 0; i < prendasInv.length; i++) {
         const nuevoNombre = document.getElementById(`nombre-${i}`).value.trim();
         const nuevoPrecio = parseFloat(document.getElementById(`precio-${i}`).value) || 0;
         const nuevoStock = parseInt(document.getElementById(`stock-${i}`).value) || 0;
+        const nuevasTallas = document.getElementById(`tallas-${i}`).value.trim();
 
         await db.collection("inventario").doc(prendasInv[i].id).update({
           nombre: nuevoNombre,
           precio: nuevoPrecio,
-          stock: nuevoStock
+          stock: nuevoStock,
+          tallas: nuevasTallas
         });
       }
       alert("✅ Inventario actualizado correctamente");
@@ -168,10 +177,12 @@
     }
   }
 
+  // ✅ Agregar una nueva prenda
   async function agregarPrenda() {
     const nombre = document.getElementById("nuevo-nombre").value.trim();
     const precio = parseFloat(document.getElementById("nuevo-precio").value) || 0;
     const stock = parseInt(document.getElementById("nuevo-stock").value) || 0;
+    const tallas = document.getElementById("nuevo-tallas").value.trim();
 
     if (!nombre) {
       alert("⚠️ Ingresa el nombre de la prenda");
@@ -179,10 +190,11 @@
     }
 
     try {
-      await db.collection("inventario").add({ nombre, precio, stock });
+      await db.collection("inventario").add({ nombre, precio, stock, tallas });
       document.getElementById("nuevo-nombre").value = "";
       document.getElementById("nuevo-precio").value = "";
       document.getElementById("nuevo-stock").value = "";
+      document.getElementById("nuevo-tallas").value = "";
       alert("✅ Nueva prenda agregada");
       cargarInventario();
     } catch (error) {
@@ -190,6 +202,7 @@
     }
   }
 
+  // ✅ Eliminar prenda
   async function eliminarPrenda(id) {
     if (confirm("¿Seguro que deseas eliminar esta prenda?")) {
       try {
@@ -202,6 +215,7 @@
     }
   }
 
+  // Inicializar
   cargarInventario();
 </script>
 
