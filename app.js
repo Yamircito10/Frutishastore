@@ -1,31 +1,7 @@
-// 🚨 Detector global para localizar error de JSON circular (evita duplicados)
-if (typeof window.originalSetItem === "undefined") {
-    window.originalSetItem = localStorage.setItem;
-    localStorage.setItem = function (key, value) {
-        try {
-            JSON.stringify(value);
-        } catch (e) {
-            alert("🚨 Se intentó guardar un objeto circular en localStorage.\nClave: " + key);
-            console.error("🚨 Objeto circular detectado:", key, value);
-            console.trace();
-            return;
-        }
-        window.originalSetItem.apply(this, [key, value]);
-    };
-}
-
 // ✅ Variables globales
 let total = 0;
 let productosSeleccionados = [];
 let prendas = [];
-
-// ✅ Mostrar mensajes en pantalla
-function mostrarMensaje(msj, tipo = "info") {
-  const contenedor = document.getElementById("lista-prendas");
-  if (contenedor) {
-    contenedor.innerHTML = `<p style="color:${tipo === 'error' ? 'red' : 'green'}; text-align:center;">${msj}</p>`;
-  }
-}
 
 // ✅ Formatear soles
 const formatearSoles = (valor) => new Intl.NumberFormat("es-PE", {
@@ -43,7 +19,7 @@ function generarTallas(inicio = 4, fin = 16) {
 }
 
 // ✅ Cargar productos desde Firebase
-async function cargarPrendas(reintento = 0) {
+async function cargarPrendas() {
   try {
     const snapshot = await db.collection("inventario").get();
     prendas = snapshot.docs.map(doc => ({
@@ -53,11 +29,6 @@ async function cargarPrendas(reintento = 0) {
     generarVistaPrendas();
   } catch (error) {
     console.error("Error cargando prendas:", error);
-    if (reintento < 3) {
-      setTimeout(() => cargarPrendas(reintento + 1), 3000);
-    } else {
-      mostrarMensaje("⚠️ No se pudo conectar a Firestore. Revisa tu conexión.", "error");
-    }
   }
 }
 
@@ -76,7 +47,7 @@ function generarVistaPrendas() {
     div.className = "producto-card";
 
     const titulo = document.createElement("h3");
-    titulo.innerText = `${prenda.nombre} (Stock: ${prenda.stock})`;
+    titulo.innerText = `${String(prenda.nombre)} (Stock: ${String(prenda.stock)})`;
     div.appendChild(titulo);
 
     const tallasDiv = document.createElement("div");
@@ -101,7 +72,7 @@ function generarVistaPrendas() {
   });
 }
 
-// ✅ Botones de descuento
+// ✅ Mostrar botones de descuento
 function mostrarDescuentos(contenedor, prenda, tallaSel) {
   const descDiv = contenedor.querySelector(".descuentos");
   descDiv.innerHTML = "";
@@ -118,15 +89,16 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   });
 }
 
-// ✅ Agregar producto y descontar stock
+// ✅ Agregar producto al carrito y descontar stock
 async function agregarProducto(prenda, tallaSel, precioFinal) {
   if (prenda.stock <= 0) {
     alert("⚠️ No hay stock disponible para este producto");
     return;
   }
 
-  total += precioFinal;
-  productosSeleccionados.push(`${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`);
+  const productoTexto = `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`;
+  total += Number(precioFinal);
+  productosSeleccionados.push(productoTexto);
 
   try {
     await db.collection("inventario").doc(prenda.id).update({
@@ -137,19 +109,7 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
     console.error("Error actualizando stock:", error);
   }
 
-  guardarEnLocalStorage();
   actualizarInterfaz();
-}
-
-// ✅ Guardar carrito
-function guardarEnLocalStorage() {
-  try {
-    const datosSeguros = productosSeleccionados.map(p => String(p));
-    localStorage.setItem("total", String(total));
-    localStorage.setItem("productos", JSON.stringify(datosSeguros));
-  } catch (err) {
-    console.warn("⚠️ No se pudo guardar en localStorage:", err);
-  }
 }
 
 // ✅ Actualizar interfaz
@@ -163,80 +123,72 @@ function reiniciarCarrito() {
   if (!confirm("¿Estás seguro de reiniciar el carrito?")) return;
   total = 0;
   productosSeleccionados = [];
-  localStorage.removeItem("total");
-  localStorage.removeItem("productos");
   actualizarInterfaz();
 }
 
-// ✅ Finalizar venta
-function finalizarVenta() {
+// ✅ Finalizar venta y guardar en Firebase
+async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
-  const historial = obtenerHistorial();
   const ahora = new Date();
-  historial.push({
-    fecha: ahora.toLocaleDateString("es-PE"),
-    hora: ahora.toLocaleTimeString("es-PE"),
-    productos: [...productosSeleccionados],
-    total
-  });
-  try {
-    localStorage.setItem("historialVentas", JSON.stringify(historial));
-  } catch (err) {
-    console.warn("⚠️ No se pudo guardar historial:", err);
-  }
-  total = 0;
-  productosSeleccionados = [];
-  localStorage.removeItem("total");
-  localStorage.removeItem("productos");
-  actualizarInterfaz();
-  mostrarHistorial(historial);
-  alert("✅ Venta guardada correctamente.");
-}
 
-// ✅ Historial
-function obtenerHistorial() {
   try {
-    return JSON.parse(localStorage.getItem("historialVentas")) || [];
-  } catch {
-    return [];
+    await db.collection("ventas").add({
+      fecha: ahora.toLocaleDateString("es-PE"),
+      hora: ahora.toLocaleTimeString("es-PE"),
+      productos: productosSeleccionados.map(p => String(p)),
+      total: Number(total)
+    });
+
+    total = 0;
+    productosSeleccionados = [];
+    actualizarInterfaz();
+    alert("✅ Venta guardada correctamente en Firebase.");
+    cargarHistorial();
+  } catch (error) {
+    console.error("Error guardando venta:", error);
   }
 }
 
-function mostrarHistorial(historial) {
-  document.getElementById("ventasDia").innerHTML = historial.map((venta) => `
-    <li>
-      🗓️ ${venta.fecha} 🕒 ${venta.hora}<br>
-      🧾 <strong>${venta.productos.length} productos</strong> - 💵 Total: <strong>${formatearSoles(venta.total)}</strong>
-    </li>`).join('');
+// ✅ Cargar historial desde Firebase
+async function cargarHistorial() {
+  try {
+    const snapshot = await db.collection("ventas").orderBy("fecha", "desc").get();
+    const historial = snapshot.docs.map(doc => doc.data());
+
+    document.getElementById("ventasDia").innerHTML = historial.map((venta) => `
+      <li>
+        🗓️ ${venta.fecha} 🕒 ${venta.hora}<br>
+        🧾 <strong>${venta.productos.length} productos</strong> - 💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+      </li>`).join('');
+  } catch (error) {
+    console.error("Error cargando historial:", error);
+  }
 }
 
-// ✅ Borrar historial
-function borrarHistorial() {
-  if (!confirm("¿Estás seguro de borrar el historial?")) return;
-  localStorage.removeItem("historialVentas");
-  mostrarHistorial([]);
-  alert("🗑 Historial eliminado correctamente.");
+// ✅ Borrar historial de Firebase
+async function borrarHistorial() {
+  if (!confirm("¿Estás seguro de borrar el historial de ventas?")) return;
+
+  try {
+    const snapshot = await db.collection("ventas").get();
+    const batch = db.batch();
+    snapshot.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    document.getElementById("ventasDia").innerHTML = "";
+    alert("🗑 Historial eliminado correctamente de Firebase.");
+  } catch (error) {
+    console.error("Error eliminando historial:", error);
+  }
 }
 
 // ✅ Descargar PDF
 function descargarPDF() {
-  const historial = obtenerHistorial();
-  if (historial.length === 0) {
+  const historialElement = document.getElementById("ventasDia");
+  if (!historialElement || historialElement.innerHTML.trim() === "") {
     alert("⚠️ No hay ventas para exportar.");
     return;
   }
-
-  let contenido = `🛍️ Historial de Ventas - Frutisha Store\n\n`;
-  historial.forEach((venta, i) => {
-    contenido += `Venta ${i + 1}\nFecha: ${venta.fecha} - Hora: ${venta.hora}\nProductos:\n`;
-    venta.productos.forEach(p => contenido += `  - ${p}\n`);
-    contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n\n`;
-  });
-
-  const elemento = document.createElement("div");
-  elemento.style.display = "none";
-  elemento.innerHTML = `<pre>${contenido}</pre>`;
-  document.body.appendChild(elemento);
 
   html2pdf().set({
     margin: 10,
@@ -244,13 +196,10 @@ function descargarPDF() {
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).from(elemento).save()
-    .then(() => {
-      document.body.removeChild(elemento);
-    });
+  }).from(historialElement).save();
 }
 
-// ✅ Inicializar
+// ✅ Inicializar página
 window.onload = async () => {
   const usuario = localStorage.getItem("usuarioActivo");
   if (!usuario) {
@@ -258,15 +207,7 @@ window.onload = async () => {
     return;
   }
 
-  try {
-    total = parseFloat(localStorage.getItem("total")) || 0;
-    productosSeleccionados = JSON.parse(localStorage.getItem("productos")) || [];
-  } catch {
-    total = 0;
-    productosSeleccionados = [];
-  }
-
   await cargarPrendas();
+  await cargarHistorial();
   actualizarInterfaz();
-  mostrarHistorial(obtenerHistorial());
 };
