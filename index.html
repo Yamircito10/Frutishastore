@@ -16,13 +16,14 @@
     window.location.href = "login.html";
   }
 
-  // ✅ Interceptor para evitar objetos circulares
+  // ✅ Detector visual de objetos circulares
   const originalSetItem = localStorage.setItem;
   localStorage.setItem = function(key, value) {
     try {
       JSON.stringify(value);
     } catch (e) {
-      console.error("🚨 Objeto circular detectado en localStorage (Index):", key, value);
+      alert("🚨 Se intentó guardar un objeto circular en localStorage:\nClave: " + key);
+      console.error("🚨 Objeto circular detectado (Index):", key, value);
       return;
     }
     originalSetItem.apply(this, [key, value]);
@@ -59,7 +60,7 @@
   </div>
 </div>
 
-<!-- ✅ Librería para PDF -->
+<!-- ✅ Librería PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <!-- ✅ Firebase Config (compat) -->
