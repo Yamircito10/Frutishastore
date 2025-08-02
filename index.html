@@ -9,12 +9,24 @@
 <body>
 
 <script>
-  // Verificar usuario logueado
+  // ✅ Verificar usuario logueado
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
   if (!usuario) {
     window.location.href = "login.html";
   }
+
+  // ✅ Interceptor para evitar objetos circulares
+  const originalSetItem = localStorage.setItem;
+  localStorage.setItem = function(key, value) {
+    try {
+      JSON.stringify(value);
+    } catch (e) {
+      console.error("🚨 Objeto circular detectado en localStorage (Index):", key, value);
+      return;
+    }
+    originalSetItem.apply(this, [key, value]);
+  };
 </script>
 
 <h1>🛍 Frutisha Store</h1>
@@ -47,10 +59,10 @@
   </div>
 </div>
 
-<!-- ✅ Librería PDF -->
+<!-- ✅ Librería para PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-<!-- ✅ Firebase (versión compat) -->
+<!-- ✅ Firebase Config (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
@@ -66,7 +78,6 @@
   const db = firebase.firestore();
 </script>
 
-<!-- ✅ Archivo principal -->
 <script src="app.js"></script>
 
 <script>
