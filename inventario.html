@@ -75,13 +75,24 @@
     alert("❌ Acceso denegado. Solo administradores pueden ver el inventario.");
     window.location.href = "index.html";
   }
+
+  // ✅ Interceptor para evitar objetos circulares
+  const originalSetItem = localStorage.setItem;
+  localStorage.setItem = function(key, value) {
+    try {
+      JSON.stringify(value);
+    } catch (e) {
+      console.error("🚨 Objeto circular detectado en localStorage (Inventario):", key, value);
+      return;
+    }
+    originalSetItem.apply(this, [key, value]);
+  };
 </script>
 
 <h1>📦 Inventario - Frutisha Store</h1>
 
 <div class="inventario-container" id="contenedor-inventario"></div>
 
-<!-- 🔹 Agregar nueva prenda -->
 <div class="nuevo-item">
   <h3>➕ Agregar nueva prenda</h3>
   <input type="text" id="nuevo-nombre" placeholder="Nombre de la prenda">
@@ -95,7 +106,7 @@
   <button class="guardar-btn" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
 </div>
 
-<!-- ✅ Firebase (Compat) -->
+<!-- ✅ Firebase Config (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
@@ -114,7 +125,6 @@
 <script>
   let prendasInv = [];
 
-  // ✅ Cargar datos desde Firebase
   async function cargarInventario() {
     try {
       const snapshot = await db.collection("inventario").get();
@@ -125,7 +135,6 @@
     }
   }
 
-  // ✅ Mostrar productos existentes
   function renderInventario() {
     const contenedor = document.getElementById("contenedor-inventario");
     contenedor.innerHTML = "";
@@ -151,7 +160,6 @@
     });
   }
 
-  // ✅ Guardar cambios de todos los productos
   async function guardarCambios() {
     try {
       for (let i = 0; i < prendasInv.length; i++) {
@@ -172,7 +180,6 @@
     }
   }
 
-  // ✅ Agregar una nueva prenda
   async function agregarPrenda() {
     const nombre = document.getElementById("nuevo-nombre").value.trim();
     const precio = parseFloat(document.getElementById("nuevo-precio").value) || 0;
@@ -195,7 +202,6 @@
     }
   }
 
-  // ✅ Eliminar prenda
   async function eliminarPrenda(id) {
     if (confirm("¿Seguro que deseas eliminar esta prenda?")) {
       try {
