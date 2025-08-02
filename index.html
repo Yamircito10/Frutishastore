@@ -15,19 +15,6 @@
   if (!usuario) {
     window.location.href = "login.html";
   }
-
-  // ✅ Detector visual de objetos circulares
-  const originalSetItem = localStorage.setItem;
-  localStorage.setItem = function(key, value) {
-    try {
-      JSON.stringify(value);
-    } catch (e) {
-      alert("🚨 Se intentó guardar un objeto circular en localStorage:\nClave: " + key);
-      console.error("🚨 Objeto circular detectado (Index):", key, value);
-      return;
-    }
-    originalSetItem.apply(this, [key, value]);
-  };
 </script>
 
 <h1>🛍 Frutisha Store</h1>
