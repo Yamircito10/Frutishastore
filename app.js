@@ -1,3 +1,18 @@
+// 🚨 Detector global para localizar el error de JSON circular
+const originalSetItem = localStorage.setItem;
+localStorage.setItem = function (key, value) {
+  try {
+    JSON.stringify(value);
+  } catch (e) {
+    alert("🚨 Se intentó guardar un objeto circular en localStorage.\nClave: " + key);
+    console.error("🚨 Objeto circular detectado:", key, value);
+    console.trace(); // 📍 Muestra qué línea y archivo provocó el error
+    return;
+  }
+  originalSetItem.apply(this, [key, value]);
+};
+
+// ✅ Variables globales
 let total = 0;
 let productosSeleccionados = [];
 let prendas = [];
@@ -25,12 +40,12 @@ function generarTallas(inicio = 4, fin = 16) {
   return tallas;
 }
 
-// ✅ Cargar productos desde Firebase (con reintentos)
+// ✅ Cargar productos desde Firebase
 async function cargarPrendas(reintento = 0) {
   try {
     const snapshot = await db.collection("inventario").get();
 
-    // Solo datos planos
+    // ✅ Usamos solo datos planos
     prendas = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -127,19 +142,14 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
   actualizarInterfaz();
 }
 
-// ✅ Guardar carrito en localStorage (protección anti-objetos)
+// ✅ Guardar carrito
 function guardarEnLocalStorage() {
   try {
-    // Aseguramos que solo sean strings simples
-    const productosPlanos = productosSeleccionados.map(p => String(p));
-
-    // Validación: si algún elemento no es string, lo ignoramos
-    const datosSeguros = productosPlanos.filter(p => typeof p === "string");
-
+    const datosSeguros = productosSeleccionados.map(p => String(p));
     localStorage.setItem("total", String(total));
     localStorage.setItem("productos", JSON.stringify(datosSeguros));
   } catch (err) {
-    console.warn("⚠️ No se pudo guardar en localStorage. Datos no válidos:", err);
+    console.warn("⚠️ No se pudo guardar en localStorage:", err);
   }
 }
 
