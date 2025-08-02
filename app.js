@@ -2,13 +2,21 @@ let total = 0;
 let productosSeleccionados = [];
 let prendas = [];
 
+// ✅ Mostrar mensajes en pantalla
+function mostrarMensaje(msj, tipo = "info") {
+  const contenedor = document.getElementById("lista-prendas");
+  if (contenedor) {
+    contenedor.innerHTML = `<p style="color:${tipo === 'error' ? 'red' : 'green'}; text-align:center;">${msj}</p>`;
+  }
+}
+
 // ✅ Formatear soles
 const formatearSoles = (valor) => new Intl.NumberFormat("es-PE", {
   style: "currency",
   currency: "PEN"
 }).format(valor);
 
-// ✅ Generar tallas por defecto (si no existen en Firebase)
+// ✅ Generar tallas por defecto
 function generarTallas(inicio = 4, fin = 16) {
   const tallas = [];
   for (let t = inicio; t <= fin; t += 2) {
@@ -17,27 +25,28 @@ function generarTallas(inicio = 4, fin = 16) {
   return tallas;
 }
 
-// ✅ Cargar productos desde Firebase con manejo de errores y reintento
+// ✅ Cargar productos desde Firebase (con reintentos)
 async function cargarPrendas(reintento = 0) {
   try {
-    const snapshot = await db.collection("inventario").get({ source: "default" });
+    const snapshot = await db.collection("inventario").get();
+
     prendas = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
+
     generarVistaPrendas();
   } catch (error) {
     console.error("Error cargando prendas:", error);
     if (reintento < 3) {
-      console.warn(`🔄 Reintentando conexión... (${reintento + 1})`);
       setTimeout(() => cargarPrendas(reintento + 1), 3000);
     } else {
-      alert("⚠️ No se pudo conectar con el servidor de inventario. Verifica tu conexión.");
+      mostrarMensaje("⚠️ No se pudo conectar a Firestore. Revisa tu conexión.", "error");
     }
   }
 }
 
-// ✅ Mostrar las prendas en la tienda
+// ✅ Mostrar productos
 function generarVistaPrendas() {
   const contenedor = document.getElementById("lista-prendas");
   contenedor.innerHTML = "";
@@ -51,12 +60,10 @@ function generarVistaPrendas() {
     const div = document.createElement("div");
     div.className = "producto-card";
 
-    // Nombre y stock
     const titulo = document.createElement("h3");
     titulo.innerText = `${prenda.nombre} (Stock: ${prenda.stock})`;
     div.appendChild(titulo);
 
-    // Botones de tallas
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
 
@@ -71,7 +78,6 @@ function generarVistaPrendas() {
 
     div.appendChild(tallasDiv);
 
-    // Div para descuentos dinámicos
     const descDiv = document.createElement("div");
     descDiv.className = "descuentos";
     div.appendChild(descDiv);
@@ -80,7 +86,7 @@ function generarVistaPrendas() {
   });
 }
 
-// ✅ Mostrar botones de descuento
+// ✅ Botones de descuento
 function mostrarDescuentos(contenedor, prenda, tallaSel) {
   const descDiv = contenedor.querySelector(".descuentos");
   descDiv.innerHTML = "";
@@ -97,7 +103,7 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   });
 }
 
-// ✅ Agregar producto al carrito y descontar stock
+// ✅ Agregar producto y descontar stock
 async function agregarProducto(prenda, tallaSel, precioFinal) {
   if (prenda.stock <= 0) {
     alert("⚠️ No hay stock disponible para este producto");
@@ -120,16 +126,21 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
   actualizarInterfaz();
 }
 
-// ✅ Actualizar la interfaz del carrito
+// ✅ Guardar carrito en localStorage (datos planos)
+function guardarEnLocalStorage() {
+  try {
+    const productosPlanos = [...productosSeleccionados]; // solo strings
+    localStorage.setItem("total", total);
+    localStorage.setItem("productos", JSON.stringify(productosPlanos));
+  } catch (err) {
+    console.error("Error guardando en localStorage:", err);
+  }
+}
+
+// ✅ Actualizar interfaz
 function actualizarInterfaz() {
   document.getElementById("total").innerText = `Total: ${formatearSoles(total)}`;
   document.getElementById("productos").innerHTML = productosSeleccionados.map(p => `<li>${p}</li>`).join('');
-}
-
-function guardarEnLocalStorage() {
-  // Solo guardamos datos simples para evitar errores circulares
-  localStorage.setItem("total", total);
-  localStorage.setItem("productos", JSON.stringify([...productosSeleccionados]));
 }
 
 // ✅ Reiniciar carrito
@@ -142,7 +153,7 @@ function reiniciarCarrito() {
   actualizarInterfaz();
 }
 
-// ✅ Finalizar venta (guarda historial del día en localStorage)
+// ✅ Finalizar venta
 function finalizarVenta() {
   if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
   const historial = obtenerHistorial();
@@ -184,7 +195,7 @@ function borrarHistorial() {
   alert("🗑 Historial eliminado correctamente.");
 }
 
-// ✅ Descargar PDF corregido
+// ✅ Descargar PDF
 function descargarPDF() {
   const historial = obtenerHistorial();
   if (historial.length === 0) {
@@ -216,7 +227,7 @@ function descargarPDF() {
     });
 }
 
-// ✅ Inicializar página
+// ✅ Inicializar
 window.onload = async () => {
   const usuario = localStorage.getItem("usuarioActivo");
   if (!usuario) {
