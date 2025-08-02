@@ -17,10 +17,10 @@ function generarTallas(inicio = 4, fin = 16) {
   return tallas;
 }
 
-// ✅ Cargar productos desde Firebase
-async function cargarPrendas() {
+// ✅ Cargar productos desde Firebase con manejo de errores y reintento
+async function cargarPrendas(reintento = 0) {
   try {
-    const snapshot = await db.collection("inventario").get();
+    const snapshot = await db.collection("inventario").get({ source: "default" });
     prendas = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -28,6 +28,12 @@ async function cargarPrendas() {
     generarVistaPrendas();
   } catch (error) {
     console.error("Error cargando prendas:", error);
+    if (reintento < 3) {
+      console.warn(`🔄 Reintentando conexión... (${reintento + 1})`);
+      setTimeout(() => cargarPrendas(reintento + 1), 3000);
+    } else {
+      alert("⚠️ No se pudo conectar con el servidor de inventario. Verifica tu conexión.");
+    }
   }
 }
 
@@ -35,6 +41,11 @@ async function cargarPrendas() {
 function generarVistaPrendas() {
   const contenedor = document.getElementById("lista-prendas");
   contenedor.innerHTML = "";
+
+  if (prendas.length === 0) {
+    contenedor.innerHTML = "<p>⚠️ No hay productos en el inventario.</p>";
+    return;
+  }
 
   prendas.forEach((prenda) => {
     const div = document.createElement("div");
@@ -116,8 +127,9 @@ function actualizarInterfaz() {
 }
 
 function guardarEnLocalStorage() {
+  // Solo guardamos datos simples para evitar errores circulares
   localStorage.setItem("total", total);
-  localStorage.setItem("productos", JSON.stringify(productosSeleccionados));
+  localStorage.setItem("productos", JSON.stringify([...productosSeleccionados]));
 }
 
 // ✅ Reiniciar carrito
