@@ -28,6 +28,10 @@
       border-radius: 6px;
       text-align: center;
     }
+    .acciones-globales {
+      margin-top: 15px;
+      text-align: center;
+    }
     .guardar-btn {
       background-color: var(--rosa);
       color: #fff;
@@ -35,10 +39,18 @@
       padding: 8px 12px;
       border-radius: 6px;
       cursor: pointer;
-      margin-top: 6px;
+      margin: 5px;
     }
     .guardar-btn:hover {
       background-color: var(--rosa-oscuro);
+    }
+    .nuevo-item {
+      background: #f8f9fa;
+      border: 2px dashed var(--rosa);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      margin-top: 15px;
     }
   </style>
 </head>
@@ -57,12 +69,21 @@
 
   <div class="inventario-container" id="contenedor-inventario"></div>
 
-  <div class="acciones">
-    <button class="guardar-btn" onclick="guardarCambios()">💾 Guardar Cambios</button>
-    <button class="boton" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
+  <!-- 🔹 Agregar nueva prenda -->
+  <div class="nuevo-item">
+    <h3>➕ Agregar nueva prenda</h3>
+    <input type="text" id="nuevo-nombre" placeholder="Nombre de la prenda">
+    <input type="number" id="nuevo-precio" placeholder="Precio (S/)" min="0">
+    <input type="number" id="nuevo-stock" placeholder="Stock inicial" min="0">
+    <button class="guardar-btn" onclick="agregarPrenda()">Agregar</button>
   </div>
 
-  <!-- 🔹 Configuración Firebase -->
+  <div class="acciones-globales">
+    <button class="guardar-btn" onclick="guardarCambios()">💾 Guardar Cambios</button>
+    <button class="guardar-btn" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
+  </div>
+
+  <!-- 🔹 Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
   <script>
@@ -88,7 +109,7 @@
       renderInventario();
     }
 
-    // ✅ Mostrar productos en pantalla
+    // ✅ Mostrar productos existentes
     function renderInventario() {
       const contenedor = document.getElementById("contenedor-inventario");
       contenedor.innerHTML = "";
@@ -96,10 +117,11 @@
       prendas.forEach((item, index) => {
         const div = document.createElement("div");
         div.className = "producto-item";
-
         div.innerHTML = `
           <label><strong>Nombre:</strong></label>
           <input type="text" id="nombre-${index}" value="${item.nombre}">
+          <label><strong>Precio (S/):</strong></label>
+          <input type="number" id="precio-${index}" value="${item.precio}" min="0">
           <label><strong>Stock:</strong></label>
           <input type="number" id="stock-${index}" value="${item.stock}" min="0">
         `;
@@ -107,22 +129,48 @@
       });
     }
 
-    // ✅ Guardar cambios en Firebase
+    // ✅ Guardar cambios de todos los productos
     async function guardarCambios() {
       for (let i = 0; i < prendas.length; i++) {
         const nuevoNombre = document.getElementById(`nombre-${i}`).value.trim();
+        const nuevoPrecio = parseFloat(document.getElementById(`precio-${i}`).value) || 0;
         const nuevoStock = parseInt(document.getElementById(`stock-${i}`).value) || 0;
 
         await db.collection("inventario").doc(prendas[i].id).update({
           nombre: nuevoNombre,
+          precio: nuevoPrecio,
           stock: nuevoStock
         });
       }
       alert("✅ Inventario actualizado correctamente");
-      cargarInventario(); // refrescar vista
+      cargarInventario();
     }
 
-    // ✅ Cargar inventario al abrir página
+    // ✅ Agregar una nueva prenda
+    async function agregarPrenda() {
+      const nombre = document.getElementById("nuevo-nombre").value.trim();
+      const precio = parseFloat(document.getElementById("nuevo-precio").value) || 0;
+      const stock = parseInt(document.getElementById("nuevo-stock").value) || 0;
+
+      if (!nombre) {
+        alert("⚠️ Ingresa el nombre de la prenda");
+        return;
+      }
+
+      await db.collection("inventario").add({
+        nombre: nombre,
+        precio: precio,
+        stock: stock
+      });
+
+      document.getElementById("nuevo-nombre").value = "";
+      document.getElementById("nuevo-precio").value = "";
+      document.getElementById("nuevo-stock").value = "";
+
+      alert("✅ Nueva prenda agregada");
+      cargarInventario();
+    }
+
     cargarInventario();
   </script>
 
