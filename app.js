@@ -8,8 +8,8 @@ const formatearSoles = (valor) => new Intl.NumberFormat("es-PE", {
   currency: "PEN"
 }).format(valor);
 
-// ✅ Función para generar tallas
-function generarTallas(inicio, fin) {
+// ✅ Generar tallas por defecto (si no existen en Firebase)
+function generarTallas(inicio = 4, fin = 16) {
   const tallas = [];
   for (let t = inicio; t <= fin; t += 2) {
     tallas.push({ talla: t, precio: null });
@@ -31,22 +31,7 @@ async function cargarPrendas() {
   }
 }
 
-window.onload = async () => {
-  const usuario = localStorage.getItem("usuarioActivo");
-  if (!usuario) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  total = parseFloat(localStorage.getItem("total")) || 0;
-  productosSeleccionados = JSON.parse(localStorage.getItem("productos")) || [];
-
-  await cargarPrendas();
-  actualizarInterfaz();
-  mostrarHistorial(obtenerHistorial());
-};
-
-// ✅ Mostrar prendas en la tienda
+// ✅ Mostrar las prendas en la tienda
 function generarVistaPrendas() {
   const contenedor = document.getElementById("lista-prendas");
   contenedor.innerHTML = "";
@@ -55,14 +40,16 @@ function generarVistaPrendas() {
     const div = document.createElement("div");
     div.className = "producto-card";
 
+    // Nombre y stock
     const titulo = document.createElement("h3");
     titulo.innerText = `${prenda.nombre} (Stock: ${prenda.stock})`;
     div.appendChild(titulo);
 
+    // Botones de tallas
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
 
-    let tallas = prenda.tallas || generarTallas(4, 16); // si no hay tallas en firebase
+    let tallas = prenda.tallas || generarTallas();
     tallas.forEach((t) => {
       const btn = document.createElement("button");
       btn.className = "boton-talla";
@@ -73,6 +60,7 @@ function generarVistaPrendas() {
 
     div.appendChild(tallasDiv);
 
+    // Div para descuentos dinámicos
     const descDiv = document.createElement("div");
     descDiv.className = "descuentos";
     div.appendChild(descDiv);
@@ -98,7 +86,7 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   });
 }
 
-// ✅ Agregar producto al carrito y descontar stock en Firebase
+// ✅ Agregar producto al carrito y descontar stock
 async function agregarProducto(prenda, tallaSel, precioFinal) {
   if (prenda.stock <= 0) {
     alert("⚠️ No hay stock disponible para este producto");
@@ -112,7 +100,7 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
     await db.collection("inventario").doc(prenda.id).update({
       stock: prenda.stock - 1
     });
-    await cargarPrendas(); // refrescar lista
+    await cargarPrendas();
   } catch (error) {
     console.error("Error actualizando stock:", error);
   }
@@ -121,7 +109,7 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
   actualizarInterfaz();
 }
 
-// ✅ Actualizar carrito
+// ✅ Actualizar la interfaz del carrito
 function actualizarInterfaz() {
   document.getElementById("total").innerText = `Total: ${formatearSoles(total)}`;
   document.getElementById("productos").innerHTML = productosSeleccionados.map(p => `<li>${p}</li>`).join('');
@@ -142,7 +130,7 @@ function reiniciarCarrito() {
   actualizarInterfaz();
 }
 
-// ✅ Finalizar venta (guarda en localStorage solo para historial del día)
+// ✅ Finalizar venta (guarda historial del día en localStorage)
 function finalizarVenta() {
   if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
   const historial = obtenerHistorial();
@@ -215,3 +203,19 @@ function descargarPDF() {
       document.body.removeChild(elemento);
     });
 }
+
+// ✅ Inicializar página
+window.onload = async () => {
+  const usuario = localStorage.getItem("usuarioActivo");
+  if (!usuario) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  total = parseFloat(localStorage.getItem("total")) || 0;
+  productosSeleccionados = JSON.parse(localStorage.getItem("productos")) || [];
+
+  await cargarPrendas();
+  actualizarInterfaz();
+  mostrarHistorial(obtenerHistorial());
+};
