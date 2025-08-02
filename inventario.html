@@ -76,13 +76,14 @@
     window.location.href = "index.html";
   }
 
-  // ✅ Interceptor para evitar objetos circulares
+  // ✅ Detector visual
   const originalSetItem = localStorage.setItem;
   localStorage.setItem = function(key, value) {
     try {
       JSON.stringify(value);
     } catch (e) {
-      console.error("🚨 Objeto circular detectado en localStorage (Inventario):", key, value);
+      alert("🚨 Se intentó guardar un objeto circular en localStorage (Inventario):\nClave: " + key);
+      console.error("🚨 Objeto circular detectado (Inventario):", key, value);
       return;
     }
     originalSetItem.apply(this, [key, value]);
@@ -106,7 +107,7 @@
   <button class="guardar-btn" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
 </div>
 
-<!-- ✅ Firebase Config (compat) -->
+<!-- ✅ Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
