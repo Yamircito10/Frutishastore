@@ -52,6 +52,18 @@
       text-align: center;
       margin-top: 15px;
     }
+    .eliminar-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 6px;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+    .eliminar-btn:hover {
+      background-color: #b02a37;
+    }
   </style>
 </head>
 <body>
@@ -92,8 +104,8 @@
       authDomain: "frutisha-store.firebaseapp.com",
       projectId: "frutisha-store",
       storageBucket: "frutisha-store.appspot.com",
-      messagingSenderId: "15388676345",
-    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+      messagingSenderId: "XXXXXXXX",
+      appId: "1:XXXX:web:XXXX"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -124,6 +136,7 @@
           <input type="number" id="precio-${index}" value="${item.precio}" min="0">
           <label><strong>Stock:</strong></label>
           <input type="number" id="stock-${index}" value="${item.stock}" min="0">
+          <button class="eliminar-btn" onclick="eliminarPrenda('${item.id}')">🗑 Eliminar</button>
         `;
         contenedor.appendChild(div);
       });
@@ -169,6 +182,15 @@
 
       alert("✅ Nueva prenda agregada");
       cargarInventario();
+    }
+
+    // ✅ Eliminar prenda
+    async function eliminarPrenda(id) {
+      if (confirm("¿Seguro que deseas eliminar esta prenda?")) {
+        await db.collection("inventario").doc(id).delete();
+        alert("🗑 Prenda eliminada");
+        cargarInventario();
+      }
     }
 
     cargarInventario();
