@@ -1,16 +1,18 @@
-// 🚨 Detector global para localizar el error de JSON circular
-const originalSetItem = localStorage.setItem;
-localStorage.setItem = function (key, value) {
-  try {
-    JSON.stringify(value);
-  } catch (e) {
-    alert("🚨 Se intentó guardar un objeto circular en localStorage.\nClave: " + key);
-    console.error("🚨 Objeto circular detectado:", key, value);
-    console.trace(); // 📍 Muestra qué línea y archivo provocó el error
-    return;
-  }
-  originalSetItem.apply(this, [key, value]);
-};
+// 🚨 Detector global para localizar error de JSON circular (evita duplicados)
+if (typeof window.originalSetItem === "undefined") {
+    window.originalSetItem = localStorage.setItem;
+    localStorage.setItem = function (key, value) {
+        try {
+            JSON.stringify(value);
+        } catch (e) {
+            alert("🚨 Se intentó guardar un objeto circular en localStorage.\nClave: " + key);
+            console.error("🚨 Objeto circular detectado:", key, value);
+            console.trace();
+            return;
+        }
+        window.originalSetItem.apply(this, [key, value]);
+    };
+}
 
 // ✅ Variables globales
 let total = 0;
@@ -44,13 +46,10 @@ function generarTallas(inicio = 4, fin = 16) {
 async function cargarPrendas(reintento = 0) {
   try {
     const snapshot = await db.collection("inventario").get();
-
-    // ✅ Usamos solo datos planos
     prendas = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
-
     generarVistaPrendas();
   } catch (error) {
     console.error("Error cargando prendas:", error);
