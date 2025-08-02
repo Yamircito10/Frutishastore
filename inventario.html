@@ -75,19 +75,6 @@
     alert("❌ Acceso denegado. Solo administradores pueden ver el inventario.");
     window.location.href = "index.html";
   }
-
-  // ✅ Detector visual
-  const originalSetItem = localStorage.setItem;
-  localStorage.setItem = function(key, value) {
-    try {
-      JSON.stringify(value);
-    } catch (e) {
-      alert("🚨 Se intentó guardar un objeto circular en localStorage (Inventario):\nClave: " + key);
-      console.error("🚨 Objeto circular detectado (Inventario):", key, value);
-      return;
-    }
-    originalSetItem.apply(this, [key, value]);
-  };
 </script>
 
 <h1>📦 Inventario - Frutisha Store</h1>
