@@ -8,6 +8,8 @@
 </head>
 <body>
 
+
+
   <script>
     // Verificar usuario logueado
     const usuario = localStorage.getItem("usuarioActivo");
@@ -70,6 +72,24 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
   </script>
+
+<script>
+  // 🔹 Prueba rápida de conexión Firebase
+  db.collection("inventario").get()
+    .then(snapshot => {
+      console.log("✅ Conexión correcta. Productos encontrados:");
+      snapshot.docs.forEach(doc => {
+        console.log(doc.id, "=>", doc.data());
+      });
+      if(snapshot.empty) {
+        console.warn("⚠️ No hay productos en la colección inventario.");
+      }
+    })
+    .catch(err => {
+      console.error("❌ Error conectando a Firebase:", err);
+    });
+</script>
+<script src="app.js"></script>
 
   <!-- ✅ Archivo JS principal -->
   <script src="app.js"></script>
