@@ -1,3 +1,7 @@
+// =============================
+//  Frutisha Store - Firebase
+// =============================
+
 // ✅ Variables globales
 let total = 0;
 let productosSeleccionados = [];
@@ -18,7 +22,9 @@ function generarTallas(inicio = 4, fin = 16) {
   return tallas;
 }
 
-// ✅ Cargar productos desde Firebase
+// =============================
+//  Cargar productos
+// =============================
 async function cargarPrendas() {
   try {
     const snapshot = await db.collection("inventario").get();
@@ -32,7 +38,9 @@ async function cargarPrendas() {
   }
 }
 
-// ✅ Mostrar productos
+// =============================
+//  Mostrar productos
+// =============================
 function generarVistaPrendas() {
   const contenedor = document.getElementById("lista-prendas");
   contenedor.innerHTML = "";
@@ -72,7 +80,9 @@ function generarVistaPrendas() {
   });
 }
 
-// ✅ Mostrar botones de descuento
+// =============================
+//  Botones de descuento
+// =============================
 function mostrarDescuentos(contenedor, prenda, tallaSel) {
   const descDiv = contenedor.querySelector(".descuentos");
   descDiv.innerHTML = "";
@@ -89,7 +99,9 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   });
 }
 
-// ✅ Agregar producto al carrito y descontar stock
+// =============================
+//  Agregar producto y descontar stock
+// =============================
 async function agregarProducto(prenda, tallaSel, precioFinal) {
   if (prenda.stock <= 0) {
     alert("⚠️ No hay stock disponible para este producto");
@@ -97,6 +109,7 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
   }
 
   const productoTexto = `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`;
+
   total += Number(precioFinal);
   productosSeleccionados.push(productoTexto);
 
@@ -112,13 +125,17 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
   actualizarInterfaz();
 }
 
-// ✅ Actualizar interfaz
+// =============================
+//  Actualizar interfaz carrito
+// =============================
 function actualizarInterfaz() {
   document.getElementById("total").innerText = `Total: ${formatearSoles(total)}`;
   document.getElementById("productos").innerHTML = productosSeleccionados.map(p => `<li>${p}</li>`).join('');
 }
 
-// ✅ Reiniciar carrito
+// =============================
+//  Reiniciar carrito
+// =============================
 function reiniciarCarrito() {
   if (!confirm("¿Estás seguro de reiniciar el carrito?")) return;
   total = 0;
@@ -126,7 +143,9 @@ function reiniciarCarrito() {
   actualizarInterfaz();
 }
 
-// ✅ Finalizar venta y guardar en Firebase
+// =============================
+//  Finalizar venta y guardar en Firebase
+// =============================
 async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
   const ahora = new Date();
@@ -149,7 +168,9 @@ async function finalizarVenta() {
   }
 }
 
-// ✅ Cargar historial desde Firebase
+// =============================
+//  Cargar historial desde Firebase
+// =============================
 async function cargarHistorial() {
   try {
     const snapshot = await db.collection("ventas").orderBy("fecha", "desc").get();
@@ -165,7 +186,9 @@ async function cargarHistorial() {
   }
 }
 
-// ✅ Borrar historial de Firebase
+// =============================
+//  Borrar historial de Firebase
+// =============================
 async function borrarHistorial() {
   if (!confirm("¿Estás seguro de borrar el historial de ventas?")) return;
 
@@ -182,7 +205,9 @@ async function borrarHistorial() {
   }
 }
 
-// ✅ Descargar PDF
+// =============================
+//  Descargar PDF
+// =============================
 function descargarPDF() {
   const historialElement = document.getElementById("ventasDia");
   if (!historialElement || historialElement.innerHTML.trim() === "") {
@@ -199,7 +224,9 @@ function descargarPDF() {
   }).from(historialElement).save();
 }
 
-// ✅ Inicializar página
+// =============================
+//  Inicializar página
+// =============================
 window.onload = async () => {
   const usuario = localStorage.getItem("usuarioActivo");
   if (!usuario) {
