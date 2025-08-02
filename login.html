@@ -40,55 +40,49 @@
 </head>
 <body>
 
-  <h1>🔐 Iniciar Sesión</h1>
+<h1>🔐 Iniciar Sesión</h1>
 
-  <div class="login-container">
-    <input type="text" id="usuario" placeholder="Usuario">
-    <input type="password" id="contrasena" placeholder="Contraseña">
-    <button onclick="iniciarSesion()">Entrar</button>
-  </div>
+<div class="login-container">
+  <input type="text" id="usuario" placeholder="Usuario">
+  <input type="password" id="contrasena" placeholder="Contraseña">
+  <button onclick="iniciarSesion()">Entrar</button>
+</div>
 
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
-    authDomain: "inventario-ab270.firebaseapp.com",
-    projectId: "inventario-ab270",
-    storageBucket: "inventario-ab270.firebasestorage.app",
-    messagingSenderId: "15388676345",
-    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+<script>
+  // ✅ Detector global de objetos circulares
+  const originalSetItem = localStorage.setItem;
+  localStorage.setItem = function(key, value) {
+    try {
+      JSON.stringify(value);
+    } catch (e) {
+      alert("🚨 Se intentó guardar un objeto circular en localStorage (Login):\nClave: " + key);
+      console.error("🚨 Objeto circular detectado (Login):", key, value);
+      return;
+    }
+    originalSetItem.apply(this, [key, value]);
   };
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
+  // ✅ Usuarios permitidos
+  const usuarios = [
+    { usuario: 'admin', contrasena: '100922', rol: 'admin' },
+    { usuario: 'trabajador', contrasena: '1234', rol: 'trabajador' }
+  ];
 
-  <script>
-    const usuarios = [
-      { usuario: 'admin', contrasena: '100922', rol: 'admin' },
-      { usuario: 'trabajador', contrasena: '1234', rol: 'trabajador' }
-    ];
+  function iniciarSesion() {
+    const user = document.getElementById('usuario').value.trim();
+    const pass = document.getElementById('contrasena').value.trim();
 
-    function iniciarSesion() {
-      const user = document.getElementById('usuario').value.trim();
-      const pass = document.getElementById('contrasena').value.trim();
+    const encontrado = usuarios.find(u => u.usuario === user && u.contrasena === pass);
 
-      const encontrado = usuarios.find(u => u.usuario === user && u.contrasena === pass);
-
-      if (encontrado) {
-        localStorage.setItem("usuarioActivo", encontrado.usuario);
-        localStorage.setItem("rolActivo", encontrado.rol);
-        window.location.href = 'index.html';
-      } else {
-        alert("❌ Usuario o contraseña incorrectos");
-      }
+    if (encontrado) {
+      localStorage.setItem("usuarioActivo", encontrado.usuario);
+      localStorage.setItem("rolActivo", encontrado.rol);
+      window.location.href = 'index.html';
+    } else {
+      alert("❌ Usuario o contraseña incorrectos");
     }
-  </script>
+  }
+</script>
 
 </body>
 </html>
