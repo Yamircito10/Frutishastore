@@ -49,19 +49,6 @@
 </div>
 
 <script>
-  // ✅ Detector global de objetos circulares
-  const originalSetItem = localStorage.setItem;
-  localStorage.setItem = function(key, value) {
-    try {
-      JSON.stringify(value);
-    } catch (e) {
-      alert("🚨 Se intentó guardar un objeto circular en localStorage (Login):\nClave: " + key);
-      console.error("🚨 Objeto circular detectado (Login):", key, value);
-      return;
-    }
-    originalSetItem.apply(this, [key, value]);
-  };
-
   // ✅ Usuarios permitidos
   const usuarios = [
     { usuario: 'admin', contrasena: '100922', rol: 'admin' },
