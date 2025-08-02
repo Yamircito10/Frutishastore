@@ -54,7 +54,24 @@
     </div>
   </div>
 
-  <!-- ✅ Librería para PDF -->
+<script>
+  // 🔹 Prueba rápida de conexión Firebase
+  db.collection("inventario").get()
+    .then(snapshot => {
+      console.log("✅ Conexión correcta. Productos encontrados:");
+      snapshot.docs.forEach(doc => {
+        console.log(doc.id, "=>", doc.data());
+      });
+      if(snapshot.empty) {
+        console.warn("⚠️ No hay productos en la colección inventario.");
+      }
+    })
+    .catch(err => {
+      console.error("❌ Error conectando a Firebase:", err);
+    });
+</script>
+
+<!-- ✅ Librería para PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <!-- ✅ Firebase Config -->
@@ -72,24 +89,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
   </script>
-
-<script>
-  // 🔹 Prueba rápida de conexión Firebase
-  db.collection("inventario").get()
-    .then(snapshot => {
-      console.log("✅ Conexión correcta. Productos encontrados:");
-      snapshot.docs.forEach(doc => {
-        console.log(doc.id, "=>", doc.data());
-      });
-      if(snapshot.empty) {
-        console.warn("⚠️ No hay productos en la colección inventario.");
-      }
-    })
-    .catch(err => {
-      console.error("❌ Error conectando a Firebase:", err);
-    });
-</script>
-<script src="app.js"></script>
 
   <!-- ✅ Archivo JS principal -->
   <script src="app.js"></script>
