@@ -215,22 +215,21 @@ function descargarPDF() {
     return;
   }
 
-  // Crear contenido personalizado
-  const ventas = Array.from(historialElement.querySelectorAll("li")).map((li, index) => {
-    return `Venta ${index + 1}:\n` + li.innerText.trim() + "\n---------------------------\n";
-  }).join("\n");
+  // Crear un div temporal visible pero fuera de la pantalla
+  const tempDiv = document.createElement("div");
+  tempDiv.style.position = "absolute";
+  tempDiv.style.left = "-9999px"; // lo mueve fuera de la pantalla
+  tempDiv.style.top = "0";
+  tempDiv.style.whiteSpace = "pre-wrap";
 
-  const contenido = `
-🛍️ Historial de Ventas - Frutisha Store
+  let contenido = `🛍️ Historial de Ventas - Frutisha Store\n\n`;
+  const items = historialElement.querySelectorAll("li");
+  items.forEach((li, index) => {
+    contenido += `Venta ${index + 1}:\n${li.innerText.trim()}\n---------------------------\n\n`;
+  });
 
-${ventas}
-  `;
-
-  // Crear elemento oculto con el contenido en <pre>
-  const elemento = document.createElement("div");
-  elemento.style.display = "none";
-  elemento.innerHTML = `<pre>${contenido}</pre>`;
-  document.body.appendChild(elemento);
+  tempDiv.textContent = contenido;
+  document.body.appendChild(tempDiv);
 
   html2pdf().set({
     margin: 10,
@@ -238,11 +237,10 @@ ${ventas}
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).from(elemento).save().then(() => {
-    document.body.removeChild(elemento);
+  }).from(tempDiv).save().then(() => {
+    document.body.removeChild(tempDiv); // limpiar
   });
 }
-
 // =============================
 //  Inicializar página
 // =============================
