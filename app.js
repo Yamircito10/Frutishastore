@@ -215,13 +215,32 @@ function descargarPDF() {
     return;
   }
 
+  // Crear contenido personalizado
+  const ventas = Array.from(historialElement.querySelectorAll("li")).map((li, index) => {
+    return `Venta ${index + 1}:\n` + li.innerText.trim() + "\n---------------------------\n";
+  }).join("\n");
+
+  const contenido = `
+🛍️ Historial de Ventas - Frutisha Store
+
+${ventas}
+  `;
+
+  // Crear elemento oculto con el contenido en <pre>
+  const elemento = document.createElement("div");
+  elemento.style.display = "none";
+  elemento.innerHTML = `<pre>${contenido}</pre>`;
+  document.body.appendChild(elemento);
+
   html2pdf().set({
     margin: 10,
-    filename: `ventas_peru_${new Date().toLocaleDateString("es-PE")}.pdf`,
+    filename: `ventas_frutisha_${new Date().toLocaleDateString("es-PE")}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).from(historialElement).save();
+  }).from(elemento).save().then(() => {
+    document.body.removeChild(elemento);
+  });
 }
 
 // =============================
