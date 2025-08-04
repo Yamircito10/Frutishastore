@@ -209,37 +209,50 @@ async function borrarHistorial() {
 //  Descargar PDF
 // =============================
 function descargarPDF() {
-  const historialElement = document.getElementById("ventasDia");
-  if (!historialElement || historialElement.innerHTML.trim() === "") {
+  if (productosSeleccionados.length === 0) {
     alert("⚠️ No hay ventas para exportar.");
     return;
   }
 
-  // Crear un div temporal visible pero fuera de la pantalla
-  const tempDiv = document.createElement("div");
-  tempDiv.style.position = "absolute";
-  tempDiv.style.left = "-9999px"; // lo mueve fuera de la pantalla
-  tempDiv.style.top = "0";
-  tempDiv.style.whiteSpace = "pre-wrap";
+  db.collection("ventas").orderBy("fecha", "desc").get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        alert("⚠️ No hay historial de ventas.");
+        return;
+      }
 
-  let contenido = `🛍️ Historial de Ventas - Frutisha Store\n\n`;
-  const items = historialElement.querySelectorAll("li");
-  items.forEach((li, index) => {
-    contenido += `Venta ${index + 1}:\n${li.innerText.trim()}\n---------------------------\n\n`;
-  });
+      let contenido = `🛍️ Historial de Ventas - Frutisha Store\n\n`;
 
-  tempDiv.textContent = contenido;
-  document.body.appendChild(tempDiv);
+      snapshot.docs.forEach((doc, index) => {
+        const venta = doc.data();
+        contenido += `Venta ${index + 1}\nFecha: ${venta.fecha} - Hora: ${venta.hora}\nProductos:\n`;
+        venta.productos.forEach(p => {
+          contenido += `  - ${p}\n`;
+        });
+        contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n\n`;
+      });
 
-  html2pdf().set({
-    margin: 10,
-    filename: `ventas_frutisha_${new Date().toLocaleDateString("es-PE")}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).from(tempDiv).save().then(() => {
-    document.body.removeChild(tempDiv); // limpiar
-  });
+      // Creamos un contenedor temporal
+      const divTemporal = document.createElement("div");
+      divTemporal.style.display = "none";
+      divTemporal.innerHTML = `<pre>${contenido}</pre>`;
+      document.body.appendChild(divTemporal);
+
+      html2pdf().set({
+        margin: 10,
+        filename: `ventas_frutisha_${new Date().toLocaleDateString("es-PE")}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(divTemporal).save().then(() => {
+        document.body.removeChild(divTemporal);
+      });
+
+    })
+    .catch(error => {
+      console.error("Error generando PDF:", error);
+      alert("❌ Ocurrió un error al generar el PDF.");
+    });
 }
 // =============================
 //  Inicializar página
