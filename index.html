@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Frutisha Store - Perú</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
@@ -17,9 +17,11 @@
 </script>
 
 <h1>🛍 Frutisha Store</h1>
+
 <div class="acciones">
   <button onclick="location.href='importar.html'">⬆️ Importar Inventario</button>
 </div>
+
 <div class="acciones" style="text-align:center; margin-bottom:10px;">
   <button id="btn-inventario" style="display:none;" onclick="location.href='inventario.html'">📦 Ir al Inventario</button>
   <button onclick="cerrarSesion()">🔒 Cerrar sesión</button>
@@ -48,9 +50,11 @@
   </div>
 </div>
 
+<!-- Librerías -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
 <script>
   const firebaseConfig = {
     apiKey: "TU_API_KEY",
@@ -63,16 +67,21 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 </script>
+
+<!-- Tu lógica principal -->
 <script src="app.js"></script>
+
 <script>
   if (rol === "admin") {
     document.getElementById("btn-inventario").style.display = "inline-block";
   }
+
   function cerrarSesion() {
     localStorage.removeItem("usuarioActivo");
     localStorage.removeItem("rolActivo");
     window.location.href = "login.html";
   }
 </script>
+
 </body>
 </html>
