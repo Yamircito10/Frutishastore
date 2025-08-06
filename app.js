@@ -209,11 +209,6 @@ async function borrarHistorial() {
 //  Descargar PDF
 // =============================
 function descargarPDF() {
-  if (productosSeleccionados.length === 0) {
-    alert("⚠️ No hay ventas para exportar.");
-    return;
-  }
-
   db.collection("ventas").orderBy("fecha", "desc").get()
     .then(snapshot => {
       if (snapshot.empty) {
@@ -232,7 +227,7 @@ function descargarPDF() {
         contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n\n`;
       });
 
-      // Creamos un contenedor temporal
+      // Crear un elemento temporal para exportar el contenido
       const divTemporal = document.createElement("div");
       divTemporal.style.display = "none";
       divTemporal.innerHTML = `<pre>${contenido}</pre>`;
