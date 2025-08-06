@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ventas por Día - Frutisha Store</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .filtro-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .ventas-container {
+      margin-top: 20px;
+    }
+    .ventas-container li {
+      background: #f1f1f1;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 6px;
+      list-style: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>📅 Ventas por Día</h1>  <div class="filtro-container">
+    <label for="fechaSeleccionada">Selecciona una fecha: </label>
+    <input type="date" id="fechaSeleccionada">
+    <button onclick="buscarVentasPorFecha()">🔍 Buscar</button>
+  </div>  <ul id="lista-ventas" class="ventas-container"></ul>  <div class="acciones">
+    <button onclick="descargarVentasDia()">📥 Descargar TXT del Día</button>
+    <button onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
+  </div>  <!-- Firebase -->  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>  <script>
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "inventario-ab270",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "15388676345",
+      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>  <!-- Script funcional -->  <script>
+    let ventasFiltradas = [];
+
+    function formatearSoles(valor) {
+      return new Intl.NumberFormat("es-PE", {
+        style: "currency",
+        currency: "PEN"
+      }).format(valor);
+    }
+
+    async function buscarVentasPorFecha() {
+      const fechaInput = document.getElementById("fechaSeleccionada").value;
+      if (!fechaInput) return alert("⚠️ Selecciona una fecha válida.");
+
+      const fechaFormateada = new Date(fechaInput).toLocaleDateString("es-PE");
+
+      try {
+        const snapshot = await db.collection("ventas").where("fecha", "==", fechaFormateada).get();
+        ventasFiltradas = snapshot.docs.map(doc => doc.data());
+
+        const lista = document.getElementById("lista-ventas");
+        lista.innerHTML = "";
+
+        if (ventasFiltradas.length === 0) {
+          lista.innerHTML = `<li>No hay ventas registradas ese día.</li>`;
+          return;
+        }
+
+        ventasFiltradas.forEach((venta, i) => {
+          const li = document.createElement("li");
+          li.innerHTML = `Venta ${i + 1}:<br>
+            🕒 ${venta.hora}<br>
+            🧾 Productos: ${venta.productos.length}<br>
+            💵 Total: ${formatearSoles(venta.total)}`;
+          lista.appendChild(li);
+        });
+
+      } catch (error) {
+        console.error("Error buscando ventas:", error);
+      }
+    }
+
+    function descargarVentasDia() {
+      if (ventasFiltradas.length === 0) return alert("⚠️ No hay ventas para exportar.");
+
+      let contenido = `📅 Historial de Ventas por Día - Frutisha Store\n\n`;
+      ventasFiltradas.forEach((venta, i) => {
+        contenido += `Venta ${i + 1}\n`;
+        contenido += `Fecha: ${venta.fecha} - Hora: ${venta.hora}\nProductos:\n`;
+        venta.productos.forEach(p => contenido += `- ${p}\n`);
+        contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n\n`;
+      });
+
+      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `ventas_dia_${new Date().toLocaleDateString("es-PE")}.txt`;
+      link.click();
+    }
+  </script></body>
+</html>
