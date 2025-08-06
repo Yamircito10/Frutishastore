@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Historial General - Frutisha Store</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>📚 Historial General de Ventas</h1>
+
+  <div class="acciones">
+    <button onclick="cargarHistorial()">🔄 Actualizar Historial</button>
+    <button onclick="descargarTxt()">📥 Exportar Todo en TXT</button>
+    <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
+  </div>
+
+  <ul id="listaHistorial"></ul>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "inventario-ab270",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "15388676345",
+      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
+  <script>
+    function formatearSoles(valor) {
+      return new Intl.NumberFormat("es-PE", {
+        style: "currency",
+        currency: "PEN"
+      }).format(valor);
+    }
+
+    let historialVentas = [];
+
+    async function cargarHistorial() {
+      const snapshot = await db.collection("ventas").orderBy("fecha", "desc").get();
+      historialVentas = snapshot.docs.map(doc => doc.data());
+
+      const lista = document.getElementById("listaHistorial");
+      lista.innerHTML = historialVentas.length === 0
+        ? "<li>No hay ventas registradas aún.</li>"
+        : historialVentas.map((venta, i) => `
+            <li>
+              📅 ${venta.fecha} 🕒 ${venta.hora}<br>
+              ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+              <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+            </li>`).join('');
+    }
+
+    function descargarTxt() {
+      if (historialVentas.length === 0) {
+        alert("⚠️ No hay datos para exportar.");
+        return;
+      }
+
+      let contenido = "🛍️ Historial General de Ventas - Frutisha Store\n\n";
+      historialVentas.forEach((venta, i) => {
+        contenido += `Venta ${i + 1} - ${venta.fecha} ${venta.hora}\n`;
+        venta.productos.forEach(p => contenido += `  - ${p}\n`);
+        contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
+      });
+
+      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `historial_completo.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    window.onload = cargarHistorial;
+  </script>
+</body>
+</html>
