@@ -206,9 +206,9 @@ async function borrarHistorial() {
 }
 
 // =============================
-//  Descargar PDF
+//  Descargar historial en TXT
 // =============================
-function descargarPDF() {
+function descargarTXT() {
   db.collection("ventas").orderBy("fecha", "desc").get()
     .then(snapshot => {
       if (snapshot.empty) {
@@ -220,33 +220,26 @@ function descargarPDF() {
 
       snapshot.docs.forEach((doc, index) => {
         const venta = doc.data();
-        contenido += `Venta ${index + 1}\nFecha: ${venta.fecha} - Hora: ${venta.hora}\nProductos:\n`;
+        contenido += `Venta ${index + 1}\n`;
+        contenido += `Fecha: ${venta.fecha} - Hora: ${venta.hora}\n`;
+        contenido += `Productos:\n`;
         venta.productos.forEach(p => {
           contenido += `  - ${p}\n`;
         });
         contenido += `Total: ${formatearSoles(venta.total)}\n---------------------------\n\n`;
       });
 
-      // Crear un elemento temporal para exportar el contenido
-      const divTemporal = document.createElement("div");
-      divTemporal.style.display = "none";
-      divTemporal.innerHTML = `<pre>${contenido}</pre>`;
-      document.body.appendChild(divTemporal);
-
-      html2pdf().set({
-        margin: 10,
-        filename: `ventas_frutisha_${new Date().toLocaleDateString("es-PE")}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(divTemporal).save().then(() => {
-        document.body.removeChild(divTemporal);
-      });
-
+      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `ventas_frutisha_${new Date().toLocaleDateString("es-PE")}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     })
     .catch(error => {
-      console.error("Error generando PDF:", error);
-      alert("❌ Ocurrió un error al generar el PDF.");
+      console.error("Error generando TXT:", error);
+      alert("❌ Ocurrió un error al generar el archivo TXT.");
     });
 }
 // =============================
