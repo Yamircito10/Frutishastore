@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Historial General - Frutisha Store</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Historial de Ventas - Frutisha Store</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <h1>📚 Historial General de Ventas</h1>
 
-  <div class="acciones">
+  <div class="acciones" style="text-align:center; margin-bottom:10px;">
     <button onclick="cargarHistorial()">🔄 Actualizar Historial</button>
     <button onclick="descargarTxt()">📥 Exportar Todo en TXT</button>
     <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
@@ -34,27 +35,34 @@
 
   <script>
     function formatearSoles(valor) {
-      return new Intl.NumberFormat("es-PE", {
-        style: "currency",
-        currency: "PEN"
-      }).format(valor);
+      return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
     }
 
     let historialVentas = [];
 
     async function cargarHistorial() {
-      const snapshot = await db.collection("ventas").orderBy("fecha", "desc").get();
-      historialVentas = snapshot.docs.map(doc => doc.data());
-
       const lista = document.getElementById("listaHistorial");
-      lista.innerHTML = historialVentas.length === 0
-        ? "<li>No hay ventas registradas aún.</li>"
-        : historialVentas.map((venta, i) => `
-            <li>
-              📅 ${venta.fecha} 🕒 ${venta.hora}<br>
-              ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
-              <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
-            </li>`).join('');
+      lista.innerHTML = "<li>Cargando...</li>";
+      try {
+        const snap = await db.collection("ventas").orderBy("fecha", "desc").get();
+        historialVentas = snap.docs.map(d => d.data());
+
+        if (historialVentas.length === 0) {
+          lista.innerHTML = "<li>No hay ventas registradas aún.</li>";
+          return;
+        }
+
+        lista.innerHTML = historialVentas.map((venta, i) => `
+          <li>
+            <strong>${venta.fecha}</strong> — 🕒 ${venta.hora}<br>
+            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+          </li>
+        `).join("");
+      } catch (e) {
+        console.error(e);
+        lista.innerHTML = "<li>❌ Error al cargar historial.</li>";
+      }
     }
 
     function descargarTxt() {
@@ -71,12 +79,12 @@
       });
 
       const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `historial_completo.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `historial_completo.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     window.onload = cargarHistorial;
