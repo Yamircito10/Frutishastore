@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ventas del Día - Frutisha Store</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <h1>🗓️ Ventas por Fecha</h1>
 
-  <div class="acciones">
-    <input type="date" id="fechaSeleccionada">
+  <div class="acciones" style="text-align:center; margin-bottom:10px;">
+    <input type="date" id="fechaSeleccionada" />
     <button onclick="buscarPorFecha()">🔍 Ver Ventas</button>
     <button onclick="descargarTxt()">📄 Descargar TXT</button>
     <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
@@ -17,7 +18,7 @@
 
   <ul id="listaVentas"></ul>
 
-  <!-- Firebase y lógica -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
@@ -35,10 +36,7 @@
 
   <script>
     function formatearSoles(valor) {
-      return new Intl.NumberFormat("es-PE", {
-        style: "currency",
-        currency: "PEN"
-      }).format(valor);
+      return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
     }
 
     let ventasFiltradas = [];
@@ -47,18 +45,30 @@
       const fecha = document.getElementById("fechaSeleccionada").value;
       if (!fecha) return alert("⚠️ Selecciona una fecha válida");
 
-      const snapshot = await db.collection("ventas").where("fecha", "==", new Date(fecha).toLocaleDateString("es-PE")).get();
-      ventasFiltradas = snapshot.docs.map(doc => doc.data());
-
       const lista = document.getElementById("listaVentas");
-      lista.innerHTML = ventasFiltradas.length === 0
-        ? "<li>No hay ventas para esta fecha.</li>"
-        : ventasFiltradas.map((venta, i) => `
-            <li>
-              Venta ${i + 1} 🕒 ${venta.hora}<br>
-              ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
-              <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
-            </li>`).join('');
+      lista.innerHTML = "<li>Cargando...</li>";
+
+      const fechaPE = new Date(fecha).toLocaleDateString("es-PE");
+      try {
+        const snap = await db.collection("ventas").where("fecha", "==", fechaPE).get();
+        ventasFiltradas = snap.docs.map(d => d.data());
+
+        if (ventasFiltradas.length === 0) {
+          lista.innerHTML = "<li>No hay ventas para esta fecha.</li>";
+          return;
+        }
+
+        lista.innerHTML = ventasFiltradas.map((venta, i) => `
+          <li>
+            <strong>Venta ${i + 1}</strong> — 🕒 ${venta.hora}<br>
+            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+          </li>
+        `).join("");
+      } catch (e) {
+        console.error(e);
+        lista.innerHTML = "<li>❌ Error al cargar ventas.</li>";
+      }
     }
 
     function descargarTxt() {
@@ -66,8 +76,9 @@
         alert("⚠️ No hay ventas para exportar.");
         return;
       }
+      const fecha = document.getElementById("fechaSeleccionada").value || new Date().toISOString().slice(0,10);
 
-      let contenido = "🛍️ Historial de Ventas - Frutisha Store\n\n";
+      let contenido = "🛍️ Ventas del Día - Frutisha Store\n\n";
       ventasFiltradas.forEach((venta, i) => {
         contenido += `Venta ${i + 1} - ${venta.hora}\n`;
         venta.productos.forEach(p => contenido += `  - ${p}\n`);
@@ -75,12 +86,12 @@
       });
 
       const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `ventas_${document.getElementById("fechaSeleccionada").value}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `ventas_${fecha}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   </script>
 </body>
