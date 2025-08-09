@@ -1,32 +1,51 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inventario - Frutisha Store</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
   <style>
     .inventario-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 12px;
       margin-top: 20px;
     }
     .producto-item {
       background: #fff;
       border: 1px solid var(--rosa);
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .producto-item input {
-      width: 90%;
-      padding: 6px;
-      margin: 5px 0;
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 10px;
       border: 1px solid #ccc;
-      border-radius: 6px;
-      text-align: center;
+      border-radius: 8px;
+      text-align: left;
+      box-sizing: border-box;
+    }
+    .tallas-editor {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .talla-card {
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 8px;
+      background: #fafafa;
+    }
+    .talla-card label {
+      display:block;
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
     }
     .acciones-globales {
       margin-top: 15px;
@@ -36,40 +55,32 @@
       background-color: var(--rosa);
       color: #fff;
       border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border-radius: 10px;
       cursor: pointer;
       margin: 5px;
     }
-    .guardar-btn:hover {
-      background-color: var(--rosa-oscuro);
-    }
-    .nuevo-item {
-      background: #f8f9fa;
-      border: 2px dashed var(--rosa);
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-      margin-top: 15px;
-    }
+    .guardar-btn:hover { background-color: var(--rosa-oscuro); }
     .eliminar-btn {
       background-color: #dc3545;
       color: white;
       border: none;
-      padding: 5px 8px;
-      border-radius: 6px;
-      margin-top: 6px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 10px;
       cursor: pointer;
     }
-    .eliminar-btn:hover {
-      background-color: #b02a37;
+    .eliminar-btn:hover { background-color: #b02a37; }
+
+    @media (max-width:600px){
+      .tallas-editor { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 <body>
 
 <script>
-  // ✅ Verificar que solo el admin pueda entrar
+  // Solo ADMIN
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
   if (!usuario || rol !== "admin") {
@@ -80,23 +91,28 @@
 
 <h1>📦 Inventario - Frutisha Store</h1>
 
+<div class="acciones" style="text-align:center; margin-bottom:10px;">
+  <button class="guardar-btn" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
+</div>
+
 <div class="inventario-container" id="contenedor-inventario"></div>
 
-<div class="nuevo-item">
+<!-- 🔹 Agregar nueva prenda -->
+<div class="producto-item" style="margin-top:15px; max-width: 680px; margin-inline:auto;">
   <h3>➕ Agregar nueva prenda</h3>
   <input type="text" id="nuevo-nombre" placeholder="Nombre de la prenda">
-  <input type="number" id="nuevo-precio" placeholder="Precio (S/)" min="0">
-  <input type="number" id="nuevo-stock" placeholder="Stock inicial" min="0">
-  <input type="text" id="nuevo-tallas" placeholder="Tallas (ej: 4-16)">
+  <input type="number" id="nuevo-precio" placeholder="Precio (S/)" min="0" step="0.01">
+  <div style="font-size:13px;color:#666;margin-bottom:6px;">
+    Las tallas se crearán por defecto (T4–T16, stock 0). Luego podrás editar cada talla.
+  </div>
   <button class="guardar-btn" onclick="agregarPrenda()">Agregar</button>
 </div>
 
 <div class="acciones-globales">
   <button class="guardar-btn" onclick="guardarCambios()">💾 Guardar Cambios</button>
-  <button class="guardar-btn" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
 </div>
 
-<!-- ✅ Firebase (Compat) -->
+<!-- ✅ Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
@@ -113,9 +129,17 @@
 </script>
 
 <script>
+  // === Utilidades locales (mismas que usa index/app.js) ===
+  function generarTallas(inicio = 4, fin = 16) {
+    const tallas = [];
+    for (let t = inicio; t <= fin; t += 2) {
+      tallas.push({ talla: t, precio: null, stock: 0 });
+    }
+    return tallas;
+  }
+
   let prendasInv = [];
 
-  // ✅ Cargar productos desde Firebase
   async function cargarInventario() {
     try {
       const snapshot = await db.collection("inventario").get();
@@ -123,66 +147,101 @@
       renderInventario();
     } catch (error) {
       console.error("Error cargando inventario:", error);
+      document.getElementById("contenedor-inventario").innerHTML =
+        "<p>❌ Error al cargar inventario. Revisa consola.</p>";
     }
   }
 
-  // ✅ Mostrar productos existentes
   function renderInventario() {
     const contenedor = document.getElementById("contenedor-inventario");
     contenedor.innerHTML = "";
 
-    if (prendasInv.length === 0) {
+    if (!prendasInv.length) {
       contenedor.innerHTML = "<p>⚠️ No hay productos en el inventario.</p>";
       return;
     }
 
-    prendasInv.forEach((item, index) => {
+    prendasInv.forEach((item, i) => {
+      const tallas = Array.isArray(item.tallas) && item.tallas.length
+        ? item.tallas
+        : generarTallas();
+
+      const tallasInputs = tallas.map(t => `
+        <div class="talla-card">
+          <div><strong>T${t.talla}</strong></div>
+          <label>Stock</label>
+          <input type="number" min="0" id="talla-${i}-${t.talla}-stock" value="${t.stock ?? 0}">
+          <label>Precio (opcional)</label>
+          <input type="number" min="0" step="0.01" id="talla-${i}-${t.talla}-precio" value="${t.precio ?? ""}" placeholder="—">
+        </div>
+      `).join("");
+
       const div = document.createElement("div");
       div.className = "producto-item";
       div.innerHTML = `
+        <h3 style="margin-top:0;">${item.nombre ?? "(Sin nombre)"} <span style="color:#c2185b;font-weight:600;">(Stock: ${item.stock ?? 0})</span></h3>
         <label><strong>Nombre:</strong></label>
-        <input type="text" id="nombre-${index}" value="${item.nombre}">
-        <label><strong>Precio (S/):</strong></label>
-        <input type="number" id="precio-${index}" value="${item.precio}" min="0">
-        <label><strong>Stock:</strong></label>
-        <input type="number" id="stock-${index}" value="${item.stock}" min="0">
-        <label><strong>Tallas:</strong></label>
-        <input type="text" id="tallas-${index}" value="${item.tallas || ''}">
+        <input type="text" id="nombre-${i}" value="${item.nombre ?? ""}">
+        <label><strong>Precio general (S/):</strong></label>
+        <input type="number" id="precio-${i}" value="${item.precio ?? 0}" min="0" step="0.01">
+
+        <div style="margin-top:8px;">
+          <strong>Tallas (stock por talla):</strong>
+          <div class="tallas-editor" id="tallas-${i}">
+            ${tallasInputs}
+          </div>
+          <small style="color:#666;">El stock general se recalcula automáticamente al guardar.</small>
+        </div>
+
         <button class="eliminar-btn" onclick="eliminarPrenda('${item.id}')">🗑 Eliminar</button>
       `;
       contenedor.appendChild(div);
     });
   }
 
-  // ✅ Guardar cambios de todos los productos
   async function guardarCambios() {
     try {
       for (let i = 0; i < prendasInv.length; i++) {
+        const id = prendasInv[i].id;
         const nuevoNombre = document.getElementById(`nombre-${i}`).value.trim();
         const nuevoPrecio = parseFloat(document.getElementById(`precio-${i}`).value) || 0;
-        const nuevoStock = parseInt(document.getElementById(`stock-${i}`).value) || 0;
-        const nuevasTallas = document.getElementById(`tallas-${i}`).value.trim();
 
-        await db.collection("inventario").doc(prendasInv[i].id).update({
-          nombre: nuevoNombre,
+        // Reconstruir tallas desde inputs
+        const baseTallas = Array.isArray(prendasInv[i].tallas) && prendasInv[i].tallas.length
+          ? prendasInv[i].tallas
+          : generarTallas();
+
+        const tallasActualizadas = baseTallas.map(t => {
+          const stockEl = document.getElementById(`talla-${i}-${t.talla}-stock`);
+          const precioEl = document.getElementById(`talla-${i}-${t.talla}-precio`);
+          return {
+            talla: t.talla,
+            stock: parseInt(stockEl?.value || "0", 10),
+            precio: precioEl?.value ? parseFloat(precioEl.value) : null
+          };
+        });
+
+        const stockGeneral = tallasActualizadas.reduce((acc, t) => acc + (t.stock || 0), 0);
+
+        await db.collection("inventario").doc(id).update({
+          nombre: nuevoNombre || prendasInv[i].nombre || "",
           precio: nuevoPrecio,
-          stock: nuevoStock,
-          tallas: nuevasTallas
+          tallas: tallasActualizadas,
+          stock: stockGeneral
         });
       }
+
       alert("✅ Inventario actualizado correctamente");
       cargarInventario();
     } catch (error) {
       console.error("Error guardando cambios:", error);
+      alert("❌ Error al guardar. Revisa la consola y tu conexión.");
     }
   }
 
-  // ✅ Agregar una nueva prenda
   async function agregarPrenda() {
     const nombre = document.getElementById("nuevo-nombre").value.trim();
     const precio = parseFloat(document.getElementById("nuevo-precio").value) || 0;
-    const stock = parseInt(document.getElementById("nuevo-stock").value) || 0;
-    const tallas = document.getElementById("nuevo-tallas").value.trim();
 
     if (!nombre) {
       alert("⚠️ Ingresa el nombre de la prenda");
@@ -190,32 +249,36 @@
     }
 
     try {
-      await db.collection("inventario").add({ nombre, precio, stock, tallas });
+      const tallas = generarTallas(); // T4–T16 con stock 0
+      const stock = 0;
+
+      await db.collection("inventario").add({
+        nombre, precio, tallas, stock
+      });
+
       document.getElementById("nuevo-nombre").value = "";
       document.getElementById("nuevo-precio").value = "";
-      document.getElementById("nuevo-stock").value = "";
-      document.getElementById("nuevo-tallas").value = "";
+
       alert("✅ Nueva prenda agregada");
       cargarInventario();
     } catch (error) {
       console.error("Error agregando prenda:", error);
+      alert("❌ No se pudo agregar. Revisa la consola.");
     }
   }
 
-  // ✅ Eliminar prenda
   async function eliminarPrenda(id) {
-    if (confirm("¿Seguro que deseas eliminar esta prenda?")) {
-      try {
-        await db.collection("inventario").doc(id).delete();
-        alert("🗑 Prenda eliminada");
-        cargarInventario();
-      } catch (error) {
-        console.error("Error eliminando prenda:", error);
-      }
+    if (!confirm("¿Seguro que deseas eliminar esta prenda?")) return;
+    try {
+      await db.collection("inventario").doc(id).delete();
+      alert("🗑 Prenda eliminada");
+      cargarInventario();
+    } catch (error) {
+      console.error("Error eliminando prenda:", error);
+      alert("❌ No se pudo eliminar. Revisa la consola.");
     }
   }
 
-  // Inicializar
   cargarInventario();
 </script>
 
