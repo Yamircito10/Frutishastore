@@ -6,11 +6,17 @@
   <title>Inventario - Frutisha Store</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
+    .contenedor-top {
+      display:flex;
+      justify-content:center;
+      gap:8px;
+      margin-bottom:10px;
+    }
     .inventario-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 12px;
-      margin-top: 20px;
+      margin-top: 10px;
     }
     .producto-item {
       background: #fff;
@@ -20,6 +26,10 @@
       text-align: left;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+    .producto-item h3 {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+    }
     .producto-item input {
       width: 100%;
       padding: 8px;
@@ -28,6 +38,7 @@
       border-radius: 8px;
       text-align: left;
       box-sizing: border-box;
+      font-size: 14px;
     }
     .tallas-editor {
       display: grid;
@@ -41,13 +52,20 @@
       padding: 8px;
       background: #fafafa;
     }
+    .talla-card .tag {
+      display:inline-block;
+      font-weight:700;
+      font-size: 13px;
+      color:#333;
+      margin-bottom:4px;
+    }
     .talla-card label {
       display:block;
       font-size: 12px;
       color: #666;
       margin-top: 4px;
     }
-    .acciones-globales {
+    .acciones-globales, .contenedor-nueva {
       margin-top: 15px;
       text-align: center;
     }
@@ -59,6 +77,7 @@
       border-radius: 10px;
       cursor: pointer;
       margin: 5px;
+      font-size: 15px;
     }
     .guardar-btn:hover { background-color: var(--rosa-oscuro); }
     .eliminar-btn {
@@ -69,8 +88,23 @@
       border-radius: 8px;
       margin-top: 10px;
       cursor: pointer;
+      font-size: 14px;
     }
     .eliminar-btn:hover { background-color: #b02a37; }
+
+    .nuevo-item {
+      background: #fff;
+      border: 1px dashed var(--rosa);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
+      max-width: 720px;
+      margin: 10px auto 0;
+    }
+    .nuevo-item h3 { margin: 0 0 6px 0; }
+    .nota {
+      font-size: 12px; color:#666; margin: 6px 0 10px;
+    }
 
     @media (max-width:600px){
       .tallas-editor { grid-template-columns: repeat(2, 1fr); }
@@ -91,25 +125,26 @@
 
 <h1>📦 Inventario - Frutisha Store</h1>
 
-<div class="acciones" style="text-align:center; margin-bottom:10px;">
+<div class="contenedor-top">
   <button class="guardar-btn" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
+  <button class="guardar-btn" onclick="guardarCambios()">💾 Guardar Cambios</button>
 </div>
 
 <div class="inventario-container" id="contenedor-inventario"></div>
 
 <!-- 🔹 Agregar nueva prenda -->
-<div class="producto-item" style="margin-top:15px; max-width: 680px; margin-inline:auto;">
+<div class="nuevo-item">
   <h3>➕ Agregar nueva prenda</h3>
+  <label><strong>Nombre:</strong></label>
   <input type="text" id="nuevo-nombre" placeholder="Nombre de la prenda">
+  <label><strong>Precio general (S/):</strong></label>
   <input type="number" id="nuevo-precio" placeholder="Precio (S/)" min="0" step="0.01">
-  <div style="font-size:13px;color:#666;margin-bottom:6px;">
-    Las tallas se crearán por defecto (T4–T16, stock 0). Luego podrás editar cada talla.
+  <div class="nota">
+    Se crearán tallas por defecto (T4–T16, stock 0). Luego podrás editar el stock/precio por talla.
   </div>
-  <button class="guardar-btn" onclick="agregarPrenda()">Agregar</button>
-</div>
-
-<div class="acciones-globales">
-  <button class="guardar-btn" onclick="guardarCambios()">💾 Guardar Cambios</button>
+  <div class="contenedor-nueva">
+    <button class="guardar-btn" onclick="agregarPrenda()">Agregar</button>
+  </div>
 </div>
 
 <!-- ✅ Firebase (compat) -->
@@ -129,7 +164,7 @@
 </script>
 
 <script>
-  // === Utilidades locales (mismas que usa index/app.js) ===
+  // === Utilidades ===
   function generarTallas(inicio = 4, fin = 16) {
     const tallas = [];
     for (let t = inicio; t <= fin; t += 2) {
@@ -168,7 +203,7 @@
 
       const tallasInputs = tallas.map(t => `
         <div class="talla-card">
-          <div><strong>T${t.talla}</strong></div>
+          <span class="tag">T${t.talla}</span>
           <label>Stock</label>
           <input type="number" min="0" id="talla-${i}-${t.talla}-stock" value="${t.stock ?? 0}">
           <label>Precio (opcional)</label>
@@ -179,18 +214,20 @@
       const div = document.createElement("div");
       div.className = "producto-item";
       div.innerHTML = `
-        <h3 style="margin-top:0;">${item.nombre ?? "(Sin nombre)"} <span style="color:#c2185b;font-weight:600;">(Stock: ${item.stock ?? 0})</span></h3>
+        <h3>${item.nombre ?? "(Sin nombre)"} <span style="color:#c2185b;font-weight:600;">(Stock: ${item.stock ?? 0})</span></h3>
+
         <label><strong>Nombre:</strong></label>
         <input type="text" id="nombre-${i}" value="${item.nombre ?? ""}">
+
         <label><strong>Precio general (S/):</strong></label>
         <input type="number" id="precio-${i}" value="${item.precio ?? 0}" min="0" step="0.01">
 
         <div style="margin-top:8px;">
-          <strong>Tallas (stock por talla):</strong>
+          <strong>Tallas (stock y precio por talla):</strong>
           <div class="tallas-editor" id="tallas-${i}">
             ${tallasInputs}
           </div>
-          <small style="color:#666;">El stock general se recalcula automáticamente al guardar.</small>
+          <small class="nota">El stock general se recalcula automáticamente al guardar.</small>
         </div>
 
         <button class="eliminar-btn" onclick="eliminarPrenda('${item.id}')">🗑 Eliminar</button>
@@ -206,7 +243,7 @@
         const nuevoNombre = document.getElementById(`nombre-${i}`).value.trim();
         const nuevoPrecio = parseFloat(document.getElementById(`precio-${i}`).value) || 0;
 
-        // Reconstruir tallas desde inputs
+        // Reconstruir tallas desde inputs (si no había tallas, generamos por defecto)
         const baseTallas = Array.isArray(prendasInv[i].tallas) && prendasInv[i].tallas.length
           ? prendasInv[i].tallas
           : generarTallas();
@@ -249,7 +286,7 @@
     }
 
     try {
-      const tallas = generarTallas(); // T4–T16 con stock 0
+      const tallas = generarTallas(); // T4–T16 stock 0
       const stock = 0;
 
       await db.collection("inventario").add({
