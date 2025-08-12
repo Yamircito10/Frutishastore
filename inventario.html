@@ -59,7 +59,7 @@
     .tallas-header strong{ color: var(--principal); }
     .fila-talla{
       display: grid;
-      grid-template-columns: 1fr 1fr auto;
+      grid-template-columns: 1fr 1fr 1fr auto;
       gap: 8px;
       align-items: center;
       margin-bottom: 6px;
@@ -112,7 +112,7 @@
 
     @media (max-width:600px){
       .fila-talla{
-        grid-template-columns: 1fr 1fr 44px;
+        grid-template-columns: 1fr 1fr 1fr 44px;
       }
     }
   </style>
@@ -150,12 +150,12 @@
   <label>Precio base (opcional, se usa si alguna talla no tiene precio)</label>
   <input type="number" id="nuevo-precio" placeholder="Ej. 35" min="0" step="0.01">
 
-  <label>Stock general</label>
-  <input type="number" id="nuevo-stock" placeholder="Ej. 20" min="0" step="1">
+  <label>Stock general (se calculará automáticamente, puedes dejarlo vacío)</label>
+  <input type="number" id="nuevo-stock" placeholder="(auto)" min="0" step="1" disabled>
 
   <div class="tallas-box">
     <div class="tallas-header">
-      <strong>Tallas (talla + precio)</strong>
+      <strong>Tallas (talla + precio + stockTalla)</strong>
       <button class="btn btn-sec" onclick="addTallaNueva()">➕ Añadir talla</button>
     </div>
     <div id="nuevo-tallas"></div>
@@ -201,12 +201,15 @@
     const cont = document.getElementById("contenedor-inventario");
     cont.innerHTML = "";
 
-    if (prendasInv.length === 0) {
+    if (!prendasInv.length) {
       cont.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>⚠️ No hay productos en el inventario.</p>";
       return;
     }
 
     prendasInv.forEach((item, i) => {
+      const tallas = Array.isArray(item.tallas) ? item.tallas : [];
+      const stockGeneral = tallas.reduce((ac, t) => ac + (Number(t.stockTalla) || 0), 0);
+
       const div = document.createElement("div");
       div.className = "producto-item";
       div.innerHTML = `
@@ -218,8 +221,8 @@
         <label>Precio base (opcional)</label>
         <input type="number" id="precio-${i}" value="${item.precio ?? ""}" min="0" step="0.01">
 
-        <label>Stock general</label>
-        <input type="number" id="stock-${i}" value="${item.stock ?? 0}" min="0" step="1">
+        <label>Stock general (auto)</label>
+        <input type="number" id="stock-${i}" value="${stockGeneral}" min="0" step="1" disabled>
 
         <div class="tallas-box">
           <div class="tallas-header">
@@ -238,25 +241,24 @@
 
       // Pintar filas de tallas existentes
       const lista = document.getElementById(`tallas-${i}`);
-      const tallas = Array.isArray(item.tallas) ? item.tallas : [];
-      tallas.forEach((t, idx) => {
-        lista.appendChild(crearFilaTalla(i, idx, t.talla, t.precio));
-      });
-      if (tallas.length === 0) {
-        // una fila vacía de cortesía
-        addTalla(i);
-      }
+      tallas
+        .sort((a,b) => (Number(a.talla)||0) - (Number(b.talla)||0))
+        .forEach((t, idx) => {
+          lista.appendChild(crearFilaTalla(i, idx, t.talla, t.precio, t.stockTalla));
+        });
+      if (!tallas.length) addTalla(i);
     });
   }
 
   // 🧱 Crea nodo de fila de talla
-  function crearFilaTalla(i, idx, tallaVal = "", precioVal = "") {
+  function crearFilaTalla(i, idx, tallaVal = "", precioVal = "", stockVal = "") {
     const fila = document.createElement("div");
     fila.className = "fila-talla";
     fila.dataset.index = idx;
     fila.innerHTML = `
       <input type="number" placeholder="Talla (ej. 4)" min="0" step="1" value="${tallaVal}" id="talla-${i}-${idx}">
       <input type="number" placeholder="Precio (ej. 35)" min="0" step="0.01" value="${precioVal}" id="precioT-${i}-${idx}">
+      <input type="number" placeholder="Stock talla (ej. 5)" min="0" step="1" value="${stockVal}" id="stockT-${i}-${idx}">
       <button class="btn btn-danger" title="Quitar" onclick="quitarTalla(${i}, ${idx})">✖</button>
     `;
     return fila;
@@ -274,41 +276,59 @@
     const box = document.getElementById(`tallas-${i}`);
     const fila = box.querySelector(`.fila-talla:nth-child(${idx + 1})`);
     if (fila) box.removeChild(fila);
-    // Re-indexar ids para mantener consistencia
+    // Re-indexar ids
     [...box.querySelectorAll(".fila-talla")].forEach((f, newIdx) => {
       f.dataset.index = newIdx;
       f.querySelectorAll("input")[0].id = `talla-${i}-${newIdx}`;
       f.querySelectorAll("input")[1].id = `precioT-${i}-${newIdx}`;
+      f.querySelectorAll("input")[2].id = `stockT-${i}-${newIdx}`;
       f.querySelector("button").setAttribute("onclick", `quitarTalla(${i}, ${newIdx})`);
     });
+    // actualizar vista de stock general (solo visual)
+    recalculaStockVisual(i);
+  }
+
+  function recalculaStockVisual(i){
+    const box = document.getElementById(`tallas-${i}`);
+    const filas = box.querySelectorAll(".fila-talla");
+    let suma = 0;
+    filas.forEach(f => {
+      const st = Number(f.querySelector(`#stockT-${i}-${f.dataset.index}`).value) || 0;
+      suma += st;
+    });
+    const inputStock = document.getElementById(`stock-${i}`);
+    if (inputStock) inputStock.value = suma;
   }
 
   // 💾 Guardar UNA prenda
   async function guardarUno(i) {
     const docId = prendasInv[i].id;
     const nombre = document.getElementById(`nombre-${i}`).value.trim();
-    const precio = document.getElementById(`precio-${i}`).value;
-    const stock  = document.getElementById(`stock-${i}`).value;
+    const precioBase = document.getElementById(`precio-${i}`).value;
 
     const tallasBox = document.getElementById(`tallas-${i}`);
     const filas = tallasBox.querySelectorAll(".fila-talla");
     const tallas = [];
-    filas.forEach(f => {
-      const inputs = f.querySelectorAll("input");
-      const tallaNum = Number(inputs[0].value);
-      const precioNum = Number(inputs[1].value);
-      if (!isNaN(tallaNum) && inputs[0].value !== "" && !isNaN(precioNum) && inputs[1].value !== "") {
-        tallas.push({ talla: tallaNum, precio: precioNum });
+    filas.forEach((f) => {
+      const idx = Number(f.dataset.index);
+      const tallaNum = Number(document.getElementById(`talla-${i}-${idx}`).value);
+      const precioNum = Number(document.getElementById(`precioT-${i}-${idx}`).value);
+      const stockNum = Number(document.getElementById(`stockT-${i}-${idx}`).value);
+      if (!isNaN(tallaNum) && document.getElementById(`talla-${i}-${idx}`).value !== "" &&
+          !isNaN(precioNum) && document.getElementById(`precioT-${i}-${idx}`).value !== "" &&
+          !isNaN(stockNum) && document.getElementById(`stockT-${i}-${idx}`).value !== "") {
+        tallas.push({ talla: tallaNum, precio: precioNum, stockTalla: stockNum });
       }
     });
 
+    const stockGeneral = tallas.reduce((ac, t) => ac + (Number(t.stockTalla) || 0), 0);
+
     const updateData = {
       nombre: nombre || "",
-      stock: Number(stock) || 0,
-      tallas
+      tallas,
+      stock: stockGeneral, // para compatibilidad y referencia rápida
     };
-    // precio base solo si lo llenan
-    if (precio !== "") updateData.precio = Number(precio);
+    if (precioBase !== "") updateData.precio = Number(precioBase);
 
     await db.collection("inventario").doc(docId).update(updateData);
     alert("✅ Prenda actualizada");
@@ -339,6 +359,7 @@
     fila.innerHTML = `
       <input type="number" id="nuevo-talla-${idx}" placeholder="Talla (ej. 4)" min="0" step="1">
       <input type="number" id="nuevo-precio-${idx}" placeholder="Precio (ej. 35)" min="0" step="0.01">
+      <input type="number" id="nuevo-stock-${idx}"  placeholder="Stock talla (ej. 5)" min="0" step="1">
       <button class="btn btn-danger" onclick="this.parentElement.remove()">✖</button>
     `;
     cont.appendChild(fila);
@@ -348,7 +369,6 @@
   async function agregarPrenda() {
     const nombre = document.getElementById("nuevo-nombre").value.trim();
     const precio = document.getElementById("nuevo-precio").value;
-    const stock  = document.getElementById("nuevo-stock").value;
 
     if (!nombre) {
       alert("⚠️ Ingresa el nombre de la prenda");
@@ -362,16 +382,20 @@
     filas.forEach((f, idx) => {
       const tallaVal = Number(document.getElementById(`nuevo-talla-${idx}`).value);
       const precioVal = Number(document.getElementById(`nuevo-precio-${idx}`).value);
+      const stockVal = Number(document.getElementById(`nuevo-stock-${idx}`).value);
       if (!isNaN(tallaVal) && document.getElementById(`nuevo-talla-${idx}`).value !== "" &&
-          !isNaN(precioVal) && document.getElementById(`nuevo-precio-${idx}`).value !== "") {
-        tallas.push({ talla: tallaVal, precio: precioVal });
+          !isNaN(precioVal) && document.getElementById(`nuevo-precio-${idx}`).value !== "" &&
+          !isNaN(stockVal) && document.getElementById(`nuevo-stock-${idx}`).value !== "") {
+        tallas.push({ talla: tallaVal, precio: precioVal, stockTalla: stockVal });
       }
     });
 
+    const stockGeneral = tallas.reduce((ac, t) => ac + (Number(t.stockTalla) || 0), 0);
+
     const newDoc = {
       nombre,
-      stock: Number(stock) || 0,
-      tallas
+      tallas,
+      stock: stockGeneral, // para referencia rápida
     };
     if (precio !== "") newDoc.precio = Number(precio);
 
@@ -380,7 +404,6 @@
     // limpiar
     document.getElementById("nuevo-nombre").value = "";
     document.getElementById("nuevo-precio").value = "";
-    document.getElementById("nuevo-stock").value = "";
     document.getElementById("nuevo-tallas").innerHTML = "";
 
     alert("✅ Nueva prenda agregada");
