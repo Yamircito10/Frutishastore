@@ -4,29 +4,39 @@
 
 // ✅ Variables globales
 let total = 0;
-let productosSeleccionados = []; // {texto, precio, idPrenda, talla}
+let productosSeleccionados = [];
 let prendas = [];
 
-// ✅ Formatear a soles
+// ✅ Formatear soles
 const formatearSoles = (valor) =>
   new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
 
-// ✅ Generar tallas por defecto (con stock)
-function generarTallas(inicio = 4, fin = 16) {
-  const tallas = [];
-  for (let t = inicio; t <= fin; t += 2) {
-    tallas.push({ talla: t, precio: null, stock: 0 });
-  }
-  return tallas;
+// =============================
+//  Utilidades
+// =============================
+function sumaStockTallas(tallas) {
+  if (!Array.isArray(tallas)) return 0;
+  return tallas.reduce((acc, t) => acc + (Number(t.stockTalla) || 0), 0);
 }
 
 // =============================
-//  Cargar productos desde Firebase
+//  Cargar productos
 // =============================
 async function cargarPrendas() {
   try {
     const snapshot = await db.collection("inventario").get();
-    prendas = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    prendas = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      const tallas = Array.isArray(data.tallas) ? data.tallas : [];
+      const stockGeneral = sumaStockTallas(tallas) || Number(data.stock) || 0; // compat si aún tienes "stock"
+      return {
+        id: doc.id,
+        nombre: data.nombre || "Sin nombre",
+        precio: data.precio, // opcional si todas las tallas tienen precio
+        tallas,
+        stockGeneral,
+      };
+    });
     generarVistaPrendas();
   } catch (error) {
     console.error("Error cargando prendas:", error);
@@ -34,7 +44,7 @@ async function cargarPrendas() {
 }
 
 // =============================
-//  Mostrar productos (desactiva talla sin stock)
+//  Mostrar productos
 // =============================
 function generarVistaPrendas() {
   const contenedor = document.getElementById("lista-prendas");
@@ -50,32 +60,32 @@ function generarVistaPrendas() {
     div.className = "producto-card";
 
     const titulo = document.createElement("h3");
-    titulo.innerText = `${String(prenda.nombre)} (Stock: ${Number(prenda.stock) || 0})`;
+    titulo.innerText = `${prenda.nombre} (Stock: ${prenda.stockGeneral})`;
     div.appendChild(titulo);
 
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
 
-    const tallas = Array.isArray(prenda.tallas) && prenda.tallas.length
-      ? prenda.tallas
-      : generarTallas();
-
-    tallas.forEach((t) => {
-      const btn = document.createElement("button");
-      btn.className = "boton-talla";
-      btn.innerText = `T${t.talla}`;
-
-      // 🔒 Desactivar si no hay stock en la talla
-      if (!t.stock || Number(t.stock) <= 0) {
-        btn.disabled = true;
-        btn.style.opacity = 0.5;
-        btn.title = "Sin stock en esta talla";
-      } else {
-        btn.onclick = () => mostrarDescuentos(div, prenda, t);
-      }
-
-      tallasDiv.appendChild(btn);
-    });
+    const tallas = Array.isArray(prenda.tallas) ? prenda.tallas : [];
+    if (!tallas.length) {
+      const p = document.createElement("p");
+      p.style.margin = "6px 0";
+      p.textContent = "Sin tallas configuradas";
+      div.appendChild(p);
+    } else {
+      tallas
+        .sort((a, b) => (Number(a.talla) || 0) - (Number(b.talla) || 0))
+        .forEach((t) => {
+          const btn = document.createElement("button");
+          btn.className = "boton-talla";
+          const stockT = Number(t.stockTalla) || 0;
+          btn.innerText = `T${t.talla}${stockT <= 0 ? " (0)" : ""}`;
+          btn.disabled = stockT <= 0; // desactivar si no hay stock en esa talla
+          btn.title = stockT > 0 ? `Stock talla ${t.talla}: ${stockT}` : "Sin stock";
+          btn.onclick = () => mostrarDescuentos(div, prenda, t);
+          tallasDiv.appendChild(btn);
+        });
+    }
 
     div.appendChild(tallasDiv);
 
@@ -94,24 +104,34 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   const descDiv = contenedor.querySelector(".descuentos");
   descDiv.innerHTML = "";
 
-  const base = tallaSel.precio != null ? Number(tallaSel.precio) : Number(prenda.precio);
-  const precioBase = Number.isFinite(base) ? base : 0;
-  const descuentos = [0, 1, 2, 3];
+  const precioBase =
+    (tallaSel && typeof tallaSel.precio === "number" ? tallaSel.precio : undefined) ??
+    (typeof prenda.precio === "number" ? prenda.precio : undefined);
 
-  descuentos.forEach((desc) => {
+  if (typeof precioBase !== "number") {
+    const aviso = document.createElement("p");
+    aviso.style.margin = "6px 0";
+    aviso.textContent = "Configura un precio para esta talla o un precio base de la prenda.";
+    descDiv.appendChild(aviso);
+    return;
+  }
+
+  const descuentos = [0, 1, 2, 3];
+  descuentos.forEach((d) => {
     const btn = document.createElement("button");
     btn.className = "descuento-btn";
-    btn.innerText = desc === 0 ? "Sin Desc." : `-S/${desc}`;
-    btn.onclick = () => agregarProducto(prenda, tallaSel, precioBase - desc);
+    btn.innerText = d === 0 ? "Sin Desc." : `-S/${d}`;
+    btn.onclick = () => agregarProducto(prenda, tallaSel, precioBase - d);
     descDiv.appendChild(btn);
   });
 }
 
 // =============================
-//  Agregar al carrito (descuenta stock de la talla y recalcula general)
+//  Agregar al carrito (descuenta stock de la talla específica)
 // =============================
 async function agregarProducto(prenda, tallaSel, precioFinal) {
-  if (!tallaSel.stock || Number(tallaSel.stock) <= 0) {
+  const stockT = Number(tallaSel.stockTalla) || 0;
+  if (stockT <= 0) {
     alert("⚠️ No hay stock disponible en esta talla.");
     return;
   }
@@ -119,68 +139,55 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
   const producto = {
     texto: `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`,
     precio: Number(precioFinal),
-    idPrenda: prenda.id,
+    id: prenda.id,
     talla: tallaSel.talla,
   };
 
   productosSeleccionados.push(producto);
-  total += producto.precio;
+  total += Number(precioFinal);
 
+  // ↓ Actualizar Firestore: restar 1 a stockTalla de la talla elegida y recalcular stock general
   try {
-    // Actualizar stock por talla y stock general
-    const tallasActualizadas = (Array.isArray(prenda.tallas) ? prenda.tallas : generarTallas()).map(
-      (t) => (t.talla === tallaSel.talla ? { ...t, stock: Math.max(0, (Number(t.stock) || 0) - 1) } : t)
-    );
-    const stockGeneral = tallasActualizadas.reduce((acc, t) => acc + (Number(t.stock) || 0), 0);
+    const docRef = db.collection("inventario").doc(prenda.id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) throw new Error("Documento no existe");
+    const data = docSnap.data();
+    const tallas = Array.isArray(data.tallas) ? data.tallas : [];
 
-    await db.collection("inventario").doc(prenda.id).update({
-      tallas: tallasActualizadas,
-      stock: stockGeneral,
+    const nuevasTallas = tallas.map((t) =>
+      Number(t.talla) === Number(tallaSel.talla)
+        ? { ...t, stockTalla: Math.max(0, (Number(t.stockTalla) || 0) - 1) }
+        : t
+    );
+    const nuevoStockGeneral = sumaStockTallas(nuevasTallas);
+
+    await docRef.update({
+      tallas: nuevasTallas,
+      stock: nuevoStockGeneral, // opcional, por compatibilidad
     });
 
     await cargarPrendas();
   } catch (error) {
-    console.error("Error actualizando stock:", error);
+    console.error("Error actualizando stock por talla:", error);
   }
 
   actualizarInterfaz();
 }
 
 // =============================
-//  Eliminar producto del carrito (resta del total y repone stock en Firebase)
+//  Eliminar producto del carrito (NO repone stock en BD)
+//  *Si quieres que reponga stock en Firebase cuando se elimina del carrito,
+//   avísame y lo agregamos.
 // =============================
-async function eliminarProducto(index) {
+function eliminarProducto(index) {
   const producto = productosSeleccionados[index];
-  if (!producto) return;
-
-  // Quitar del carrito y total
-  total -= Number(producto.precio) || 0;
+  total -= producto.precio;
   productosSeleccionados.splice(index, 1);
   actualizarInterfaz();
-
-  // Reponer stock en Firebase (talla específica + general)
-  try {
-    const ref = db.collection("inventario").doc(producto.idPrenda);
-    const snap = await ref.get();
-    if (snap.exists) {
-      const prenda = { id: snap.id, ...snap.data() };
-      const tallas = Array.isArray(prenda.tallas) ? prenda.tallas : generarTallas();
-
-      const tallasActualizadas = tallas.map((t) =>
-        t.talla === producto.talla ? { ...t, stock: (Number(t.stock) || 0) + 1 } : t
-      );
-      const stockGeneral = tallasActualizadas.reduce((acc, t) => acc + (Number(t.stock) || 0), 0);
-
-      await ref.update({ tallas: tallasActualizadas, stock: stockGeneral });
-      await cargarPrendas();
-    }
-  } catch (error) {
-    console.error("Error reponiendo stock:", error);
-  }
 }
 
 // =============================
-//  Mostrar carrito
+//  UI del carrito
 // =============================
 function actualizarInterfaz() {
   document.getElementById("total").innerText = `Total: ${formatearSoles(total)}`;
@@ -194,7 +201,7 @@ function actualizarInterfaz() {
 }
 
 // =============================
-//  Finalizar venta (guarda en Firebase)
+//  Finalizar venta → guarda en Firebase (colección "ventas")
 // =============================
 async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
@@ -204,7 +211,7 @@ async function finalizarVenta() {
     await db.collection("ventas").add({
       fecha: ahora.toLocaleDateString("es-PE"),
       hora: ahora.toLocaleTimeString("es-PE"),
-      productos: productosSeleccionados.map((p) => String(p.texto)),
+      productos: productosSeleccionados.map((p) => p.texto),
       total: Number(total),
     });
 
@@ -219,7 +226,7 @@ async function finalizarVenta() {
 }
 
 // =============================
-//  Historial (desde Firebase)
+//  Historial (lee de Firebase)
 // =============================
 async function cargarHistorial() {
   try {
@@ -256,7 +263,7 @@ function descargarTXT() {
       snapshot.forEach((doc, i) => {
         const venta = doc.data();
         contenido += `Venta ${i + 1}\nFecha: ${venta.fecha} - Hora: ${venta.hora}\nProductos:\n`;
-        (venta.productos || []).forEach((p) => (contenido += ` - ${p}\n`));
+        venta.productos.forEach((p) => (contenido += ` - ${p}\n`));
         contenido += `Total: ${formatearSoles(venta.total)}\n------------------------\n\n`;
       });
 
@@ -273,7 +280,7 @@ function descargarTXT() {
 }
 
 // =============================
-//  Borrar historial (Firebase)
+//  Borrar historial
 // =============================
 async function borrarHistorial() {
   if (!confirm("¿Deseas borrar el historial de ventas?")) return;
@@ -290,7 +297,7 @@ async function borrarHistorial() {
 }
 
 // =============================
-//  Reiniciar carrito
+//  Reiniciar carrito (solo UI)
 // =============================
 function reiniciarCarrito() {
   if (!confirm("¿Deseas reiniciar el carrito?")) return;
