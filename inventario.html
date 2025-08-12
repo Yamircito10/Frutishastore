@@ -4,19 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inventario - Frutisha Store</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
   <style>
-    .contenedor-top {
-      display:flex;
-      justify-content:center;
-      gap:8px;
-      margin-bottom:10px;
-    }
     .inventario-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 12px;
-      margin-top: 10px;
+      margin-top: 16px;
     }
     .producto-item {
       background: #fff;
@@ -24,97 +18,109 @@
       border-radius: 12px;
       padding: 12px;
       text-align: left;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
     }
-    .producto-item h3 {
+    .producto-item h3{
       margin: 0 0 8px 0;
+      color: var(--principal);
       font-size: 18px;
+      text-align: center;
+    }
+    .producto-item label{
+      font-weight: 600;
+      display: block;
+      margin-top: 6px;
     }
     .producto-item input {
       width: 100%;
       padding: 8px;
-      margin: 6px 0 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      text-align: left;
-      box-sizing: border-box;
-      font-size: 14px;
-    }
-    .tallas-editor {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 6px;
-    }
-    .talla-card {
-      border: 1px solid #eee;
-      border-radius: 10px;
-      padding: 8px;
-      background: #fafafa;
-    }
-    .talla-card .tag {
-      display:inline-block;
-      font-weight:700;
-      font-size: 13px;
-      color:#333;
-      margin-bottom:4px;
-    }
-    .talla-card label {
-      display:block;
-      font-size: 12px;
-      color: #666;
       margin-top: 4px;
-    }
-    .acciones-globales, .contenedor-nueva {
-      margin-top: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
       text-align: center;
     }
-    .guardar-btn {
-      background-color: var(--rosa);
+
+    /* Editor de tallas */
+    .tallas-box {
+      margin-top: 10px;
+      background: #fff8fb;
+      border: 1px dashed var(--rosa);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .tallas-header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .tallas-header strong{ color: var(--principal); }
+    .fila-talla{
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .btn{
+      background: var(--rosa);
       color: #fff;
       border: none;
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      margin: 5px;
-      font-size: 15px;
-    }
-    .guardar-btn:hover { background-color: var(--rosa-oscuro); }
-    .eliminar-btn {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 8px 10px;
       border-radius: 8px;
-      margin-top: 10px;
+      padding: 8px 10px;
       cursor: pointer;
       font-size: 14px;
     }
-    .eliminar-btn:hover { background-color: #b02a37; }
+    .btn:hover{ background: var(--rosa-oscuro); }
+    .btn-sec{
+      background: #f1f3f5;
+      color: #333;
+    }
+    .btn-sec:hover{ background:#e9ecef; }
+    .btn-danger{
+      background:#dc3545;
+    }
+    .btn-danger:hover{
+      background:#b02a37;
+    }
 
+    .acciones-globales{
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    /* Nueva prenda */
     .nuevo-item {
-      background: #fff;
-      border: 1px dashed var(--rosa);
+      background: #f8f9fa;
+      border: 2px dashed var(--rosa);
       border-radius: 12px;
       padding: 12px;
+      margin-top: 18px;
       text-align: left;
-      max-width: 720px;
-      margin: 10px auto 0;
     }
-    .nuevo-item h3 { margin: 0 0 6px 0; }
-    .nota {
-      font-size: 12px; color:#666; margin: 6px 0 10px;
+    .nuevo-item h3{
+      text-align:center;
+      margin-top:0;
+      color: var(--principal);
+    }
+    .volver{
+      margin-top: 8px;
+      text-align:center;
     }
 
     @media (max-width:600px){
-      .tallas-editor { grid-template-columns: repeat(2, 1fr); }
+      .fila-talla{
+        grid-template-columns: 1fr 1fr 44px;
+      }
     }
   </style>
 </head>
 <body>
 
 <script>
-  // Solo ADMIN
+  // 🔒 Solo ADMIN
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
   if (!usuario || rol !== "admin") {
@@ -125,26 +131,43 @@
 
 <h1>📦 Inventario - Frutisha Store</h1>
 
-<div class="contenedor-top">
-  <button class="guardar-btn" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
-  <button class="guardar-btn" onclick="guardarCambios()">💾 Guardar Cambios</button>
+<div class="acciones volver">
+  <button class="btn btn-sec" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
+</div>
+
+<div class="acciones-globales">
+  <button class="btn" onclick="guardarTodos()">💾 Guardar TODOS</button>
 </div>
 
 <div class="inventario-container" id="contenedor-inventario"></div>
 
-<!-- 🔹 Agregar nueva prenda -->
+<!-- ➕ Nueva prenda -->
 <div class="nuevo-item">
   <h3>➕ Agregar nueva prenda</h3>
-  <label><strong>Nombre:</strong></label>
+  <label>Nombre</label>
   <input type="text" id="nuevo-nombre" placeholder="Nombre de la prenda">
-  <label><strong>Precio general (S/):</strong></label>
-  <input type="number" id="nuevo-precio" placeholder="Precio (S/)" min="0" step="0.01">
-  <div class="nota">
-    Se crearán tallas por defecto (T4–T16, stock 0). Luego podrás editar el stock/precio por talla.
+
+  <label>Precio base (opcional, se usa si alguna talla no tiene precio)</label>
+  <input type="number" id="nuevo-precio" placeholder="Ej. 35" min="0" step="0.01">
+
+  <label>Stock general</label>
+  <input type="number" id="nuevo-stock" placeholder="Ej. 20" min="0" step="1">
+
+  <div class="tallas-box">
+    <div class="tallas-header">
+      <strong>Tallas (talla + precio)</strong>
+      <button class="btn btn-sec" onclick="addTallaNueva()">➕ Añadir talla</button>
+    </div>
+    <div id="nuevo-tallas"></div>
   </div>
-  <div class="contenedor-nueva">
-    <button class="guardar-btn" onclick="agregarPrenda()">Agregar</button>
+
+  <div class="acciones-globales">
+    <button class="btn" onclick="agregarPrenda()">✅ Guardar prenda</button>
   </div>
+</div>
+
+<div class="acciones volver">
+  <button class="btn btn-sec" onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
 </div>
 
 <!-- ✅ Firebase (compat) -->
@@ -164,158 +187,207 @@
 </script>
 
 <script>
-  // === Utilidades ===
-  function generarTallas(inicio = 4, fin = 16) {
-    const tallas = [];
-    for (let t = inicio; t <= fin; t += 2) {
-      tallas.push({ talla: t, precio: null, stock: 0 });
-    }
-    return tallas;
-  }
-
   let prendasInv = [];
 
+  // 📥 Cargar inventario
   async function cargarInventario() {
-    try {
-      const snapshot = await db.collection("inventario").get();
-      prendasInv = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      renderInventario();
-    } catch (error) {
-      console.error("Error cargando inventario:", error);
-      document.getElementById("contenedor-inventario").innerHTML =
-        "<p>❌ Error al cargar inventario. Revisa consola.</p>";
-    }
+    const snap = await db.collection("inventario").get();
+    prendasInv = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderInventario();
   }
 
+  // 🖼️ Render de tarjetas
   function renderInventario() {
-    const contenedor = document.getElementById("contenedor-inventario");
-    contenedor.innerHTML = "";
+    const cont = document.getElementById("contenedor-inventario");
+    cont.innerHTML = "";
 
-    if (!prendasInv.length) {
-      contenedor.innerHTML = "<p>⚠️ No hay productos en el inventario.</p>";
+    if (prendasInv.length === 0) {
+      cont.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>⚠️ No hay productos en el inventario.</p>";
       return;
     }
 
     prendasInv.forEach((item, i) => {
-      const tallas = Array.isArray(item.tallas) && item.tallas.length
-        ? item.tallas
-        : generarTallas();
-
-      const tallasInputs = tallas.map(t => `
-        <div class="talla-card">
-          <span class="tag">T${t.talla}</span>
-          <label>Stock</label>
-          <input type="number" min="0" id="talla-${i}-${t.talla}-stock" value="${t.stock ?? 0}">
-          <label>Precio (opcional)</label>
-          <input type="number" min="0" step="0.01" id="talla-${i}-${t.talla}-precio" value="${t.precio ?? ""}" placeholder="—">
-        </div>
-      `).join("");
-
       const div = document.createElement("div");
       div.className = "producto-item";
       div.innerHTML = `
-        <h3>${item.nombre ?? "(Sin nombre)"} <span style="color:#c2185b;font-weight:600;">(Stock: ${item.stock ?? 0})</span></h3>
+        <h3>${item.nombre || "Sin nombre"}</h3>
 
-        <label><strong>Nombre:</strong></label>
-        <input type="text" id="nombre-${i}" value="${item.nombre ?? ""}">
+        <label>Nombre</label>
+        <input type="text" id="nombre-${i}" value="${item.nombre || ""}">
 
-        <label><strong>Precio general (S/):</strong></label>
-        <input type="number" id="precio-${i}" value="${item.precio ?? 0}" min="0" step="0.01">
+        <label>Precio base (opcional)</label>
+        <input type="number" id="precio-${i}" value="${item.precio ?? ""}" min="0" step="0.01">
 
-        <div style="margin-top:8px;">
-          <strong>Tallas (stock y precio por talla):</strong>
-          <div class="tallas-editor" id="tallas-${i}">
-            ${tallasInputs}
+        <label>Stock general</label>
+        <input type="number" id="stock-${i}" value="${item.stock ?? 0}" min="0" step="1">
+
+        <div class="tallas-box">
+          <div class="tallas-header">
+            <strong>Tallas</strong>
+            <button class="btn btn-sec" onclick="addTalla(${i})">➕ Añadir talla</button>
           </div>
-          <small class="nota">El stock general se recalcula automáticamente al guardar.</small>
+          <div id="tallas-${i}"></div>
         </div>
 
-        <button class="eliminar-btn" onclick="eliminarPrenda('${item.id}')">🗑 Eliminar</button>
+        <div class="acciones-globales">
+          <button class="btn" onclick="guardarUno(${i})">💾 Guardar</button>
+          <button class="btn btn-danger" onclick="eliminarPrenda('${item.id}')">🗑 Eliminar</button>
+        </div>
       `;
-      contenedor.appendChild(div);
+      cont.appendChild(div);
+
+      // Pintar filas de tallas existentes
+      const lista = document.getElementById(`tallas-${i}`);
+      const tallas = Array.isArray(item.tallas) ? item.tallas : [];
+      tallas.forEach((t, idx) => {
+        lista.appendChild(crearFilaTalla(i, idx, t.talla, t.precio));
+      });
+      if (tallas.length === 0) {
+        // una fila vacía de cortesía
+        addTalla(i);
+      }
     });
   }
 
-  async function guardarCambios() {
-    try {
-      for (let i = 0; i < prendasInv.length; i++) {
-        const id = prendasInv[i].id;
-        const nuevoNombre = document.getElementById(`nombre-${i}`).value.trim();
-        const nuevoPrecio = parseFloat(document.getElementById(`precio-${i}`).value) || 0;
+  // 🧱 Crea nodo de fila de talla
+  function crearFilaTalla(i, idx, tallaVal = "", precioVal = "") {
+    const fila = document.createElement("div");
+    fila.className = "fila-talla";
+    fila.dataset.index = idx;
+    fila.innerHTML = `
+      <input type="number" placeholder="Talla (ej. 4)" min="0" step="1" value="${tallaVal}" id="talla-${i}-${idx}">
+      <input type="number" placeholder="Precio (ej. 35)" min="0" step="0.01" value="${precioVal}" id="precioT-${i}-${idx}">
+      <button class="btn btn-danger" title="Quitar" onclick="quitarTalla(${i}, ${idx})">✖</button>
+    `;
+    return fila;
+  }
 
-        // Reconstruir tallas desde inputs (si no había tallas, generamos por defecto)
-        const baseTallas = Array.isArray(prendasInv[i].tallas) && prendasInv[i].tallas.length
-          ? prendasInv[i].tallas
-          : generarTallas();
+  // ➕ Añadir fila talla (existente)
+  function addTalla(i) {
+    const box = document.getElementById(`tallas-${i}`);
+    const idx = box.querySelectorAll(".fila-talla").length;
+    box.appendChild(crearFilaTalla(i, idx));
+  }
 
-        const tallasActualizadas = baseTallas.map(t => {
-          const stockEl = document.getElementById(`talla-${i}-${t.talla}-stock`);
-          const precioEl = document.getElementById(`talla-${i}-${t.talla}-precio`);
-          return {
-            talla: t.talla,
-            stock: parseInt(stockEl?.value || "0", 10),
-            precio: precioEl?.value ? parseFloat(precioEl.value) : null
-          };
-        });
+  // ✖ Quitar fila talla (existente)
+  function quitarTalla(i, idx) {
+    const box = document.getElementById(`tallas-${i}`);
+    const fila = box.querySelector(`.fila-talla:nth-child(${idx + 1})`);
+    if (fila) box.removeChild(fila);
+    // Re-indexar ids para mantener consistencia
+    [...box.querySelectorAll(".fila-talla")].forEach((f, newIdx) => {
+      f.dataset.index = newIdx;
+      f.querySelectorAll("input")[0].id = `talla-${i}-${newIdx}`;
+      f.querySelectorAll("input")[1].id = `precioT-${i}-${newIdx}`;
+      f.querySelector("button").setAttribute("onclick", `quitarTalla(${i}, ${newIdx})`);
+    });
+  }
 
-        const stockGeneral = tallasActualizadas.reduce((acc, t) => acc + (t.stock || 0), 0);
+  // 💾 Guardar UNA prenda
+  async function guardarUno(i) {
+    const docId = prendasInv[i].id;
+    const nombre = document.getElementById(`nombre-${i}`).value.trim();
+    const precio = document.getElementById(`precio-${i}`).value;
+    const stock  = document.getElementById(`stock-${i}`).value;
 
-        await db.collection("inventario").doc(id).update({
-          nombre: nuevoNombre || prendasInv[i].nombre || "",
-          precio: nuevoPrecio,
-          tallas: tallasActualizadas,
-          stock: stockGeneral
-        });
+    const tallasBox = document.getElementById(`tallas-${i}`);
+    const filas = tallasBox.querySelectorAll(".fila-talla");
+    const tallas = [];
+    filas.forEach(f => {
+      const inputs = f.querySelectorAll("input");
+      const tallaNum = Number(inputs[0].value);
+      const precioNum = Number(inputs[1].value);
+      if (!isNaN(tallaNum) && inputs[0].value !== "" && !isNaN(precioNum) && inputs[1].value !== "") {
+        tallas.push({ talla: tallaNum, precio: precioNum });
       }
+    });
 
-      alert("✅ Inventario actualizado correctamente");
-      cargarInventario();
-    } catch (error) {
-      console.error("Error guardando cambios:", error);
-      alert("❌ Error al guardar. Revisa la consola y tu conexión.");
+    const updateData = {
+      nombre: nombre || "",
+      stock: Number(stock) || 0,
+      tallas
+    };
+    // precio base solo si lo llenan
+    if (precio !== "") updateData.precio = Number(precio);
+
+    await db.collection("inventario").doc(docId).update(updateData);
+    alert("✅ Prenda actualizada");
+    await cargarInventario();
+  }
+
+  // 💾 Guardar TODOS
+  async function guardarTodos() {
+    for (let i = 0; i < prendasInv.length; i++) {
+      await guardarUno(i);
     }
   }
 
+  // 🗑 Eliminar prenda
+  async function eliminarPrenda(id) {
+    if (!confirm("¿Seguro que deseas eliminar esta prenda?")) return;
+    await db.collection("inventario").doc(id).delete();
+    alert("🗑 Prenda eliminada");
+    await cargarInventario();
+  }
+
+  // ➕ Nueva prenda – tallas
+  function addTallaNueva() {
+    const cont = document.getElementById("nuevo-tallas");
+    const idx = cont.querySelectorAll(".fila-talla").length;
+    const fila = document.createElement("div");
+    fila.className = "fila-talla";
+    fila.innerHTML = `
+      <input type="number" id="nuevo-talla-${idx}" placeholder="Talla (ej. 4)" min="0" step="1">
+      <input type="number" id="nuevo-precio-${idx}" placeholder="Precio (ej. 35)" min="0" step="0.01">
+      <button class="btn btn-danger" onclick="this.parentElement.remove()">✖</button>
+    `;
+    cont.appendChild(fila);
+  }
+
+  // ✅ Agregar prenda nueva
   async function agregarPrenda() {
     const nombre = document.getElementById("nuevo-nombre").value.trim();
-    const precio = parseFloat(document.getElementById("nuevo-precio").value) || 0;
+    const precio = document.getElementById("nuevo-precio").value;
+    const stock  = document.getElementById("nuevo-stock").value;
 
     if (!nombre) {
       alert("⚠️ Ingresa el nombre de la prenda");
       return;
     }
 
-    try {
-      const tallas = generarTallas(); // T4–T16 stock 0
-      const stock = 0;
+    // recolectar tallas nuevas
+    const cont = document.getElementById("nuevo-tallas");
+    const filas = cont.querySelectorAll(".fila-talla");
+    const tallas = [];
+    filas.forEach((f, idx) => {
+      const tallaVal = Number(document.getElementById(`nuevo-talla-${idx}`).value);
+      const precioVal = Number(document.getElementById(`nuevo-precio-${idx}`).value);
+      if (!isNaN(tallaVal) && document.getElementById(`nuevo-talla-${idx}`).value !== "" &&
+          !isNaN(precioVal) && document.getElementById(`nuevo-precio-${idx}`).value !== "") {
+        tallas.push({ talla: tallaVal, precio: precioVal });
+      }
+    });
 
-      await db.collection("inventario").add({
-        nombre, precio, tallas, stock
-      });
+    const newDoc = {
+      nombre,
+      stock: Number(stock) || 0,
+      tallas
+    };
+    if (precio !== "") newDoc.precio = Number(precio);
 
-      document.getElementById("nuevo-nombre").value = "";
-      document.getElementById("nuevo-precio").value = "";
+    await db.collection("inventario").add(newDoc);
 
-      alert("✅ Nueva prenda agregada");
-      cargarInventario();
-    } catch (error) {
-      console.error("Error agregando prenda:", error);
-      alert("❌ No se pudo agregar. Revisa la consola.");
-    }
+    // limpiar
+    document.getElementById("nuevo-nombre").value = "";
+    document.getElementById("nuevo-precio").value = "";
+    document.getElementById("nuevo-stock").value = "";
+    document.getElementById("nuevo-tallas").innerHTML = "";
+
+    alert("✅ Nueva prenda agregada");
+    await cargarInventario();
   }
 
-  async function eliminarPrenda(id) {
-    if (!confirm("¿Seguro que deseas eliminar esta prenda?")) return;
-    try {
-      await db.collection("inventario").doc(id).delete();
-      alert("🗑 Prenda eliminada");
-      cargarInventario();
-    } catch (error) {
-      console.error("Error eliminando prenda:", error);
-      alert("❌ No se pudo eliminar. Revisa la consola.");
-    }
-  }
-
+  // 🚀 Init
   cargarInventario();
 </script>
 
