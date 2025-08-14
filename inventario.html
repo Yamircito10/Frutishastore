@@ -186,4 +186,40 @@
 
   async function agregarPrenda(){
     const nombre = document.getElementById("nuevo-nombre").value.trim();
-    const
+    const precioBaseRaw = document.getElementById("nuevo-precio").value;
+    const precio = precioBaseRaw === "" ? null : Number(precioBaseRaw);
+    const {tallas, total} = leerTallasDeContenedor("nuevo-tallas");
+    if(!nombre){ alert("Ingresa nombre"); return; }
+    if(tallas.length===0){ alert("Agrega al menos una talla"); return; }
+
+    await db.collection("inventario").add({
+      nombre,
+      precio,
+      stock: total,
+      tallas
+    });
+
+    document.getElementById("nuevo-nombre").value = "";
+    document.getElementById("nuevo-precio").value = "";
+    document.getElementById("nuevo-tallas").innerHTML = `<div class="mini">Tallas (talla / precio / stockTalla)</div>`;
+    alert("✅ Prenda agregada.");
+    cargarInventario();
+  }
+
+  async function eliminarPrenda(id){
+    if(!confirm("¿Eliminar prenda?")) return;
+    await db.collection("inventario").doc(id).delete();
+    alert("🗑 Eliminado.");
+    cargarInventario();
+  }
+
+  // Inicial
+  // agrega una fila por defecto en "nuevo" para comodidad
+  document.addEventListener("DOMContentLoaded", ()=>{
+    agregarFilaTalla("nuevo-tallas");
+    cargarInventario();
+  });
+</script>
+
+</body>
+</html>
