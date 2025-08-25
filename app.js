@@ -1,101 +1,74 @@
 // app.js
 
-// Variables globales
-let carrito = [];
-let total = 0;
+// Inicializar Firebase Auth y Firestore
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-// Referencia a Firestore (usando la exportación global de firebase.js)
-const prendasRef = db.collection("prendas");
-const ventasRef = db.collection("ventas");
+// Verificar si estamos en una página protegida (inventario, ventas, etc.)
+document.addEventListener('DOMContentLoaded', () => {
+  const protectedPages = ['inventario.html', 'ventas.html', 'index.html'];
+  const currentPage = window.location.pathname.split('/').pop();
 
-// Elementos del DOM
-const listaPrendas = document.getElementById("listaPrendas");
-const carritoUl = document.getElementById("carrito");
-const totalSpan = document.getElementById("total");
-
-// Cargar productos desde Firestore
-function cargarPrendas() {
-  listaPrendas.innerHTML = "Cargando productos...";
-  
-  prendasRef.get()
-    .then(snapshot => {
-      if (snapshot.empty) {
-        listaPrendas.innerHTML = "<p>No hay productos disponibles.</p>";
-        return;
+  if (protectedPages.includes(currentPage)) {
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        // Si no hay usuario autenticado, redirigir a login
+        window.location.href = "login.html";
+      } else {
+        console.log(`Bienvenido ${user.email}`);
       }
-
-      listaPrendas.innerHTML = "";
-      snapshot.forEach(doc => {
-        const prenda = doc.data();
-        const div = document.createElement("div");
-        div.classList.add("prenda-item");
-        div.innerHTML = `
-          <h3>${prenda.nombre}</h3>
-          <p>Precio: S/ ${prenda.precio}</p>
-          <button onclick="agregarAlCarrito('${doc.id}', '${prenda.nombre}', ${prenda.precio})">Agregar</button>
-        `;
-        listaPrendas.appendChild(div);
-      });
-    })
-    .catch(error => {
-      console.error("Error cargando productos:", error);
-      listaPrendas.innerHTML = "<p>Error al cargar los productos.</p>";
     });
-}
-
-// Agregar al carrito
-function agregarAlCarrito(id, nombre, precio) {
-  carrito.push({ id, nombre, precio });
-  total += precio;
-  actualizarCarrito();
-}
-
-// Eliminar del carrito
-function eliminarDelCarrito(index) {
-  total -= carrito[index].precio;
-  carrito.splice(index, 1);
-  actualizarCarrito();
-}
-
-// Actualizar carrito en pantalla
-function actualizarCarrito() {
-  carritoUl.innerHTML = "";
-  carrito.forEach((item, index) => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      ${item.nombre} - S/ ${item.precio}
-      <button onclick="eliminarDelCarrito(${index})">X</button>
-    `;
-    carritoUl.appendChild(li);
-  });
-  totalSpan.textContent = `S/ ${total.toFixed(2)}`;
-}
-
-// Finalizar venta
-function finalizarVenta() {
-  if (carrito.length === 0) {
-    alert("El carrito está vacío.");
-    return;
   }
+});
 
-  const venta = {
-    productos: carrito,
-    total: total,
-    fecha: new Date().toISOString()
-  };
-
-  ventasRef.add(venta)
-    .then(() => {
-      alert("Venta registrada con éxito.");
-      carrito = [];
-      total = 0;
-      actualizarCarrito();
-    })
-    .catch(error => {
-      console.error("Error registrando la venta:", error);
-      alert("Ocurrió un error al registrar la venta.");
-    });
+// Función para iniciar sesión
+async function login(email, password) {
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    alert("Inicio de sesión exitoso");
+    window.location.href = "index.html";
+  } catch (error) {
+    alert("Error en el inicio de sesión: " + error.message);
+  }
 }
 
-// Cargar productos al iniciar
-cargarPrendas();
+// Función para cerrar sesión
+async function logout() {
+  await auth.signOut();
+  alert("Sesión cerrada");
+  window.location.href = "login.html";
+}
+
+// Cargar productos (usado en index.html)
+async function cargarProductos() {
+  const productosDiv = document.getElementById('productos');
+  if (!productosDiv) return;
+
+  const snapshot = await db.collection("productos").get();
+  productosDiv.innerHTML = '';
+  snapshot.forEach(doc => {
+    const producto = doc.data();
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <h3>${producto.nombre}</h3>
+      <p>Precio: S/ ${producto.precio}</p>
+      <p>Stock: ${producto.stock}</p>
+      <button onclick="agregarAlCarrito('${doc.id}')">Agregar</button>
+    `;
+    productosDiv.appendChild(div);
+  });
+}
+
+// Agregar producto al carrito (localStorage)
+function agregarAlCarrito(id) {
+  let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+  carrito.push(id);
+  localStorage.setItem('carrito', JSON.stringify(carrito));
+  alert("Producto agregado al carrito");
+}
+
+// Cerrar sesión desde cualquier página
+const logoutBtn = document.getElementById('logout');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', logout);
+}
