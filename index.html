@@ -20,29 +20,45 @@
     <button id="logout">Cerrar sesión</button>
   </header>
 
-  <main>
-    <!-- Sección Inventario -->
+  <main class="container">
+    <!-- Sección productos -->
     <section>
-      <h2>Inventario</h2>
+      <h2>Productos</h2>
       <div id="productos"></div>
     </section>
 
-    <!-- Sección Carrito -->
+    <!-- Sección carrito -->
     <section>
       <h2>Carrito</h2>
       <ul id="carrito"></ul>
-      <p><strong>Total:</strong> S/ <span id="total">0.00</span></p>
-      <button id="finalizarCompra">Finalizar Compra</button>
-    </section>
-
-    <!-- Sección Historial -->
-    <section>
-      <h2>Historial de Ventas</h2>
-      <ul id="historial"></ul>
+      <p class="total">Total: S/. <span id="total">0.00</span></p>
+      <button id="guardarVenta">Guardar Venta</button>
+      <button id="exportarExcel">Exportar a Excel</button>
     </section>
   </main>
 
-  <!-- Scripts -->
+  <!-- Historial de ventas -->
+  <section>
+    <h2>Historial de Ventas</h2>
+    <ul id="historial"></ul>
+  </section>
+
+  <!-- Scripts principales -->
+  <script>
+    // Verificar autenticación antes de mostrar la tienda
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'login.html';
+      }
+    });
+
+    // Cerrar sesión
+    document.getElementById('logout').addEventListener('click', () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = 'login.html';
+      });
+    });
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
