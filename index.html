@@ -1,98 +1,95 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Frutisha Store - Perú</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <title>Frutisha Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* Opcional: hace que la fila de botones se vea ordenada en móvil */
-    .nav-acciones {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 8px;
-      margin-bottom: 12px;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .prenda-item {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+      background: #fff;
+    }
+    .prenda-item button {
+      margin-top: 5px;
+      padding: 5px 10px;
+      background: #ff69b4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .prenda-item button:hover {
+      background: #e055a5;
+    }
+    #carrito {
+      list-style: none;
+      padding: 0;
+    }
+    #carrito li {
+      margin: 5px 0;
+      background: #fff;
+      padding: 5px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #carrito button {
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #carrito button:hover {
+      background: #d93636;
+    }
+    #total {
+      font-weight: bold;
+    }
+    button#finalizar {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button#finalizar:hover {
+      background: #45a049;
     }
   </style>
 </head>
 <body>
+  <h1>Bienvenido a Frutisha Store</h1>
 
-<script>
-  // ✅ Verificar login
-  const usuario = localStorage.getItem("usuarioActivo");
-  const rol = localStorage.getItem("rolActivo");
-  if (!usuario) {
-    window.location.href = "login.html";
-  }
-</script>
+  <h2>Lista de prendas</h2>
+  <div id="listaPrendas">Cargando productos...</div>
 
-<h1>🛍 Frutisha Store</h1>
+  <h2>Carrito de compras</h2>
+  <ul id="carrito"></ul>
+  <p><strong>Total:</strong> <span id="total">S/ 0.00</span></p>
+  <button id="finalizar" onclick="finalizarVenta()">Finalizar venta</button>
 
-<!-- 🔗 Navegación (Reportes / Historial / Tallas / Inventario / Cerrar sesión) -->
-<div class="acciones nav-acciones">
-  <button onclick="location.href='ventas.html'">📈 Reporte de ventas</button>
-  <button onclick="location.href='historial.html'">📚 Historial</button>
-  <!-- Este botón de Inventario solo lo verá el admin (se muestra por JS abajo) -->
-  <button id="btn-inventario" style="display:none;" onclick="location.href='inventario.html'">📦 Inventario</button>
-  <button onclick="cerrarSesion()">🔒 Cerrar sesión</button>
-</div>
+  <!-- Scripts de Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase.js"></script>
 
-<!-- 🧾 Productos de la tienda -->
-<section id="lista-prendas" class="productos"></section>
-
-<!-- 💵 Carrito -->
-<div id="total">Total: S/ 0.00</div>
-<div id="lista">
-  <p><strong>Productos seleccionados:</strong></p>
-  <ul id="productos"></ul>
-</div>
-
-<div class="acciones">
-  <button onclick="finalizarVenta()">💾 Finalizar Venta</button>
-  <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
-</div>
-
-<!-- 🗂 Historial en la portada (últimas ventas) -->
-<div id="historial" style="margin-top:30px;">
-  <h2>📋 Historial del Día</h2>
-  <ul id="ventasDia"></ul>
-  <div class="acciones">
-    <button class="borrar-btn" onclick="borrarHistorial()">🗑 Borrar Historial</button>
-    <button onclick="descargarTXT()">📥 Descargar TXT</button>
-  </div>
-</div>
-
-<!-- Firebase (compat) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "frutisha-store.firebaseapp.com",
-    projectId: "inventario-ab270",
-    storageBucket: "frutisha-store.appspot.com",
-    messagingSenderId: "15388676345",
-    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-</script>
-
-<!-- Lógica principal -->
-<script src="app.js"></script>
-
-<script>
-  // Mostrar botón “Inventario” solo a admin
-  if (rol === "admin") {
-    document.getElementById("btn-inventario").style.display = "inline-block";
-  }
-
-  function cerrarSesion() {
-    localStorage.removeItem("usuarioActivo");
-    localStorage.removeItem("rolActivo");
-    window.location.href = "login.html";
-  }
-</script>
-
+  <!-- Tu lógica de la tienda -->
+  <script src="app.js"></script>
 </body>
 </html>
