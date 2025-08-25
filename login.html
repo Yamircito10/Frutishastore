@@ -2,73 +2,43 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Frutisha Store</title>
+  <title>Iniciar sesión - Fruitsha Store</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <link rel="stylesheet" href="styles.css">
-  <style>
-    .login-container {
-      max-width: 300px;
-      margin: 80px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .login-container input {
-      width: 90%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 15px;
-    }
-    .login-container button {
-      width: 95%;
-      padding: 10px;
-      background-color: var(--rosa);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .login-container button:hover {
-      background-color: var(--rosa-oscuro);
-    }
-  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script src="firebase.js"></script>
 </head>
 <body>
+  <main>
+    <h1>Inicio de sesión</h1>
+    <section>
+      <input type="email" id="email" placeholder="Correo electrónico">
+      <input type="password" id="password" placeholder="Contraseña">
+      <button id="login-btn">Ingresar</button>
+      <p id="login-message"></p>
+    </section>
+  </main>
 
-<h1>🔐 Iniciar Sesión</h1>
+  <script>
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const msg = document.getElementById('login-message');
 
-<div class="login-container">
-  <input type="text" id="usuario" placeholder="Usuario">
-  <input type="password" id="contrasena" placeholder="Contraseña">
-  <button onclick="iniciarSesion()">Entrar</button>
-</div>
-
-<script>
-  const usuarios = [
-    { usuario: 'admin', contrasena: '100922', rol: 'admin' },
-    { usuario: 'trabajador', contrasena: '1234', rol: 'trabajador' }
-  ];
-
-  function iniciarSesion() {
-    const user = document.getElementById('usuario').value.trim();
-    const pass = document.getElementById('contrasena').value.trim();
-
-    const encontrado = usuarios.find(u => u.usuario === user && u.contrasena === pass);
-
-    if (encontrado) {
-      localStorage.setItem("usuarioActivo", encontrado.usuario);
-      localStorage.setItem("rolActivo", encontrado.rol);
-      window.location.href = 'index.html';
-    } else {
-      alert("❌ Usuario o contraseña incorrectos");
-    }
-  }
-</script>
-
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        msg.textContent = "Inicio de sesión exitoso. Redirigiendo...";
+        setTimeout(() => {
+          window.location.href = "index.html"; // Redirige a tu página principal
+        }, 1500);
+      } catch (error) {
+        msg.textContent = "Error: " + error.message;
+      }
+    });
+  </script>
 </body>
 </html>
