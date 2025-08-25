@@ -2,94 +2,66 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Frutisha Store</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f9f9f9;
-    }
-    h1, h2 {
-      color: #333;
-    }
-    .prenda-item {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 10px;
-      margin: 10px 0;
-      background: #fff;
-    }
-    .prenda-item button {
-      margin-top: 5px;
-      padding: 5px 10px;
-      background: #ff69b4;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .prenda-item button:hover {
-      background: #e055a5;
-    }
-    #carrito {
-      list-style: none;
-      padding: 0;
-    }
-    #carrito li {
-      margin: 5px 0;
-      background: #fff;
-      padding: 5px;
-      border-radius: 5px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    #carrito button {
-      background: #ff4d4d;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #carrito button:hover {
-      background: #d93636;
-    }
-    #total {
-      font-weight: bold;
-    }
-    button#finalizar {
-      margin-top: 10px;
-      padding: 10px 20px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button#finalizar:hover {
-      background: #45a049;
-    }
-  </style>
+  <title>Fruitsha Store - Perú</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Estilos principales -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script src="firebase.js"></script>
 </head>
 <body>
-  <h1>Bienvenido a Frutisha Store</h1>
+  <header>
+    <h1>Bienvenido a Fruitsha Store</h1>
+  </header>
 
-  <h2>Lista de prendas</h2>
-  <div id="listaPrendas">Cargando productos...</div>
+  <main>
+    <section id="login-section">
+      <h2>Inicia sesión</h2>
+      <input type="email" id="email" placeholder="Correo electrónico">
+      <input type="password" id="password" placeholder="Contraseña">
+      <button id="login-btn">Ingresar</button>
+      <p id="login-message"></p>
+    </section>
 
-  <h2>Carrito de compras</h2>
-  <ul id="carrito"></ul>
-  <p><strong>Total:</strong> <span id="total">S/ 0.00</span></p>
-  <button id="finalizar" onclick="finalizarVenta()">Finalizar venta</button>
+    <section id="productos-section" style="display: none;">
+      <h2>Inventario</h2>
+      <div id="productos"></div>
+    </section>
+  </main>
 
-  <!-- Scripts de Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="firebase.js"></script>
+  <script>
+    // Lógica de autenticación y carga de productos
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const loginMsg = document.getElementById('login-message');
 
-  <!-- Tu lógica de la tienda -->
-  <script src="app.js"></script>
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        loginMsg.textContent = "Ingreso exitoso";
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('productos-section').style.display = 'block';
+
+        // Aquí puedes cargar tus productos desde Firestore
+        const db = firebase.firestore();
+        const snapshot = await db.collection('productos').get();
+        const contenedor = document.getElementById('productos');
+        contenedor.innerHTML = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const div = document.createElement('div');
+          div.textContent = `${data.nombre} - ${data.precio} soles`;
+          contenedor.appendChild(div);
+        });
+      } catch (error) {
+        loginMsg.textContent = "Error: " + error.message;
+      }
+    });
+  </script>
 </body>
 </html>
