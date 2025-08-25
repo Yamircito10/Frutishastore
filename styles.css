@@ -1,82 +1,70 @@
-/* Variables de color */
 :root {
   --rosa: #ff69b4;
   --rosa-oscuro: #e055a5;
   --texto: #444;
   --borde: #ffe4ec;
-  --fondo: #fff5f8;
-  --fondo-card: #ffffff;
+  --fondo: #fff5f9;
 }
 
-/* Estilos globales */
-body {
-  font-family: Arial, sans-serif;
-  background-color: var(--fondo);
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--fondo);
   color: var(--texto);
+  padding: 20px;
 }
 
-header {
-  background-color: var(--rosa);
-  color: white;
-  padding: 1rem;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-main {
-  padding: 1.5rem;
-}
-
-h1, h2 {
+h1, h2, h3 {
   color: var(--rosa-oscuro);
-  text-align: center;
-}
-
-input[type="email"],
-input[type="password"],
-input[type="text"],
-input[type="number"] {
-  display: block;
-  width: 100%;
-  max-width: 300px;
-  margin: 10px auto;
-  padding: 10px;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
 button {
-  display: block;
-  margin: 15px auto;
-  padding: 10px 20px;
-  background-color: var(--rosa);
+  background: var(--rosa);
   color: white;
   border: none;
+  padding: 10px 15px;
+  margin: 5px 0;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s;
 }
 
 button:hover {
-  background-color: var(--rosa-oscuro);
+  background: var(--rosa-oscuro);
 }
 
-#productos {
+.container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
 }
 
-#productos div {
-  background-color: var(--fondo-card);
-  border: 1px solid var(--borde);
-  padding: 1rem;
+.producto {
+  border: 2px solid var(--borde);
+  padding: 15px;
+  margin-bottom: 10px;
   border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+#carrito, #historial {
+  list-style: none;
+  margin-top: 10px;
+}
+
+#carrito li, #historial li {
+  padding: 8px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.total {
+  font-weight: bold;
+  font-size: 18px;
+  margin-top: 10px;
 }
