@@ -1,287 +1,249 @@
-// =============================
-//  Frutisha Store - Firebase
-// =============================
+// ===============================
+// Configuración inicial
+// ===============================
 
-// ✅ Variables globales
-let total = 0;
-let productosSeleccionados = []; // {id, talla, precio, texto}
-let prendas = [];
+// Recuperar carrito e historial desde localStorage
+let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+let historialVentas = JSON.parse(localStorage.getItem("historialVentas")) || [];
 
-// ✅ Formatear soles
-const formatearSoles = (valor) =>
-  new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
-
-// =============================
-//  Cargar productos
-// =============================
-async function cargarPrendas() {
-  try {
-    const snapshot = await db.collection("inventario").get();
-    prendas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    generarVistaPrendas();
-  } catch (error) {
-    console.error("Error cargando prendas:", error);
-  }
+// ===============================
+// Funciones de utilidad
+// ===============================
+function guardarCarrito() {
+  localStorage.setItem("carrito", JSON.stringify(carrito));
 }
 
-// =============================
-//  Mostrar productos
-// =============================
-function generarVistaPrendas() {
-  const contenedor = document.getElementById("lista-prendas");
+function guardarHistorial() {
+  localStorage.setItem("historialVentas", JSON.stringify(historialVentas));
+}
+
+function mostrarCarrito() {
+  let contenedor = document.getElementById("carrito");
   contenedor.innerHTML = "";
 
-  if (!Array.isArray(prendas) || prendas.length === 0) {
-    contenedor.innerHTML = "<p>⚠️ No hay productos en el inventario.</p>";
+  if (carrito.length === 0) {
+    contenedor.innerHTML = "<p>El carrito está vacío</p>";
     return;
   }
 
-  prendas.forEach(prenda => {
-    const div = document.createElement("div");
-    div.className = "producto-card";
+  let tabla = document.createElement("table");
+  tabla.innerHTML = `
+    <tr>
+      <th>Producto</th>
+      <th>Talla</th>
+      <th>Cantidad</th>
+      <th>Precio</th>
+      <th>Subtotal</th>
+    </tr>
+  `;
 
-    const titulo = document.createElement("h3");
-    titulo.innerText = `${prenda.nombre} (Stock: ${prenda.stock ?? 0})`;
-    div.appendChild(titulo);
+  let total = 0;
 
-    const tallasDiv = document.createElement("div");
-    tallasDiv.className = "tallas";
+  carrito.forEach((prod, i) => {
+    let subtotal = prod.cantidad * prod.precio;
+    total += subtotal;
 
-    const tallas = Array.isArray(prenda.tallas) ? prenda.tallas : [];
-    tallas.forEach(t => {
-      const btn = document.createElement("button");
-      btn.className = "boton-talla";
-      btn.innerText = `T${t.talla}`;
-      btn.disabled = (t.stockTalla ?? 0) <= 0;
-      btn.title = (t.stockTalla ?? 0) <= 0 ? "Sin stock" : `Stock: ${t.stockTalla}`;
-      btn.onclick = () => mostrarDescuentos(div, prenda, t);
-      tallasDiv.appendChild(btn);
-    });
+    let fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${prod.nombre}</td>
+      <td>${prod.talla || "-"}</td>
+      <td>${prod.cantidad}</td>
+      <td>S/ ${prod.precio.toFixed(2)}</td>
+      <td>S/ ${subtotal.toFixed(2)}</td>
+    `;
+    tabla.appendChild(fila);
+  });
 
-    div.appendChild(tallasDiv);
+  contenedor.appendChild(tabla);
 
-    const descDiv = document.createElement("div");
-    descDiv.className = "descuentos";
-    div.appendChild(descDiv);
+  let totalDiv = document.createElement("div");
+  totalDiv.innerHTML = `<h3>Total: S/ ${total.toFixed(2)}</h3>`;
+  contenedor.appendChild(totalDiv);
+}
 
+// ===============================
+// Funciones principales
+// ===============================
+function agregarProducto(nombre, talla, precio, cantidad) {
+  carrito.push({ nombre, talla, precio, cantidad });
+  guardarCarrito();
+  mostrarCarrito();
+}
+
+function finalizarVenta() {
+  if (carrito.length === 0) {
+    alert("El carrito está vacío");
+    return;
+  }
+
+  let venta = {
+    fecha: new Date().toLocaleString(),
+    productos: carrito,
+  };
+
+  historialVentas.push(venta);
+  guardarHistorial();
+
+  carrito = [];
+  guardarCarrito();
+  mostrarCarrito();
+
+  alert("Venta registrada correctamente");
+}
+
+function reiniciarCarrito() {
+  carrito = [];
+  guardarCarrito();
+  mostrarCarrito();
+}
+
+function borrarHistorial() {
+  if (confirm("¿Seguro que deseas borrar el historial completo?")) {
+    historialVentas = [];
+    guardarHistorial();
+    alert("Historial borrado.");
+  }
+}
+
+function mostrarHistorial() {
+  let contenedor = document.getElementById("contenedorHistorial");
+  contenedor.innerHTML = "";
+
+  if (historialVentas.length === 0) {
+    contenedor.innerHTML = "<p>No hay ventas registradas</p>";
+    return;
+  }
+
+  historialVentas.forEach((venta, i) => {
+    let div = document.createElement("div");
+    div.classList.add("venta");
+    div.innerHTML = `
+      <h4>Venta ${i + 1} - ${venta.fecha}</h4>
+      <ul>
+        ${venta.productos.map(p => `<li>${p.cantidad}x ${p.nombre} (T: ${p.talla || "-"}) - S/ ${(p.cantidad * p.precio).toFixed(2)}</li>`).join("")}
+      </ul>
+    `;
     contenedor.appendChild(div);
   });
 }
 
-// =============================
-//  Descuentos
-// =============================
-function mostrarDescuentos(contenedor, prenda, tallaSel) {
-  const descDiv = contenedor.querySelector(".descuentos");
-  descDiv.innerHTML = "";
-
-  const precioBase = (tallaSel.precio ?? prenda.precio);
-  const descuentos = [0, 1, 2, 3];
-
-  descuentos.forEach(desc => {
-    const btn = document.createElement("button");
-    btn.className = "descuento-btn";
-    btn.innerText = desc === 0 ? "Sin Desc." : `-S/${desc}`;
-    btn.onclick = () => agregarProducto(prenda, tallaSel, Number(precioBase) - desc);
-    descDiv.appendChild(btn);
-  });
-}
-
-// =============================
-//  Transacción: ajustar stock talla + stock total
-// =============================
-async function ajustarStock(prendaId, tallaNumero, delta) {
-  // delta: -1 al vender, +1 al devolver
-  return db.runTransaction(async (tx) => {
-    const ref = db.collection("inventario").doc(prendaId);
-    const snap = await tx.get(ref);
-    if (!snap.exists) throw new Error("Prenda no encontrada");
-
-    const data = snap.data();
-    const tallas = Array.isArray(data.tallas) ? [...data.tallas] : [];
-    const idx = tallas.findIndex(x => Number(x.talla) === Number(tallaNumero));
-    if (idx === -1) throw new Error("Talla no encontrada");
-
-    const actual = Number(tallas[idx].stockTalla || 0) + delta;
-    if (actual < 0) throw new Error("Sin stock para esta talla");
-
-    tallas[idx].stockTalla = actual;
-
-    // recalcular stock total sumando todas las tallas
-    const nuevoTotal = tallas.reduce((acc, x) => acc + Number(x.stockTalla || 0), 0);
-
-    tx.update(ref, { tallas, stock: nuevoTotal });
-    return { nuevoTotal, tallas };
-  });
-}
-
-// =============================
-//  Agregar al carrito (vende 1 unidad)
-// =============================
-async function agregarProducto(prenda, tallaSel, precioFinal) {
-  try {
-    // 1) Ajustar stock en Firestore (transacción)
-    await ajustarStock(prenda.id, tallaSel.talla, -1);
-
-    // 2) Actualizar vista y carrito local
-    const texto = `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`;
-    productosSeleccionados.push({
-      id: prenda.id,
-      talla: Number(tallaSel.talla),
-      precio: Number(precioFinal),
-      texto
+function descargarHistorialTXT() {
+  let texto = "Historial de Ventas\n\n";
+  historialVentas.forEach((venta, i) => {
+    texto += `Venta ${i + 1} - ${venta.fecha}\n`;
+    venta.productos.forEach(p => {
+      texto += `  ${p.cantidad}x ${p.nombre} (T: ${p.talla || "-"}) - S/ ${(p.cantidad * p.precio).toFixed(2)}\n`;
     });
-    total += Number(precioFinal);
-
-    await cargarPrendas();
-    actualizarInterfaz();
-  } catch (error) {
-    console.error("Error vendiendo:", error);
-    alert("⚠️ No se pudo realizar la venta: " + error.message);
-  }
-}
-
-// =============================
-//  Eliminar del carrito (repone 1 unidad)
-// =============================
-async function eliminarProducto(index) {
-  const prod = productosSeleccionados[index];
-  if (!prod) return;
-  try {
-    // 1) Reponer stock en Firestore
-    await ajustarStock(prod.id, prod.talla, +1);
-
-    // 2) Quitar del carrito local y ajustar total
-    total -= Number(prod.precio);
-    productosSeleccionados.splice(index, 1);
-
-    await cargarPrendas();
-    actualizarInterfaz();
-  } catch (error) {
-    console.error("Error reponiendo stock:", error);
-    alert("⚠️ No se pudo reponer el stock: " + error.message);
-  }
-}
-
-// =============================
-//  Carrito / UI
-// =============================
-function actualizarInterfaz() {
-  document.getElementById("total").innerText = `Total: ${formatearSoles(total)}`;
-  const ul = document.getElementById("productos");
-  ul.innerHTML = "";
-  productosSeleccionados.forEach((p, i) => {
-    const li = document.createElement("li");
-    li.innerHTML = `${p.texto} <button onclick="eliminarProducto(${i})">❌</button>`;
-    ul.appendChild(li);
+    texto += "\n";
   });
+
+  let blob = new Blob([texto], { type: "text/plain" });
+  let enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(blob);
+  enlace.download = "historial_ventas.txt";
+  enlace.click();
 }
 
-// =============================
-//  Finalizar venta (guarda en ventas)
-// =============================
-async function finalizarVenta() {
-  if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
-  const ahora = new Date();
-  try {
-    await db.collection("ventas").add({
-      fecha: ahora.toLocaleDateString("es-PE"),
-      hora: ahora.toLocaleTimeString("es-PE"),
-      productos: productosSeleccionados.map(p => p.texto),
-      total: Number(total)
+// ===============================
+// Inventario
+// ===============================
+function mostrarInventario() {
+  let inventario = {};
+
+  historialVentas.forEach(venta => {
+    venta.productos.forEach(p => {
+      let clave = `${p.nombre}-${p.talla || "sinTalla"}`;
+      if (!inventario[clave]) {
+        inventario[clave] = { nombre: p.nombre, talla: p.talla || "-", cantidad: 0 };
+      }
+      inventario[clave].cantidad += p.cantidad;
     });
-    total = 0;
-    productosSeleccionados = [];
-    actualizarInterfaz();
-    alert("✅ Venta guardada correctamente.");
-    cargarHistorial();
-  } catch (err) {
-    console.error("Error guardando venta:", err);
-    alert("❌ Error guardando venta.");
-  }
-}
+  });
 
-// =============================
-//  Historial (lee de ventas)
-// =============================
-async function cargarHistorial() {
-  try {
-    const snapshot = await db.collection("ventas").orderBy("fecha", "desc").get();
-    const historial = snapshot.docs.map(doc => doc.data());
-    document.getElementById("ventasDia").innerHTML = historial.map(v => `
-      <li>
-        🗓️ ${v.fecha} 🕒 ${v.hora}<br>
-        🧾 <strong>${v.productos.length} productos</strong> - 💵 Total: <strong>${formatearSoles(v.total)}</strong>
-      </li>
-    `).join('');
-  } catch (error) {
-    console.error("Error cargando historial:", error);
-  }
-}
+  let contenedor = document.getElementById("contenedorInventario");
+  contenedor.innerHTML = "";
 
-// =============================
-//  Exportar TXT (ventas)
-// =============================
-function descargarTXT() {
-  db.collection("ventas").orderBy("fecha", "desc").get()
-    .then(snapshot => {
-      if (snapshot.empty) return alert("⚠️ No hay historial de ventas.");
-      let contenido = `🛍️ Historial de Ventas - Frutisha Store\n\n`;
-      snapshot.forEach((doc, i) => {
-        const v = doc.data();
-        contenido += `Venta ${i + 1}\nFecha: ${v.fecha} - Hora: ${v.hora}\nProductos:\n`;
-        (v.productos || []).forEach(p => contenido += ` - ${p}\n`);
-        contenido += `Total: ${formatearSoles(v.total)}\n---------------------------\n\n`;
-      });
-      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `ventas_frutisha_${new Date().toLocaleDateString("es-PE")}.txt`;
-      a.click();
-    })
-    .catch(err => {
-      console.error("Error exportando TXT:", err);
-      alert("❌ Error al exportar ventas.");
-    });
-}
-
-// =============================
-//  Borrar historial
-// =============================
-async function borrarHistorial() {
-  if (!confirm("¿Deseas borrar el historial de ventas?")) return;
-  try {
-    const snap = await db.collection("ventas").get();
-    const batch = db.batch();
-    snap.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
-    document.getElementById("ventasDia").innerHTML = "";
-    alert("🗑 Historial eliminado.");
-  } catch (err) {
-    console.error("Error eliminando historial:", err);
-  }
-}
-
-// =============================
-//  Reiniciar carrito (no toca Firebase)
-// =============================
-function reiniciarCarrito() {
-  if (!confirm("¿Deseas reiniciar el carrito?")) return;
-  total = 0;
-  productosSeleccionados = [];
-  actualizarInterfaz();
-}
-
-// =============================
-//  Inicializar
-// =============================
-window.onload = async () => {
-  const usuario = localStorage.getItem("usuarioActivo");
-  if (!usuario) {
-    window.location.href = "login.html";
+  if (Object.keys(inventario).length === 0) {
+    contenedor.innerHTML = "<p>No hay inventario registrado</p>";
     return;
   }
-  await cargarPrendas();
-  await cargarHistorial();
-  actualizarInterfaz();
-};
+
+  let tabla = document.createElement("table");
+  tabla.innerHTML = `
+    <tr>
+      <th>Producto</th>
+      <th>Talla</th>
+      <th>Cantidad Vendida</th>
+    </tr>
+  `;
+
+  for (let clave in inventario) {
+    let fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${inventario[clave].nombre}</td>
+      <td>${inventario[clave].talla}</td>
+      <td>${inventario[clave].cantidad}</td>
+    `;
+    tabla.appendChild(fila);
+  }
+
+  contenedor.appendChild(tabla);
+}
+
+// ===============================
+// Reporte de Tallas
+// ===============================
+function generarReporteTallas() {
+  let historial = JSON.parse(localStorage.getItem("historialVentas")) || [];
+  let conteoTallas = {};
+
+  historial.forEach(venta => {
+    venta.productos.forEach(prod => {
+      let talla = prod.talla || "Sin talla";
+      conteoTallas[talla] = (conteoTallas[talla] || 0) + prod.cantidad;
+    });
+  });
+
+  let contenedor = document.getElementById("contenedorTallas");
+  contenedor.innerHTML = "";
+
+  if (Object.keys(conteoTallas).length === 0) {
+    contenedor.innerHTML = "<p>No hay datos de ventas todavía.</p>";
+    return;
+  }
+
+  let tabla = document.createElement("table");
+  tabla.innerHTML = `
+    <tr>
+      <th>Talla</th>
+      <th>Cantidad Vendida</th>
+    </tr>
+  `;
+
+  for (let talla in conteoTallas) {
+    let fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${talla}</td>
+      <td>${conteoTallas[talla]}</td>
+    `;
+    tabla.appendChild(fila);
+  }
+
+  contenedor.appendChild(tabla);
+}
+
+// ===============================
+// Cambio de secciones
+// ===============================
+function mostrarSeccion(id) {
+  let secciones = document.querySelectorAll(".seccion");
+  secciones.forEach(sec => sec.style.display = "none");
+  document.getElementById(id).style.display = "block";
+}
+
+// ===============================
+// Inicialización
+// ===============================
+document.addEventListener("DOMContentLoaded", () => {
+  mostrarCarrito();
+});
