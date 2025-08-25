@@ -2,60 +2,58 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <title>Fruitsha Store - Perú</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fruitsha Store - Panel de Ventas</title>
-  <link rel="stylesheet" href="estilos.css">
+  <!-- Estilos -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  <!-- Encabezado -->
   <header>
-    <h1>🍓 Fruitsha Store - Panel de Ventas</h1>
+    <h1>Fruitsha Store 🍓</h1>
+    <nav>
+      <button onclick="mostrarSeccion('ventas')">Ventas</button>
+      <button onclick="mostrarSeccion('historial')">Historial</button>
+      <button onclick="mostrarSeccion('inventario')">Inventario</button>
+      <button onclick="mostrarSeccion('reportes')">Reportes</button>
+    </nav>
   </header>
 
-  <!-- Navegación -->
-  <nav>
-    <button onclick="mostrarSeccion('carrito')">🛒 Carrito</button>
-    <button onclick="mostrarSeccion('historial')">📑 Historial</button>
-    <button onclick="mostrarSeccion('inventario')">📦 Inventario</button>
-    <button onclick="mostrarSeccion('reporte')">📊 Reporte Tallas</button>
-  </nav>
+  <main>
+    <!-- Sección Ventas -->
+    <section id="ventas" class="seccion-activa">
+      <h2>Nueva Venta</h2>
+      <div id="productos-container"></div>
+      <div class="acciones">
+        <button onclick="finalizarVenta()">Finalizar Venta</button>
+        <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
+      </div>
+      <p>Total: <span id="total">0</span> soles</p>
+    </section>
 
-  <!-- Carrito -->
-  <section id="carrito" class="seccion">
-    <h2>🛒 Carrito de Compras</h2>
-    <div>
-      <label>Producto: <input type="text" id="producto"></label>
-      <label>Precio: <input type="number" id="precio" min="0"></label>
-      <label>Cantidad: <input type="number" id="cantidad" min="1" value="1"></label>
-      <button class="btn-accion" onclick="agregarAlCarrito()">Agregar</button>
-    </div>
-    <ul id="listaCarrito"></ul>
-    <p id="totalCarrito">Total: S/ 0.00</p>
-    <button class="btn-accion" onclick="finalizarVenta()">✅ Finalizar Venta</button>
-    <button class="btn-peligro" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
-  </section>
+    <!-- Sección Historial -->
+    <section id="historial" class="oculto">
+      <h2>Historial de Ventas</h2>
+      <div id="historial-container"></div>
+      <button onclick="borrarHistorial()">Borrar Historial</button>
+      <button onclick="descargarHistorial()">Descargar TXT</button>
+    </section>
 
-  <!-- Historial -->
-  <section id="historial" class="seccion">
-    <h2>📑 Historial de Ventas</h2>
-    <div id="listaHistorial"></div>
-    <button class="btn-peligro" onclick="borrarHistorial()">🗑️ Borrar Historial</button>
-    <button class="btn-descargar" onclick="descargarHistorial()">⬇️ Descargar TXT</button>
-  </section>
+    <!-- Sección Inventario -->
+    <section id="inventario" class="oculto">
+      <h2>Inventario</h2>
+      <div id="inventario-container"></div>
+    </section>
 
-  <!-- Inventario -->
-  <section id="inventario" class="seccion">
-    <h2>📦 Inventario</h2>
-    <div id="listaInventario"></div>
-  </section>
+    <!-- Sección Reportes -->
+    <section id="reportes" class="oculto">
+      <h2>Reportes</h2>
+      <div id="reportes-container"></div>
+    </section>
+  </main>
 
-  <!-- Reporte Tallas -->
-  <section id="reporte" class="seccion">
-    <h2>📊 Reporte por Tallas</h2>
-    <div id="listaTallas"></div>
-  </section>
-
+  <!-- Firebase -->
+  <script type="module" src="firebase.js"></script>
+  <!-- App principal -->
   <script src="app.js"></script>
 </body>
 </html>
