@@ -4,148 +4,61 @@
   <meta charset="UTF-8">
   <title>Fruitsha Store - Perú</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      margin: 0;
-      padding: 0;
-    }
 
-    header {
-      background: #ff69b4;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-    }
-
-    nav {
-      background: #ffc0cb;
-      padding: 0.5rem;
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-
-    nav button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: white;
-      font-weight: bold;
-    }
-
-    nav button:hover {
-      background: #ff69b4;
-      color: white;
-    }
-
-    main {
-      padding: 1rem;
-    }
-
-    .seccion {
-      display: none;
-      margin-top: 1rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
-
-    th {
-      background: #ff69b4;
-      color: white;
-    }
-
-    .acciones {
-      margin-top: 1rem;
-    }
-
-    .acciones button {
-      margin: 0.3rem;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      background: #ff69b4;
-      color: white;
-    }
-
-    .acciones button:hover {
-      background: #d15692;
-    }
-  </style>
+  <!-- Vincular tu archivo de estilos existente -->
+  <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
   <header>
-    <h1>Fruitsha Store - Perú</h1>
-    <p>Gestión de ventas diarias</p>
+    <h1>Fruitsha Store</h1>
+    <nav>
+      <button onclick="mostrarSeccion('carrito')">Carrito</button>
+      <button onclick="mostrarHistorial()">Historial</button>
+      <button onclick="mostrarInventario()">Inventario</button>
+      <button onclick="mostrarReporteTallas()">Reporte Tallas</button>
+    </nav>
   </header>
 
-  <nav>
-    <button onclick="mostrarSeccion('seccionVentas')">Ventas</button>
-    <button onclick="mostrarSeccion('seccionHistorial')">Historial</button>
-    <button onclick="mostrarSeccion('seccionInventario')">Inventario</button>
-    <button onclick="mostrarSeccion('seccionTallas')">Reporte Tallas</button>
-  </nav>
-
   <main>
-    <!-- Sección Ventas -->
-    <div id="seccionVentas" class="seccion">
-      <h2>Ventas</h2>
-      <div id="carrito"></div>
-      <div class="acciones">
-        <button onclick="finalizarVenta()">Finalizar Venta</button>
-        <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
+    <!-- ================== CARRITO ================== -->
+    <section id="carrito" class="seccion">
+      <h2>Carrito de Compras</h2>
+      <div class="formulario">
+        <input type="text" id="nombreProducto" placeholder="Nombre del producto">
+        <input type="number" id="precioProducto" placeholder="Precio">
+        <input type="number" id="cantidadProducto" placeholder="Cantidad">
+        <button onclick="agregarProducto()">Agregar</button>
       </div>
-    </div>
 
-    <!-- Sección Historial -->
-    <div id="seccionHistorial" class="seccion">
+      <ul id="listaCarrito"></ul>
+      <p id="totalCarrito">Total: S/.0.00</p>
+
+      <button onclick="finalizarVenta()">Finalizar Venta</button>
+      <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
+    </section>
+
+    <!-- ================== HISTORIAL ================== -->
+    <section id="historial" class="seccion" style="display:none;">
       <h2>Historial de Ventas</h2>
       <div id="contenedorHistorial"></div>
-      <div class="acciones">
-        <button onclick="mostrarHistorial()">Mostrar Historial</button>
-        <button onclick="borrarHistorial()">Borrar Historial</button>
-        <button onclick="descargarHistorialTXT()">Descargar TXT</button>
-      </div>
-    </div>
+      <button onclick="borrarHistorial()">Borrar Historial</button>
+      <button onclick="descargarHistorial()">Descargar TXT</button>
+    </section>
 
-    <!-- Sección Inventario -->
-    <div id="seccionInventario" class="seccion">
+    <!-- ================== INVENTARIO ================== -->
+    <section id="inventario" class="seccion" style="display:none;">
       <h2>Inventario</h2>
       <div id="contenedorInventario"></div>
-      <div class="acciones">
-        <button onclick="mostrarInventario()">Actualizar Inventario</button>
-      </div>
-    </div>
+    </section>
 
-    <!-- Sección Reporte Tallas -->
-    <div id="seccionTallas" class="seccion">
+    <!-- ================== REPORTE TALLAS ================== -->
+    <section id="reporteTallas" class="seccion" style="display:none;">
       <h2>Reporte de Tallas</h2>
       <div id="contenedorTallas"></div>
-      <div class="acciones">
-        <button onclick="generarReporteTallas()">Generar Reporte</button>
-      </div>
-    </div>
+    </section>
   </main>
 
+  <!-- Conectar el script -->
   <script src="app.js"></script>
-  <script>
-    // Mostrar sección inicial (Ventas)
-    document.addEventListener("DOMContentLoaded", () => {
-      mostrarSeccion("seccionVentas");
-    });
-  </script>
 </body>
 </html>
