@@ -24,18 +24,6 @@
     <button id="loginBtn">Ingresar</button>
     <p id="loginError" style="color: red; margin-top: 10px;"></p>
   </main>
-
-firebase.auth().onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = 'login.html';
-  }
-});
-
-document.getElementById('logout').addEventListener('click', () => {
-  firebase.auth().signOut().then(() => {
-    window.location.href = 'login.html';
-  });
-});
   <script src="login.js"></script>
 </body>
 </html>
