@@ -1,130 +1,163 @@
-/* ================== RESET ================== */
+/* ===============================
+   Reset básico
+   =============================== */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 body {
-  background: #f9f9f9;
+  background: #f5f5f5;
   color: #333;
-  line-height: 1.6;
-  padding: 0;
-  margin: 0;
+  line-height: 1.5;
+  padding: 20px;
 }
 
-/* ================== HEADER ================== */
+/* ===============================
+   Encabezado
+   =============================== */
 header {
-  background: #ff69b4; /* rosa principal */
+  background: #ff69b4;
   color: white;
+  padding: 15px;
   text-align: center;
-  padding: 15px 10px;
+  border-radius: 10px;
+  margin-bottom: 20px;
 }
 
 header h1 {
-  margin-bottom: 10px;
-  font-size: 24px;
+  font-size: 1.8rem;
 }
 
-/* ================== NAV ================== */
+/* ===============================
+   Navegación
+   =============================== */
 nav {
-  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 nav button {
-  background: white;
-  color: #ff69b4;
-  border: 2px solid #ff69b4;
+  background: #ff69b4;
+  border: none;
+  color: white;
+  padding: 10px 15px;
   border-radius: 8px;
-  padding: 8px 15px;
-  margin: 5px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-weight: bold;
+  transition: background 0.3s;
 }
 
 nav button:hover {
   background: #ff1493;
-  color: white;
 }
 
-/* ================== MAIN ================== */
-main {
-  padding: 20px;
-  max-width: 900px;
-  margin: auto;
-}
-
+/* ===============================
+   Secciones
+   =============================== */
 .seccion {
-  margin-bottom: 30px;
-  padding: 15px;
+  display: none;
   background: white;
+  padding: 15px;
   border-radius: 10px;
-  box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
 }
 
-/* ================== FORMULARIO ================== */
-.formulario {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.formulario input {
-  flex: 1 1 200px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.formulario button {
-  background: #ff69b4;
-  border: none;
-  color: white;
-  padding: 8px 15px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.formulario button:hover {
-  background: #ff1493;
-}
-
-/* ================== LISTA CARRITO ================== */
+/* ===============================
+   Carrito
+   =============================== */
 #listaCarrito {
   list-style: none;
-  margin-bottom: 15px;
+  margin: 10px 0;
 }
 
 #listaCarrito li {
-  padding: 8px;
-  margin: 4px 0;
-  border-bottom: 1px solid #eee;
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
-/* ================== BOTONES ================== */
-button {
-  margin-top: 8px;
-  background: #ff69b4;
-  border: none;
+#listaCarrito button {
+  background: #ff4444;
   color: white;
-  padding: 10px 16px;
-  border-radius: 8px;
+  border: none;
+  border-radius: 5px;
+  padding: 3px 7px;
   cursor: pointer;
-  transition: background 0.2s ease;
 }
 
-button:hover {
-  background: #ff1493;
-}
-
-/* ================== TEXTO TOTAL ================== */
 #totalCarrito {
-  font-weight: bold;
-  font-size: 18px;
   margin-top: 10px;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* ===============================
+   Botones generales
+   =============================== */
+button {
+  margin: 5px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-accion {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-accion:hover {
+  background: #388E3C;
+}
+
+.btn-peligro {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-peligro:hover {
+  background: #c0392b;
+}
+
+.btn-descargar {
+  background: #3498db;
+  color: white;
+}
+
+.btn-descargar:hover {
+  background: #2980b9;
+}
+
+/* ===============================
+   Historial, Inventario, Reporte
+   =============================== */
+.venta, .inventario-item, .talla-item {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.venta strong {
+  color: #ff1493;
+}
+
+/* ===============================
+   Responsivo
+   =============================== */
+@media (max-width: 600px) {
+  nav {
+    flex-direction: column;
+  }
+  nav button {
+    width: 100%;
+  }
 }
