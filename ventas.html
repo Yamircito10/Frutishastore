@@ -1,101 +1,98 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Ventas - Fruitsha Store</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <link rel="stylesheet" href="styles.css">
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-  <script src="firebase.js"></script>
-  <!-- Librería para exportar a Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ventas del Día - Frutisha Store</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header>
-    <h1>Registro de Ventas</h1>
-  </header>
+  <h1>🗓️ Ventas por Fecha</h1>
 
-  <main>
-    <h2>Registrar venta</h2>
-    <input type="text" id="producto" placeholder="Producto vendido">
-    <input type="number" id="cantidad" placeholder="Cantidad">
-    <input type="number" id="precio" placeholder="Precio unitario">
-    <button id="registrar">Registrar venta</button>
+  <div class="acciones" style="text-align:center; margin-bottom:10px;">
+    <input type="date" id="fechaSeleccionada" />
+    <button onclick="buscarPorFecha()">🔍 Ver Ventas</button>
+    <button onclick="descargarTxt()">📄 Descargar TXT</button>
+    <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
+  </div>
 
-    <h2>Historial de ventas</h2>
-    <div id="ventas"></div>
-    <button id="exportar">Exportar a Excel</button>
-  </main>
+  <ul id="listaVentas"></ul>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "inventario-ab270",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "15388676345",
+      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
 
   <script>
-    const db = firebase.firestore();
-    const ventasDiv = document.getElementById('ventas');
-    const registrarBtn = document.getElementById('registrar');
-    const exportarBtn = document.getElementById('exportar');
+    function formatearSoles(valor) {
+      return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
+    }
 
-    // Cargar ventas en tiempo real
-    db.collection("ventas").orderBy("fecha", "desc").onSnapshot(snapshot => {
-      ventasDiv.innerHTML = '';
-      snapshot.forEach(doc => {
-        const venta = doc.data();
-        const div = document.createElement('div');
-        div.innerHTML = `
-          <h3>${venta.producto}</h3>
-          <p>Cantidad: ${venta.cantidad}</p>
-          <p>Precio unitario: S/ ${venta.precio}</p>
-          <p>Total: S/ ${(venta.cantidad * venta.precio).toFixed(2)}</p>
-          <p>Fecha: ${new Date(venta.fecha.seconds * 1000).toLocaleString()}</p>
-        `;
-        ventasDiv.appendChild(div);
-      });
-    });
+    let ventasFiltradas = [];
 
-    // Registrar nueva venta
-    registrarBtn.addEventListener('click', async () => {
-      const producto = document.getElementById('producto').value;
-      const cantidad = parseInt(document.getElementById('cantidad').value);
-      const precio = parseFloat(document.getElementById('precio').value);
+    async function buscarPorFecha() {
+      const fecha = document.getElementById("fechaSeleccionada").value;
+      if (!fecha) return alert("⚠️ Selecciona una fecha válida");
 
-      if (!producto || isNaN(cantidad) || isNaN(precio)) {
-        alert('Por favor, completa todos los campos.');
+      const lista = document.getElementById("listaVentas");
+      lista.innerHTML = "<li>Cargando...</li>";
+
+      const fechaPE = new Date(fecha).toLocaleDateString("es-PE");
+      try {
+        const snap = await db.collection("ventas").where("fecha", "==", fechaPE).get();
+        ventasFiltradas = snap.docs.map(d => d.data());
+
+        if (ventasFiltradas.length === 0) {
+          lista.innerHTML = "<li>No hay ventas para esta fecha.</li>";
+          return;
+        }
+
+        lista.innerHTML = ventasFiltradas.map((venta, i) => `
+          <li>
+            <strong>Venta ${i + 1}</strong> — 🕒 ${venta.hora}<br>
+            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+          </li>
+        `).join("");
+      } catch (e) {
+        console.error(e);
+        lista.innerHTML = "<li>❌ Error al cargar ventas.</li>";
+      }
+    }
+
+    function descargarTxt() {
+      if (ventasFiltradas.length === 0) {
+        alert("⚠️ No hay ventas para exportar.");
         return;
       }
+      const fecha = document.getElementById("fechaSeleccionada").value || new Date().toISOString().slice(0,10);
 
-      await db.collection("ventas").add({
-        producto,
-        cantidad,
-        precio,
-        fecha: new Date()
+      let contenido = "🛍️ Ventas del Día - Frutisha Store\n\n";
+      ventasFiltradas.forEach((venta, i) => {
+        contenido += `Venta ${i + 1} - ${venta.hora}\n`;
+        venta.productos.forEach(p => contenido += `  - ${p}\n`);
+        contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
       });
 
-      alert('Venta registrada correctamente');
-    });
-
-    // Exportar ventas a Excel
-    exportarBtn.addEventListener('click', async () => {
-      const snapshot = await db.collection("ventas").orderBy("fecha", "desc").get();
-      const datos = [];
-      snapshot.forEach(doc => {
-        const venta = doc.data();
-        datos.push({
-          Producto: venta.producto,
-          Cantidad: venta.cantidad,
-          "Precio Unitario": venta.precio,
-          Total: venta.cantidad * venta.precio,
-          Fecha: new Date(venta.fecha.seconds * 1000).toLocaleString()
-        });
-      });
-
-      const hoja = XLSX.utils.json_to_sheet(datos);
-      const libro = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(libro, hoja, "Ventas");
-      XLSX.writeFile(libro, "ventas.xlsx");
-    });
+      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `ventas_${fecha}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   </script>
 </body>
 </html>
