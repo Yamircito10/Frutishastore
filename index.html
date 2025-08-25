@@ -2,63 +2,60 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Fruitsha Store - Perú</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- Vincular tu archivo de estilos existente -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fruitsha Store - Panel de Ventas</title>
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
+
+  <!-- Encabezado -->
   <header>
-    <h1>Fruitsha Store</h1>
-    <nav>
-      <button onclick="mostrarSeccion('carrito')">Carrito</button>
-      <button onclick="mostrarHistorial()">Historial</button>
-      <button onclick="mostrarInventario()">Inventario</button>
-      <button onclick="mostrarReporteTallas()">Reporte Tallas</button>
-    </nav>
+    <h1>🍓 Fruitsha Store - Panel de Ventas</h1>
   </header>
 
-  <main>
-    <!-- ================== CARRITO ================== -->
-    <section id="carrito" class="seccion">
-      <h2>Carrito de Compras</h2>
-      <div class="formulario">
-        <input type="text" id="nombreProducto" placeholder="Nombre del producto">
-        <input type="number" id="precioProducto" placeholder="Precio">
-        <input type="number" id="cantidadProducto" placeholder="Cantidad">
-        <button onclick="agregarProducto()">Agregar</button>
-      </div>
+  <!-- Navegación -->
+  <nav>
+    <button onclick="mostrarSeccion('carrito')">🛒 Carrito</button>
+    <button onclick="mostrarSeccion('historial')">📑 Historial</button>
+    <button onclick="mostrarSeccion('inventario')">📦 Inventario</button>
+    <button onclick="mostrarSeccion('reporte')">📊 Reporte Tallas</button>
+  </nav>
 
-      <ul id="listaCarrito"></ul>
-      <p id="totalCarrito">Total: S/.0.00</p>
+  <!-- Carrito -->
+  <section id="carrito" class="seccion">
+    <h2>🛒 Carrito de Compras</h2>
+    <div>
+      <label>Producto: <input type="text" id="producto"></label>
+      <label>Precio: <input type="number" id="precio" min="0"></label>
+      <label>Cantidad: <input type="number" id="cantidad" min="1" value="1"></label>
+      <button class="btn-accion" onclick="agregarAlCarrito()">Agregar</button>
+    </div>
+    <ul id="listaCarrito"></ul>
+    <p id="totalCarrito">Total: S/ 0.00</p>
+    <button class="btn-accion" onclick="finalizarVenta()">✅ Finalizar Venta</button>
+    <button class="btn-peligro" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
+  </section>
 
-      <button onclick="finalizarVenta()">Finalizar Venta</button>
-      <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
-    </section>
+  <!-- Historial -->
+  <section id="historial" class="seccion">
+    <h2>📑 Historial de Ventas</h2>
+    <div id="listaHistorial"></div>
+    <button class="btn-peligro" onclick="borrarHistorial()">🗑️ Borrar Historial</button>
+    <button class="btn-descargar" onclick="descargarHistorial()">⬇️ Descargar TXT</button>
+  </section>
 
-    <!-- ================== HISTORIAL ================== -->
-    <section id="historial" class="seccion" style="display:none;">
-      <h2>Historial de Ventas</h2>
-      <div id="contenedorHistorial"></div>
-      <button onclick="borrarHistorial()">Borrar Historial</button>
-      <button onclick="descargarHistorial()">Descargar TXT</button>
-    </section>
+  <!-- Inventario -->
+  <section id="inventario" class="seccion">
+    <h2>📦 Inventario</h2>
+    <div id="listaInventario"></div>
+  </section>
 
-    <!-- ================== INVENTARIO ================== -->
-    <section id="inventario" class="seccion" style="display:none;">
-      <h2>Inventario</h2>
-      <div id="contenedorInventario"></div>
-    </section>
+  <!-- Reporte Tallas -->
+  <section id="reporte" class="seccion">
+    <h2>📊 Reporte por Tallas</h2>
+    <div id="listaTallas"></div>
+  </section>
 
-    <!-- ================== REPORTE TALLAS ================== -->
-    <section id="reporteTallas" class="seccion" style="display:none;">
-      <h2>Reporte de Tallas</h2>
-      <div id="contenedorTallas"></div>
-    </section>
-  </main>
-
-  <!-- Conectar el script -->
   <script src="app.js"></script>
 </body>
 </html>
