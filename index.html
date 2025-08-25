@@ -2,66 +2,47 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Fruitsha Store - Perú</title>
+  <title>Fruitsha Store</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Estilos principales -->
+  <!-- Estilos -->
   <link rel="stylesheet" href="styles.css">
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="firebase.js"></script>
 </head>
 <body>
   <header>
-    <h1>Bienvenido a Fruitsha Store</h1>
+    <h1>Fruitsha Store</h1>
+    <button id="logout">Cerrar sesión</button>
   </header>
 
   <main>
-    <section id="login-section">
-      <h2>Inicia sesión</h2>
-      <input type="email" id="email" placeholder="Correo electrónico">
-      <input type="password" id="password" placeholder="Contraseña">
-      <button id="login-btn">Ingresar</button>
-      <p id="login-message"></p>
-    </section>
-
-    <section id="productos-section" style="display: none;">
+    <!-- Sección Inventario -->
+    <section>
       <h2>Inventario</h2>
       <div id="productos"></div>
     </section>
+
+    <!-- Sección Carrito -->
+    <section>
+      <h2>Carrito</h2>
+      <ul id="carrito"></ul>
+      <p><strong>Total:</strong> S/ <span id="total">0.00</span></p>
+      <button id="finalizarCompra">Finalizar Compra</button>
+    </section>
+
+    <!-- Sección Historial -->
+    <section>
+      <h2>Historial de Ventas</h2>
+      <ul id="historial"></ul>
+    </section>
   </main>
 
-  <script>
-    // Lógica de autenticación y carga de productos
-    document.getElementById('login-btn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const loginMsg = document.getElementById('login-message');
-
-      try {
-        await firebase.auth().signInWithEmailAndPassword(email, password);
-        loginMsg.textContent = "Ingreso exitoso";
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('productos-section').style.display = 'block';
-
-        // Aquí puedes cargar tus productos desde Firestore
-        const db = firebase.firestore();
-        const snapshot = await db.collection('productos').get();
-        const contenedor = document.getElementById('productos');
-        contenedor.innerHTML = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const div = document.createElement('div');
-          div.textContent = `${data.nombre} - ${data.precio} soles`;
-          contenedor.appendChild(div);
-        });
-      } catch (error) {
-        loginMsg.textContent = "Error: " + error.message;
-      }
-    });
-  </script>
+  <!-- Scripts -->
+  <script src="app.js"></script>
 </body>
 </html>
