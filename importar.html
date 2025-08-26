@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Importar Inventario</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h2>📦 Importar inventario a Firebase</h2>
+  <button onclick="importarInventario()">🚀 Subir inventario</button>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "inventario-ab270",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "15388676345",
+      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 👇 Aquí va tu inventario:
+    const inventario = [
+  {
+    "nombre": "Polos 1",
+    "precio": 35,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 35 }, { "talla": 6, "precio": 35 }, { "talla": 8, "precio": 35 }, { "talla": 10, "precio": 35 }, { "talla": 12, "precio": 35 }, { "talla": 14, "precio": 35 }, { "talla": 16, "precio": 35 }, { "talla": 18, "precio": 35 } ]
+  },
+  {
+    "nombre": "Polos 2",
+    "precio": 30,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 30 }, { "talla": 6, "precio": 30 }, { "talla": 8, "precio": 30 }, { "talla": 10, "precio": 30 }, { "talla": 12, "precio": 30 }, { "talla": 14, "precio": 30 }, { "talla": 16, "precio": 30 } ]
+  },
+  {
+    "nombre": "Polos mangalarga niño",
+    "precio": 35,
+    "stock": 20,
+    "tallas": [ { "talla": 2, "precio": 35 }, { "talla": 4, "precio": 35 }, { "talla": 6, "precio": 35 }, { "talla": 8, "precio": 35 }, { "talla": 10, "precio": 35 }, { "talla": 12, "precio": 35 }, { "talla": 14, "precio": 35 }, { "talla": 16, "precio": 35 } ]
+  },
+  {
+    "nombre": "Polos mangacorta niño",
+    "precio": 28,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 28 }, { "talla": 6, "precio": 28 }, { "talla": 8, "precio": 28 }, { "talla": 10, "precio": 28 }, { "talla": 12, "precio": 28 }, { "talla": 14, "precio": 28 }, { "talla": 16, "precio": 28 } ]
+  },
+  {
+    "nombre": "Polo mangalarga algodón niña",
+    "precio": 30,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 30 }, { "talla": 6, "precio": 30 }, { "talla": 8, "precio": 30 }, { "talla": 10, "precio": 30 }, { "talla": 12, "precio": 30 }, { "talla": 14, "precio": 30 }, { "talla": 16, "precio": 30 } ]
+  },
+  {
+    "nombre": "Jean 1",
+    "precio": 55,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 55 }, { "talla": 6, "precio": 55 }, { "talla": 8, "precio": 55 }, { "talla": 10, "precio": 55 }, { "talla": 12, "precio": 55 }, { "talla": 14, "precio": 55 }, { "talla": 16, "precio": 60 } ]
+  },
+  {
+    "nombre": "Jean 2",
+    "precio": 60,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
+  },
+  {
+    "nombre": "Jean 3",
+    "precio": 65,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 65 }, { "talla": 6, "precio": 65 }, { "talla": 8, "precio": 65 }, { "talla": 10, "precio": 65 }, { "talla": 12, "precio": 65 }, { "talla": 14, "precio": 65 }, { "talla": 16, "precio": 65 } ]
+  },
+  {
+    "nombre": "Jean bebé",
+    "precio": 50,
+    "stock": 20,
+    "tallas": [ { "talla": 2, "precio": 50 }, { "talla": 4, "precio": 50 }, { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 } ]
+  },
+  {
+    "nombre": "Conjunto jean",
+    "precio": 130,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 130 }, { "talla": 6, "precio": 130 }, { "talla": 8, "precio": 130 }, { "talla": 10, "precio": 130 }, { "talla": 12, "precio": 130 }, { "talla": 14, "precio": 130 }, { "talla": 16, "precio": 135 } ]
+  },
+  {
+    "nombre": "Conjunto de piedrita",
+    "precio": 70,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 70 }, { "talla": 6, "precio": 70 }, { "talla": 8, "precio": 70 }, { "talla": 10, "precio": 70 }, { "talla": 12, "precio": 70 }, { "talla": 14, "precio": 70 }, { "talla": 16, "precio": 70 } ]
+  },
+  {
+    "nombre": "Casaca tíoe",
+    "precio": 75,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 75 }, { "talla": 6, "precio": 75 }, { "talla": 8, "precio": 75 }, { "talla": 10, "precio": 75 }, { "talla": 12, "precio": 75 }, { "talla": 14, "precio": 75 }, { "talla": 16, "precio": 75 } ]
+  },
+  {
+    "nombre": "Conjunto flores",
+    "precio": 60,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
+  },
+  {
+    "nombre": "Casaca impermeable",
+    "precio": 50,
+    "stock": 20,
+    "tallas": [ { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 }, { "talla": 10, "precio": 50 }, { "talla": 12, "precio": 50 }, { "talla": 14, "precio": 50 } ]
+  },
+  {
+    "nombre": "Casaca cuero niño",
+    "precio": 60,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
+  },
+  {
+    "nombre": "Casaca cuero niña",
+    "precio": 50,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 50 }, { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 }, { "talla": 10, "precio": 50 }, { "talla": 12, "precio": 50 }, { "talla": 14, "precio": 50 } ]
+  },
+  {
+    "nombre": "Chaleco cuero niña",
+    "precio": 45,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 45 }, { "talla": 6, "precio": 45 }, { "talla": 8, "precio": 45 }, { "talla": 10, "precio": 45 }, { "talla": 12, "precio": 45 }, { "talla": 14, "precio": 45 }, { "talla": 16, "precio": 45 } ]
+  },
+  {
+    "nombre": "Cafarena",
+    "precio": 10,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 10 }, { "talla": 6, "precio": 10 }, { "talla": 8, "precio": 10 }, { "talla": 10, "precio": 10 }, { "talla": 12, "precio": 10 }, { "talla": 14, "precio": 10 } ]
+  }
+]
+
+    function generarTallas(inicio, fin, precio) {
+      const tallas = [];
+      for (let i = inicio; i <= fin; i += 2) {
+        tallas.push({ talla: i, precio: precio });
+      }
+      return tallas;
+    }
+
+    async function importarInventario() {
+      for (const prenda of inventario) {
+        try {
+          await db.collection("inventario").add(prenda);
+          console.log("✅ Agregado:", prenda.nombre);
+        } catch (error) {
+          console.error("❌ Error con:", prenda.nombre, error);
+        }
+      }
+      alert("✅ Inventario importado correctamente.");
+    }
+  </script>
+</body>
+</html>
