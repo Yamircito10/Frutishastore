@@ -1,74 +1,98 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fruitsha Store - Panel de Ventas</title>
-
-  <!-- Tus estilos CSS originales -->
-  <link rel="stylesheet" href="styles.css">
-
-  <!-- Firebase App y Firestore -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Frutisha Store - Perú</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Opcional: hace que la fila de botones se vea ordenada en móvil */
+    .nav-acciones {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Fruitsha Store</h1>
-    <button onclick="cerrarSesion()">Cerrar Sesión</button>
-  </header>
 
-  <main>
-    <!-- Productos -->
-    <section id="productos">
-      <h2>Productos Disponibles</h2>
-      <div id="productos-lista"></div>
-    </section>
+<script>
+  // ✅ Verificar login
+  const usuario = localStorage.getItem("usuarioActivo");
+  const rol = localStorage.getItem("rolActivo");
+  if (!usuario) {
+    window.location.href = "login.html";
+  }
+</script>
 
-    <!-- Carrito de Compras -->
-    <section id="carrito">
-      <h2>Carrito de Compras</h2>
-      <ul id="carrito-lista"></ul>
-      <p>Total: <span id="total">S/ 0.00</span></p>
-      <button onclick="finalizarVenta()">Finalizar Venta</button>
-      <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
-    </section>
+<h1>🛍 Frutisha Store</h1>
 
-    <!-- Historial de Ventas -->
-    <section id="historial">
-      <h2>Historial de Ventas</h2>
-      <div id="ventas-historial"></div>
-      <button onclick="borrarHistorial()">Borrar Historial</button>
-      <button onclick="descargarHistorial()">Descargar TXT</button>
-    </section>
-  </main>
+<!-- 🔗 Navegación (Reportes / Historial / Tallas / Inventario / Cerrar sesión) -->
+<div class="acciones nav-acciones">
+  <button onclick="location.href='ventas.html'">📈 Reporte de ventas</button>
+  <button onclick="location.href='historial.html'">📚 Historial</button>
+  <!-- Este botón de Inventario solo lo verá el admin (se muestra por JS abajo) -->
+  <button id="btn-inventario" style="display:none;" onclick="location.href='inventario.html'">📦 Inventario</button>
+  <button onclick="cerrarSesion()">🔒 Cerrar sesión</button>
+</div>
 
-  <script>
-    // Protección de sesión
-    if (!localStorage.getItem("usuarioActivo")) {
-      window.location.href = "login.html";
-    }
+<!-- 🧾 Productos de la tienda -->
+<section id="lista-prendas" class="productos"></section>
 
-    function cerrarSesion() {
-      localStorage.removeItem("usuarioActivo");
-      window.location.href = "login.html";
-    }
+<!-- 💵 Carrito -->
+<div id="total">Total: S/ 0.00</div>
+<div id="lista">
+  <p><strong>Productos seleccionados:</strong></p>
+  <ul id="productos"></ul>
+</div>
 
-    // ===== Tu configuración de Firebase original =====
-    const firebaseConfig = {
-      apiKey: "TU_API_KEY",
+<div class="acciones">
+  <button onclick="finalizarVenta()">💾 Finalizar Venta</button>
+  <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
+</div>
+
+<!-- 🗂 Historial en la portada (últimas ventas) -->
+<div id="historial" style="margin-top:30px;">
+  <h2>📋 Historial del Día</h2>
+  <ul id="ventasDia"></ul>
+  <div class="acciones">
+    <button class="borrar-btn" onclick="borrarHistorial()">🗑 Borrar Historial</button>
+    <button onclick="descargarTXT()">📥 Descargar TXT</button>
+  </div>
+</div>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
     authDomain: "frutisha-store.firebaseapp.com",
     projectId: "inventario-ab270",
     storageBucket: "frutisha-store.appspot.com",
     messagingSenderId: "15388676345",
     appId: "1:15388676345:web:72c8e22a2aece1d4151228"
-    };
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-  </script>
+<!-- Lógica principal -->
+<script src="app.js"></script>
 
-  <script src="app.js"></script>
+<script>
+  // Mostrar botón “Inventario” solo a admin
+  if (rol === "admin") {
+    document.getElementById("btn-inventario").style.display = "inline-block";
+  }
+
+  function cerrarSesion() {
+    localStorage.removeItem("usuarioActivo");
+    localStorage.removeItem("rolActivo");
+    window.location.href = "login.html";
+  }
+</script>
+
 </body>
 </html>
