@@ -2,58 +2,44 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Fruitsha Store - Perú</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Estilos -->
+  <title>Fruitsha Store - Panel de Ventas</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <h1>Fruitsha Store 🍓</h1>
-    <nav>
-      <button onclick="mostrarSeccion('ventas')">Ventas</button>
-      <button onclick="mostrarSeccion('historial')">Historial</button>
-      <button onclick="mostrarSeccion('inventario')">Inventario</button>
-      <button onclick="mostrarSeccion('reportes')">Reportes</button>
-    </nav>
+    <h1>Fruitsha Store</h1>
+    <button onclick="cerrarSesion()">Cerrar Sesión</button>
   </header>
 
   <main>
-    <!-- Sección Ventas -->
-    <section id="ventas" class="seccion-activa">
-      <h2>Nueva Venta</h2>
-      <div id="productos-container"></div>
-      <div class="acciones">
-        <button onclick="finalizarVenta()">Finalizar Venta</button>
-        <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
-      </div>
-      <p>Total: <span id="total">0</span> soles</p>
+    <section id="carrito">
+      <h2>Carrito de Compras</h2>
+      <div id="productos-lista"></div>
+      <p>Total: <span id="total">S/ 0.00</span></p>
+      <button onclick="finalizarVenta()">Finalizar Venta</button>
+      <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
     </section>
 
-    <!-- Sección Historial -->
-    <section id="historial" class="oculto">
+    <section id="historial">
       <h2>Historial de Ventas</h2>
-      <div id="historial-container"></div>
+      <div id="ventas-historial"></div>
       <button onclick="borrarHistorial()">Borrar Historial</button>
       <button onclick="descargarHistorial()">Descargar TXT</button>
     </section>
-
-    <!-- Sección Inventario -->
-    <section id="inventario" class="oculto">
-      <h2>Inventario</h2>
-      <div id="inventario-container"></div>
-    </section>
-
-    <!-- Sección Reportes -->
-    <section id="reportes" class="oculto">
-      <h2>Reportes</h2>
-      <div id="reportes-container"></div>
-    </section>
   </main>
 
-  <!-- Firebase -->
-  <script type="module" src="firebase.js"></script>
-  <!-- App principal -->
+  <script>
+    // Protección de sesión
+    if (!localStorage.getItem("usuarioActivo")) {
+      window.location.href = "login.html";
+    }
+
+    function cerrarSesion() {
+      localStorage.removeItem("usuarioActivo");
+      window.location.href = "login.html";
+    }
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
