@@ -151,7 +151,8 @@
       historialVentas.forEach((venta, i) => {
         const div = document.createElement("div");
         div.classList.add("venta");
-        div.innerHTML = `<strong>Venta #${i + 1} - ${venta.fecha}</strong>`;
+        div.innerHTML = `<strong>Venta #${i + 1} - ${venta.fecha}</strong> 
+                         <button onclick="eliminarVenta(${i})">Eliminar</button>`;
         const ul = document.createElement("ul");
         venta.productos.forEach(p => {
           const li = document.createElement("li");
@@ -164,7 +165,16 @@
       });
     }
 
-    // Borrar historial
+    // Eliminar venta individual
+    function eliminarVenta(index) {
+      if (confirm(`¿Eliminar la venta #${index + 1}?`)) {
+        historialVentas.splice(index, 1);
+        localStorage.setItem("historialVentas", JSON.stringify(historialVentas));
+        mostrarHistorial();
+      }
+    }
+
+    // Borrar historial completo
     function borrarHistorial() {
       if (confirm("¿Estás seguro de borrar todo el historial?")) {
         historialVentas = [];
