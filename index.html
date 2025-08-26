@@ -13,19 +13,27 @@
   </header>
 
   <main>
+    <!-- Carrito de Compras -->
     <section id="carrito">
       <h2>Carrito de Compras</h2>
-      <div id="productos-lista"></div>
+      <ul id="carrito-lista"></ul> <!-- Agregado para que se muestren los productos del carrito -->
       <p>Total: <span id="total">S/ 0.00</span></p>
-      <button onclick="finalizarVenta()">Finalizar Venta</button>
-      <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
+      <button id="finalizar-venta">Finalizar Venta</button>
+      <button id="reiniciar-carrito">Reiniciar Carrito</button>
     </section>
 
+    <!-- Lista de Productos -->
+    <section id="productos">
+      <h2>Productos Disponibles</h2>
+      <div id="productos-lista"></div> <!-- Aquí se muestran los productos -->
+    </section>
+
+    <!-- Historial de Ventas -->
     <section id="historial">
       <h2>Historial de Ventas</h2>
       <div id="ventas-historial"></div>
-      <button onclick="borrarHistorial()">Borrar Historial</button>
-      <button onclick="descargarHistorial()">Descargar TXT</button>
+      <button id="borrar-historial">Borrar Historial</button>
+      <button id="descargar-txt">Descargar TXT</button>
     </section>
   </main>
 
