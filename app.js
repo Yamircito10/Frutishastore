@@ -1,115 +1,173 @@
-// Productos con tallas (como en tu código original)
+// ===============================
+// Datos iniciales de productos
+// ===============================
 const productos = [
-  { nombre: "Polera", tallas: ["S", "M", "L"], precio: 25 },
-  { nombre: "Jeans", tallas: ["28", "30", "32"], precio: 60 },
-  { nombre: "Casaca", tallas: ["M", "L", "XL"], precio: 80 },
-  { nombre: "Polo", tallas: ["S", "M", "L", "XL"], precio: 20 }
+  { id: 1, nombre: "Polera Fruitsha", precio: 50, tallas: ["S", "M", "L"] },
+  { id: 2, nombre: "Polo Fruitsha", precio: 30, tallas: ["S", "M", "L", "XL"] },
+  { id: 3, nombre: "Casaca Fruitsha", precio: 90, tallas: ["M", "L"] }
 ];
 
 let carrito = [];
-let historial = JSON.parse(localStorage.getItem("historial")) || [];
+let historial = JSON.parse(localStorage.getItem("historialVentas")) || [];
 
-// Mostrar productos
-function cargarProductos() {
-  const cont = document.getElementById("productos-container");
-  cont.innerHTML = "";
-  productos.forEach((prod, i) => {
-    const div = document.createElement("div");
-    div.classList.add("producto");
-    div.innerHTML = `
+// ===============================
+// Renderizar productos
+// ===============================
+function mostrarProductos() {
+  const contenedor = document.getElementById("productos");
+  contenedor.innerHTML = "";
+
+  productos.forEach(prod => {
+    const card = document.createElement("div");
+    card.classList.add("producto-card");
+
+    card.innerHTML = `
       <h3>${prod.nombre}</h3>
-      <p>Precio: ${prod.precio} soles</p>
-      <label>Talla:</label>
-      <select id="talla-${i}">
+      <p>Precio: S/ ${prod.precio.toFixed(2)}</p>
+      <label for="talla-${prod.id}">Talla:</label>
+      <select id="talla-${prod.id}">
         ${prod.tallas.map(t => `<option value="${t}">${t}</option>`).join("")}
       </select>
-      <button onclick="agregarCarrito(${i})">Agregar</button>
+      <button onclick="agregarAlCarrito(${prod.id})">Agregar al carrito</button>
     `;
-    cont.appendChild(div);
+
+    contenedor.appendChild(card);
   });
 }
 
-// Agregar producto
-function agregarCarrito(i) {
-  const talla = document.getElementById(`talla-${i}`).value;
-  const prod = productos[i];
-  carrito.push({ ...prod, talla });
-  actualizarTotal();
+// ===============================
+// Carrito
+// ===============================
+function agregarAlCarrito(id) {
+  const producto = productos.find(p => p.id === id);
+  const talla = document.getElementById(`talla-${id}`).value;
+
+  carrito.push({ ...producto, talla });
+  actualizarCarrito();
 }
 
-// Actualizar total
-function actualizarTotal() {
-  const total = carrito.reduce((s, p) => s + p.precio, 0);
-  document.getElementById("total").textContent = total;
+function actualizarCarrito() {
+  const lista = document.getElementById("lista-carrito");
+  lista.innerHTML = "";
+
+  carrito.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = `${item.nombre} - Talla ${item.talla} - S/ ${item.precio}`;
+    lista.appendChild(li);
+  });
+
+  const total = carrito.reduce((acc, p) => acc + p.precio, 0);
+  document.getElementById("total").textContent = `Total: S/ ${total.toFixed(2)}`;
 }
 
-// Finalizar venta
-function finalizarVenta() {
-  if (carrito.length === 0) return alert("El carrito está vacío");
-  historial.push({ fecha: new Date().toLocaleString(), carrito });
-  localStorage.setItem("historial", JSON.stringify(historial));
+document.getElementById("finalizar").addEventListener("click", () => {
+  if (carrito.length === 0) {
+    alert("El carrito está vacío");
+    return;
+  }
+
+  historial.push({
+    fecha: new Date().toLocaleString(),
+    items: [...carrito]
+  });
+
+  localStorage.setItem("historialVentas", JSON.stringify(historial));
   carrito = [];
-  actualizarTotal();
+  actualizarCarrito();
   alert("Venta finalizada ✅");
-}
+});
 
-// Reiniciar carrito
-function reiniciarCarrito() {
+document.getElementById("reiniciar").addEventListener("click", () => {
   carrito = [];
-  actualizarTotal();
-}
+  actualizarCarrito();
+});
 
-// Historial
-function cargarHistorial() {
-  const cont = document.getElementById("historial-container");
-  cont.innerHTML = "";
+document.getElementById("borrarHistorial").addEventListener("click", () => {
+  if (confirm("¿Seguro que quieres borrar el historial?")) {
+    historial = [];
+    localStorage.removeItem("historialVentas");
+    document.getElementById("contenedor-reportes").innerHTML = "";
+  }
+});
+
+document.getElementById("descargarTXT").addEventListener("click", () => {
+  if (historial.length === 0) {
+    alert("No hay historial para descargar");
+    return;
+  }
+
+  let contenido = "Historial de Ventas:\n\n";
+  historial.forEach((venta, i) => {
+    contenido += `Venta ${i + 1} - ${venta.fecha}\n`;
+    venta.items.forEach(item => {
+      contenido += ` - ${item.nombre} (Talla: ${item.talla}) - S/ ${item.precio}\n`;
+    });
+    contenido += "\n";
+  });
+
+  const blob = new Blob([contenido], { type: "text/plain" });
+  const enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(blob);
+  enlace.download = "historial_ventas.txt";
+  enlace.click();
+});
+
+// ===============================
+// Reportes
+// ===============================
+document.getElementById("verHistorial").addEventListener("click", () => {
+  const contenedor = document.getElementById("contenedor-reportes");
+  contenedor.innerHTML = "<h3>Historial de Ventas</h3>";
+
   historial.forEach((venta, i) => {
     const div = document.createElement("div");
+    div.classList.add("reporte-card");
     div.innerHTML = `
-      <h4>Venta ${i + 1} - ${venta.fecha}</h4>
+      <strong>Venta ${i + 1} - ${venta.fecha}</strong>
       <ul>
-        ${venta.carrito.map(p => `<li>${p.nombre} (${p.talla}) - S/${p.precio}</li>`).join("")}
+        ${venta.items.map(it => `<li>${it.nombre} - Talla ${it.talla} - S/ ${it.precio}</li>`).join("")}
       </ul>
     `;
-    cont.appendChild(div);
+    contenedor.appendChild(div);
   });
-}
+});
 
-// Borrar historial
-function borrarHistorial() {
-  if (confirm("¿Seguro que deseas borrar todo el historial?")) {
-    historial = [];
-    localStorage.removeItem("historial");
-    cargarHistorial();
-  }
-}
+document.getElementById("verInventario").addEventListener("click", () => {
+  const contenedor = document.getElementById("contenedor-reportes");
+  contenedor.innerHTML = "<h3>Inventario</h3>";
 
-// Descargar historial como TXT
-function descargarHistorial() {
-  let texto = "HISTORIAL DE VENTAS\n\n";
-  historial.forEach((venta, i) => {
-    texto += `Venta ${i + 1} - ${venta.fecha}\n`;
-    venta.carrito.forEach(p => {
-      texto += `  ${p.nombre} (${p.talla}) - S/${p.precio}\n`;
+  productos.forEach(p => {
+    const div = document.createElement("div");
+    div.classList.add("reporte-card");
+    div.innerHTML = `
+      ${p.nombre} - Precio: S/ ${p.precio} <br>
+      Tallas: ${p.tallas.join(", ")}
+    `;
+    contenedor.appendChild(div);
+  });
+});
+
+document.getElementById("verTallas").addEventListener("click", () => {
+  const contenedor = document.getElementById("contenedor-reportes");
+  contenedor.innerHTML = "<h3>Reporte de Tallas Vendidas</h3>";
+
+  const conteo = {};
+
+  historial.forEach(v => {
+    v.items.forEach(item => {
+      conteo[item.talla] = (conteo[item.talla] || 0) + 1;
     });
-    texto += "\n";
   });
-  const blob = new Blob([texto], { type: "text/plain" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "historial.txt";
-  link.click();
-}
 
-// Cambiar sección
-function mostrarSeccion(id) {
-  document.querySelectorAll("main section").forEach(s => s.classList.add("oculto"));
-  document.getElementById(id).classList.remove("oculto");
-  if (id === "historial") cargarHistorial();
-}
+  for (const [talla, cantidad] of Object.entries(conteo)) {
+    const p = document.createElement("p");
+    p.textContent = `Talla ${talla}: ${cantidad} ventas`;
+    contenedor.appendChild(p);
+  }
+});
 
-// Inicializar
-window.onload = () => {
-  cargarProductos();
-  cargarHistorial();
-};
+// ===============================
+// Inicialización
+// ===============================
+mostrarProductos();
+actualizarCarrito();
