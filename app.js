@@ -1,35 +1,31 @@
-// app.js
-// Gestión principal de la tienda Fruitsha Store
-// Versión optimizada con la lógica original de carga de productos
-
-// Variables globales
+// Variables
+let productos = [];
 let carrito = [];
 let historialVentas = JSON.parse(localStorage.getItem("historialVentas")) || [];
 
-// Referencias a elementos
+// Referencias HTML
 const productosLista = document.getElementById("productos-lista");
 const carritoLista = document.getElementById("carrito-lista");
 const totalSpan = document.getElementById("total");
-const finalizarBtn = document.getElementById("finalizar-venta");
-const reiniciarBtn = document.getElementById("reiniciar-carrito");
-const borrarHistorialBtn = document.getElementById("borrar-historial");
-const descargarTxtBtn = document.getElementById("descargar-txt");
+const ventasHistorialDiv = document.getElementById("ventas-historial");
 
-// Productos cargados como en tu código original
-const productos = [
-  { id: 1, nombre: "Polera Negra", precio: 50, tallas: ["S", "M", "L"] },
-  { id: 2, nombre: "Polera Blanca", precio: 50, tallas: ["S", "M", "L"] },
-  { id: 3, nombre: "Polo Azul", precio: 30, tallas: ["S", "M", "L"] },
-  { id: 4, nombre: "Polo Rojo", precio: 30, tallas: ["S", "M", "L"] }
-];
+// ===== Función para cargar productos desde Firebase =====
+function cargarProductos() {
+  db.collection("productos").get()
+    .then(snapshot => {
+      // Convertimos cada documento a un objeto con id
+      productos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      mostrarProductos();
+    })
+    .catch(err => console.error("Error cargando productos:", err));
+}
 
-// Función para mostrar productos en la página
+// ===== Mostrar productos en pantalla =====
 function mostrarProductos() {
   productosLista.innerHTML = "";
   productos.forEach(producto => {
     const div = document.createElement("div");
     div.classList.add("producto");
-
     div.innerHTML = `
       <h3>${producto.nombre}</h3>
       <p>Precio: S/ ${producto.precio}</p>
@@ -38,22 +34,21 @@ function mostrarProductos() {
           ${producto.tallas.map(t => `<option value="${t}">${t}</option>`).join("")}
         </select>
       </label>
-      <button onclick="agregarAlCarrito(${producto.id})">Agregar</button>
+      <button onclick="agregarAlCarrito('${producto.id}')">Agregar</button>
     `;
     productosLista.appendChild(div);
   });
 }
 
-// Agregar producto al carrito
+// ===== Agregar producto al carrito =====
 function agregarAlCarrito(id) {
   const producto = productos.find(p => p.id === id);
   const tallaSeleccionada = document.getElementById(`talla-${id}`).value;
-
   carrito.push({ ...producto, talla: tallaSeleccionada });
   actualizarCarrito();
 }
 
-// Actualizar vista del carrito
+// ===== Actualizar carrito =====
 function actualizarCarrito() {
   carritoLista.innerHTML = "";
   let total = 0;
@@ -72,53 +67,81 @@ function actualizarCarrito() {
   totalSpan.textContent = total.toFixed(2);
 }
 
-// Eliminar producto del carrito
+// ===== Eliminar producto del carrito =====
 function eliminarDelCarrito(index) {
   carrito.splice(index, 1);
   actualizarCarrito();
 }
 
-// Finalizar venta
-finalizarBtn.addEventListener("click", () => {
+// ===== Finalizar venta =====
+function finalizarVenta() {
   if (carrito.length === 0) {
     alert("El carrito está vacío.");
     return;
   }
-
   historialVentas.push({
     fecha: new Date().toLocaleString(),
     productos: [...carrito],
     total: carrito.reduce((acc, item) => acc + item.precio, 0)
   });
-
   localStorage.setItem("historialVentas", JSON.stringify(historialVentas));
   carrito = [];
   actualizarCarrito();
+  mostrarHistorial();
   alert("Venta finalizada y guardada en el historial.");
-});
+}
 
-// Reiniciar carrito
-reiniciarBtn.addEventListener("click", () => {
+// ===== Reiniciar carrito =====
+function reiniciarCarrito() {
   carrito = [];
   actualizarCarrito();
-});
+}
 
-// Borrar historial
-borrarHistorialBtn.addEventListener("click", () => {
+// ===== Mostrar historial en pantalla =====
+function mostrarHistorial() {
+  ventasHistorialDiv.innerHTML = "";
+  historialVentas.forEach((venta, i) => {
+    const div = document.createElement("div");
+    div.classList.add("venta");
+    div.innerHTML = `<strong>Venta #${i + 1} - ${venta.fecha}</strong>
+                     <button onclick="eliminarVenta(${i})">Eliminar</button>`;
+    const ul = document.createElement("ul");
+    venta.productos.forEach(p => {
+      const li = document.createElement("li");
+      li.textContent = `${p.nombre} (Talla: ${p.talla}) - S/ ${p.precio}`;
+      ul.appendChild(li);
+    });
+    div.appendChild(ul);
+    div.innerHTML += `<p>Total: S/ ${venta.total}</p>`;
+    ventasHistorialDiv.appendChild(div);
+  });
+}
+
+// ===== Eliminar venta individual =====
+function eliminarVenta(index) {
+  if (confirm(`¿Eliminar la venta #${index + 1}?`)) {
+    historialVentas.splice(index, 1);
+    localStorage.setItem("historialVentas", JSON.stringify(historialVentas));
+    mostrarHistorial();
+  }
+}
+
+// ===== Borrar historial completo =====
+function borrarHistorial() {
   if (confirm("¿Estás seguro de borrar todo el historial?")) {
     historialVentas = [];
     localStorage.removeItem("historialVentas");
+    mostrarHistorial();
     alert("Historial borrado.");
   }
-});
+}
 
-// Descargar historial en TXT
-descargarTxtBtn.addEventListener("click", () => {
+// ===== Descargar historial en TXT =====
+function descargarHistorial() {
   if (historialVentas.length === 0) {
     alert("No hay ventas para descargar.");
     return;
   }
-
   let contenido = "Historial de Ventas\n\n";
   historialVentas.forEach((venta, i) => {
     contenido += `Venta #${i + 1}\nFecha: ${venta.fecha}\n`;
@@ -133,10 +156,11 @@ descargarTxtBtn.addEventListener("click", () => {
   enlace.href = URL.createObjectURL(blob);
   enlace.download = "historial_ventas.txt";
   enlace.click();
-});
+}
 
-// Inicialización
+// ===== Inicialización =====
 document.addEventListener("DOMContentLoaded", () => {
-  mostrarProductos();
+  cargarProductos(); // Carga productos desde Firebase
   actualizarCarrito();
+  mostrarHistorial();
 });
