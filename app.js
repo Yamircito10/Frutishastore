@@ -1,173 +1,95 @@
-// ===============================
-// Datos iniciales de productos
-// ===============================
-const productos = [
-  { id: 1, nombre: "Polera Fruitsha", precio: 50, tallas: ["S", "M", "L"] },
-  { id: 2, nombre: "Polo Fruitsha", precio: 30, tallas: ["S", "M", "L", "XL"] },
-  { id: 3, nombre: "Casaca Fruitsha", precio: 90, tallas: ["M", "L"] }
-];
+// app.js
 
 let carrito = [];
-let historial = JSON.parse(localStorage.getItem("historialVentas")) || [];
+let historialVentas = JSON.parse(localStorage.getItem("historialVentas")) || [];
 
-// ===============================
+// Productos simulados
+const productos = [
+  { nombre: "Polera", precio: 35, tallas: ["S", "M", "L"] },
+  { nombre: "Polo", precio: 25, tallas: ["S", "M", "L", "XL"] },
+  { nombre: "Pantalón", precio: 50, tallas: ["M", "L"] }
+];
+
 // Renderizar productos
-// ===============================
 function mostrarProductos() {
-  const contenedor = document.getElementById("productos");
+  const contenedor = document.getElementById("productos-lista");
   contenedor.innerHTML = "";
-
-  productos.forEach(prod => {
-    const card = document.createElement("div");
-    card.classList.add("producto-card");
-
-    card.innerHTML = `
-      <h3>${prod.nombre}</h3>
-      <p>Precio: S/ ${prod.precio.toFixed(2)}</p>
-      <label for="talla-${prod.id}">Talla:</label>
-      <select id="talla-${prod.id}">
-        ${prod.tallas.map(t => `<option value="${t}">${t}</option>`).join("")}
+  productos.forEach((p, index) => {
+    const div = document.createElement("div");
+    div.classList.add("producto");
+    div.innerHTML = `
+      <strong>${p.nombre}</strong> - S/ ${p.precio}
+      <select id="talla-${index}">
+        ${p.tallas.map(t => `<option value="${t}">${t}</option>`).join("")}
       </select>
-      <button onclick="agregarAlCarrito(${prod.id})">Agregar al carrito</button>
+      <button onclick="agregarAlCarrito(${index})">Agregar</button>
     `;
-
-    contenedor.appendChild(card);
+    contenedor.appendChild(div);
   });
 }
 
-// ===============================
-// Carrito
-// ===============================
-function agregarAlCarrito(id) {
-  const producto = productos.find(p => p.id === id);
-  const talla = document.getElementById(`talla-${id}`).value;
-
-  carrito.push({ ...producto, talla });
+// Agregar producto al carrito
+function agregarAlCarrito(index) {
+  const talla = document.getElementById(`talla-${index}`).value;
+  carrito.push({ ...productos[index], talla });
   actualizarCarrito();
 }
 
+// Actualizar carrito
 function actualizarCarrito() {
-  const lista = document.getElementById("lista-carrito");
-  lista.innerHTML = "";
-
-  carrito.forEach((item, index) => {
-    const li = document.createElement("li");
-    li.textContent = `${item.nombre} - Talla ${item.talla} - S/ ${item.precio}`;
-    lista.appendChild(li);
-  });
-
-  const total = carrito.reduce((acc, p) => acc + p.precio, 0);
-  document.getElementById("total").textContent = `Total: S/ ${total.toFixed(2)}`;
+  let total = carrito.reduce((suma, p) => suma + p.precio, 0);
+  document.getElementById("total").textContent = `S/ ${total.toFixed(2)}`;
 }
 
-document.getElementById("finalizar").addEventListener("click", () => {
-  if (carrito.length === 0) {
-    alert("El carrito está vacío");
-    return;
-  }
-
-  historial.push({
+// Finalizar venta
+function finalizarVenta() {
+  if (carrito.length === 0) return alert("El carrito está vacío.");
+  historialVentas.push({
     fecha: new Date().toLocaleString(),
-    items: [...carrito]
+    productos: [...carrito],
+    total: carrito.reduce((s, p) => s + p.precio, 0)
   });
-
-  localStorage.setItem("historialVentas", JSON.stringify(historial));
+  localStorage.setItem("historialVentas", JSON.stringify(historialVentas));
   carrito = [];
   actualizarCarrito();
-  alert("Venta finalizada ✅");
-});
+  mostrarHistorial();
+}
 
-document.getElementById("reiniciar").addEventListener("click", () => {
+// Reiniciar carrito
+function reiniciarCarrito() {
   carrito = [];
   actualizarCarrito();
-});
+}
 
-document.getElementById("borrarHistorial").addEventListener("click", () => {
-  if (confirm("¿Seguro que quieres borrar el historial?")) {
-    historial = [];
-    localStorage.removeItem("historialVentas");
-    document.getElementById("contenedor-reportes").innerHTML = "";
-  }
-});
-
-document.getElementById("descargarTXT").addEventListener("click", () => {
-  if (historial.length === 0) {
-    alert("No hay historial para descargar");
-    return;
-  }
-
-  let contenido = "Historial de Ventas:\n\n";
-  historial.forEach((venta, i) => {
-    contenido += `Venta ${i + 1} - ${venta.fecha}\n`;
-    venta.items.forEach(item => {
-      contenido += ` - ${item.nombre} (Talla: ${item.talla}) - S/ ${item.precio}\n`;
-    });
-    contenido += "\n";
+// Mostrar historial
+function mostrarHistorial() {
+  const contenedor = document.getElementById("ventas-historial");
+  contenedor.innerHTML = "";
+  historialVentas.forEach(v => {
+    const div = document.createElement("div");
+    div.innerHTML = `<p>${v.fecha} - Total: S/ ${v.total.toFixed(2)}</p>`;
+    contenedor.appendChild(div);
   });
+}
 
+// Borrar historial
+function borrarHistorial() {
+  if (!confirm("¿Seguro que deseas borrar todo el historial?")) return;
+  historialVentas = [];
+  localStorage.removeItem("historialVentas");
+  mostrarHistorial();
+}
+
+// Descargar historial en TXT
+function descargarHistorial() {
+  const contenido = historialVentas.map(v => `${v.fecha} - Total: S/ ${v.total.toFixed(2)}`).join("\n");
   const blob = new Blob([contenido], { type: "text/plain" });
   const enlace = document.createElement("a");
   enlace.href = URL.createObjectURL(blob);
   enlace.download = "historial_ventas.txt";
   enlace.click();
-});
+}
 
-// ===============================
-// Reportes
-// ===============================
-document.getElementById("verHistorial").addEventListener("click", () => {
-  const contenedor = document.getElementById("contenedor-reportes");
-  contenedor.innerHTML = "<h3>Historial de Ventas</h3>";
-
-  historial.forEach((venta, i) => {
-    const div = document.createElement("div");
-    div.classList.add("reporte-card");
-    div.innerHTML = `
-      <strong>Venta ${i + 1} - ${venta.fecha}</strong>
-      <ul>
-        ${venta.items.map(it => `<li>${it.nombre} - Talla ${it.talla} - S/ ${it.precio}</li>`).join("")}
-      </ul>
-    `;
-    contenedor.appendChild(div);
-  });
-});
-
-document.getElementById("verInventario").addEventListener("click", () => {
-  const contenedor = document.getElementById("contenedor-reportes");
-  contenedor.innerHTML = "<h3>Inventario</h3>";
-
-  productos.forEach(p => {
-    const div = document.createElement("div");
-    div.classList.add("reporte-card");
-    div.innerHTML = `
-      ${p.nombre} - Precio: S/ ${p.precio} <br>
-      Tallas: ${p.tallas.join(", ")}
-    `;
-    contenedor.appendChild(div);
-  });
-});
-
-document.getElementById("verTallas").addEventListener("click", () => {
-  const contenedor = document.getElementById("contenedor-reportes");
-  contenedor.innerHTML = "<h3>Reporte de Tallas Vendidas</h3>";
-
-  const conteo = {};
-
-  historial.forEach(v => {
-    v.items.forEach(item => {
-      conteo[item.talla] = (conteo[item.talla] || 0) + 1;
-    });
-  });
-
-  for (const [talla, cantidad] of Object.entries(conteo)) {
-    const p = document.createElement("p");
-    p.textContent = `Talla ${talla}: ${cantidad} ventas`;
-    contenedor.appendChild(p);
-  }
-});
-
-// ===============================
-// Inicialización
-// ===============================
+// Inicializar
 mostrarProductos();
-actualizarCarrito();
+mostrarHistorial();
