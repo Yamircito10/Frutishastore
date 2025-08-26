@@ -1,95 +1,142 @@
 // app.js
+// Gestión principal de la tienda Fruitsha Store
+// Versión optimizada con la lógica original de carga de productos
 
+// Variables globales
 let carrito = [];
 let historialVentas = JSON.parse(localStorage.getItem("historialVentas")) || [];
 
-// Productos simulados
+// Referencias a elementos
+const productosLista = document.getElementById("productos-lista");
+const carritoLista = document.getElementById("carrito-lista");
+const totalSpan = document.getElementById("total");
+const finalizarBtn = document.getElementById("finalizar-venta");
+const reiniciarBtn = document.getElementById("reiniciar-carrito");
+const borrarHistorialBtn = document.getElementById("borrar-historial");
+const descargarTxtBtn = document.getElementById("descargar-txt");
+
+// Productos cargados como en tu código original
 const productos = [
-  { nombre: "Polera", precio: 35, tallas: ["S", "M", "L"] },
-  { nombre: "Polo", precio: 25, tallas: ["S", "M", "L", "XL"] },
-  { nombre: "Pantalón", precio: 50, tallas: ["M", "L"] }
+  { id: 1, nombre: "Polera Negra", precio: 50, tallas: ["S", "M", "L"] },
+  { id: 2, nombre: "Polera Blanca", precio: 50, tallas: ["S", "M", "L"] },
+  { id: 3, nombre: "Polo Azul", precio: 30, tallas: ["S", "M", "L"] },
+  { id: 4, nombre: "Polo Rojo", precio: 30, tallas: ["S", "M", "L"] }
 ];
 
-// Renderizar productos
+// Función para mostrar productos en la página
 function mostrarProductos() {
-  const contenedor = document.getElementById("productos-lista");
-  contenedor.innerHTML = "";
-  productos.forEach((p, index) => {
+  productosLista.innerHTML = "";
+  productos.forEach(producto => {
     const div = document.createElement("div");
     div.classList.add("producto");
+
     div.innerHTML = `
-      <strong>${p.nombre}</strong> - S/ ${p.precio}
-      <select id="talla-${index}">
-        ${p.tallas.map(t => `<option value="${t}">${t}</option>`).join("")}
-      </select>
-      <button onclick="agregarAlCarrito(${index})">Agregar</button>
+      <h3>${producto.nombre}</h3>
+      <p>Precio: S/ ${producto.precio}</p>
+      <label>Talla:
+        <select id="talla-${producto.id}">
+          ${producto.tallas.map(t => `<option value="${t}">${t}</option>`).join("")}
+        </select>
+      </label>
+      <button onclick="agregarAlCarrito(${producto.id})">Agregar</button>
     `;
-    contenedor.appendChild(div);
+    productosLista.appendChild(div);
   });
 }
 
 // Agregar producto al carrito
-function agregarAlCarrito(index) {
-  const talla = document.getElementById(`talla-${index}`).value;
-  carrito.push({ ...productos[index], talla });
+function agregarAlCarrito(id) {
+  const producto = productos.find(p => p.id === id);
+  const tallaSeleccionada = document.getElementById(`talla-${id}`).value;
+
+  carrito.push({ ...producto, talla: tallaSeleccionada });
   actualizarCarrito();
 }
 
-// Actualizar carrito
+// Actualizar vista del carrito
 function actualizarCarrito() {
-  let total = carrito.reduce((suma, p) => suma + p.precio, 0);
-  document.getElementById("total").textContent = `S/ ${total.toFixed(2)}`;
+  carritoLista.innerHTML = "";
+  let total = 0;
+
+  carrito.forEach((item, index) => {
+    total += item.precio;
+    const li = document.createElement("li");
+    li.textContent = `${item.nombre} - Talla: ${item.talla} - S/ ${item.precio}`;
+    const btnEliminar = document.createElement("button");
+    btnEliminar.textContent = "X";
+    btnEliminar.onclick = () => eliminarDelCarrito(index);
+    li.appendChild(btnEliminar);
+    carritoLista.appendChild(li);
+  });
+
+  totalSpan.textContent = total.toFixed(2);
+}
+
+// Eliminar producto del carrito
+function eliminarDelCarrito(index) {
+  carrito.splice(index, 1);
+  actualizarCarrito();
 }
 
 // Finalizar venta
-function finalizarVenta() {
-  if (carrito.length === 0) return alert("El carrito está vacío.");
+finalizarBtn.addEventListener("click", () => {
+  if (carrito.length === 0) {
+    alert("El carrito está vacío.");
+    return;
+  }
+
   historialVentas.push({
     fecha: new Date().toLocaleString(),
     productos: [...carrito],
-    total: carrito.reduce((s, p) => s + p.precio, 0)
+    total: carrito.reduce((acc, item) => acc + item.precio, 0)
   });
+
   localStorage.setItem("historialVentas", JSON.stringify(historialVentas));
   carrito = [];
   actualizarCarrito();
-  mostrarHistorial();
-}
+  alert("Venta finalizada y guardada en el historial.");
+});
 
 // Reiniciar carrito
-function reiniciarCarrito() {
+reiniciarBtn.addEventListener("click", () => {
   carrito = [];
   actualizarCarrito();
-}
-
-// Mostrar historial
-function mostrarHistorial() {
-  const contenedor = document.getElementById("ventas-historial");
-  contenedor.innerHTML = "";
-  historialVentas.forEach(v => {
-    const div = document.createElement("div");
-    div.innerHTML = `<p>${v.fecha} - Total: S/ ${v.total.toFixed(2)}</p>`;
-    contenedor.appendChild(div);
-  });
-}
+});
 
 // Borrar historial
-function borrarHistorial() {
-  if (!confirm("¿Seguro que deseas borrar todo el historial?")) return;
-  historialVentas = [];
-  localStorage.removeItem("historialVentas");
-  mostrarHistorial();
-}
+borrarHistorialBtn.addEventListener("click", () => {
+  if (confirm("¿Estás seguro de borrar todo el historial?")) {
+    historialVentas = [];
+    localStorage.removeItem("historialVentas");
+    alert("Historial borrado.");
+  }
+});
 
 // Descargar historial en TXT
-function descargarHistorial() {
-  const contenido = historialVentas.map(v => `${v.fecha} - Total: S/ ${v.total.toFixed(2)}`).join("\n");
+descargarTxtBtn.addEventListener("click", () => {
+  if (historialVentas.length === 0) {
+    alert("No hay ventas para descargar.");
+    return;
+  }
+
+  let contenido = "Historial de Ventas\n\n";
+  historialVentas.forEach((venta, i) => {
+    contenido += `Venta #${i + 1}\nFecha: ${venta.fecha}\n`;
+    venta.productos.forEach(p => {
+      contenido += `- ${p.nombre} (Talla: ${p.talla}) - S/ ${p.precio}\n`;
+    });
+    contenido += `Total: S/ ${venta.total}\n\n`;
+  });
+
   const blob = new Blob([contenido], { type: "text/plain" });
   const enlace = document.createElement("a");
   enlace.href = URL.createObjectURL(blob);
   enlace.download = "historial_ventas.txt";
   enlace.click();
-}
+});
 
-// Inicializar
-mostrarProductos();
-mostrarHistorial();
+// Inicialización
+document.addEventListener("DOMContentLoaded", () => {
+  mostrarProductos();
+  actualizarCarrito();
+});
