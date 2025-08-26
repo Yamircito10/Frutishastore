@@ -13,27 +13,27 @@
   </header>
 
   <main>
+    <!-- Productos -->
+    <section id="productos">
+      <h2>Productos Disponibles</h2>
+      <div id="productos-lista"></div>
+    </section>
+
     <!-- Carrito de Compras -->
     <section id="carrito">
       <h2>Carrito de Compras</h2>
-      <ul id="carrito-lista"></ul> <!-- Agregado para que se muestren los productos del carrito -->
+      <ul id="carrito-lista"></ul>
       <p>Total: <span id="total">S/ 0.00</span></p>
-      <button id="finalizar-venta">Finalizar Venta</button>
-      <button id="reiniciar-carrito">Reiniciar Carrito</button>
-    </section>
-
-    <!-- Lista de Productos -->
-    <section id="productos">
-      <h2>Productos Disponibles</h2>
-      <div id="productos-lista"></div> <!-- Aquí se muestran los productos -->
+      <button onclick="finalizarVenta()">Finalizar Venta</button>
+      <button onclick="reiniciarCarrito()">Reiniciar Carrito</button>
     </section>
 
     <!-- Historial de Ventas -->
     <section id="historial">
       <h2>Historial de Ventas</h2>
       <div id="ventas-historial"></div>
-      <button id="borrar-historial">Borrar Historial</button>
-      <button id="descargar-txt">Descargar TXT</button>
+      <button onclick="borrarHistorial()">Borrar Historial</button>
+      <button onclick="descargarHistorial()">Descargar TXT</button>
     </section>
   </main>
 
@@ -47,7 +47,62 @@
       localStorage.removeItem("usuarioActivo");
       window.location.href = "login.html";
     }
+
+    // Funciones de carrito e historial adaptadas al onclick
+    function finalizarVenta() {
+      if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+      }
+      historialVentas.push({
+        fecha: new Date().toLocaleString(),
+        productos: [...carrito],
+        total: carrito.reduce((acc, item) => acc + item.precio, 0)
+      });
+      localStorage.setItem("historialVentas", JSON.stringify(historialVentas));
+      carrito = [];
+      actualizarCarrito();
+      mostrarHistorial();
+      alert("Venta finalizada y guardada en el historial.");
+    }
+
+    function reiniciarCarrito() {
+      carrito = [];
+      actualizarCarrito();
+    }
+
+    function borrarHistorial() {
+      if (confirm("¿Estás seguro de borrar todo el historial?")) {
+        historialVentas = [];
+        localStorage.removeItem("historialVentas");
+        mostrarHistorial();
+        alert("Historial borrado.");
+      }
+    }
+
+    function descargarHistorial() {
+      if (historialVentas.length === 0) {
+        alert("No hay ventas para descargar.");
+        return;
+      }
+
+      let contenido = "Historial de Ventas\n\n";
+      historialVentas.forEach((venta, i) => {
+        contenido += `Venta #${i + 1}\nFecha: ${venta.fecha}\n`;
+        venta.productos.forEach(p => {
+          contenido += `- ${p.nombre} (Talla: ${p.talla}) - S/ ${p.precio}\n`;
+        });
+        contenido += `Total: S/ ${venta.total}\n\n`;
+      });
+
+      const blob = new Blob([contenido], { type: "text/plain" });
+      const enlace = document.createElement("a");
+      enlace.href = URL.createObjectURL(blob);
+      enlace.download = "historial_ventas.txt";
+      enlace.click();
+    }
   </script>
+
   <script src="app.js"></script>
 </body>
 </html>
