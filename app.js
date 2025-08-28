@@ -91,7 +91,6 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
 //  Transacción: ajustar stock talla + stock total
 // =============================
 async function ajustarStock(prendaId, tallaNumero, delta) {
-  // delta: -1 al vender, +1 al devolver
   return db.runTransaction(async (tx) => {
     const ref = db.collection("inventario").doc(prendaId);
     const snap = await tx.get(ref);
@@ -106,8 +105,6 @@ async function ajustarStock(prendaId, tallaNumero, delta) {
     if (actual < 0) throw new Error("Sin stock para esta talla");
 
     tallas[idx].stockTalla = actual;
-
-    // recalcular stock total sumando todas las tallas
     const nuevoTotal = tallas.reduce((acc, x) => acc + Number(x.stockTalla || 0), 0);
 
     tx.update(ref, { tallas, stock: nuevoTotal });
@@ -116,14 +113,11 @@ async function ajustarStock(prendaId, tallaNumero, delta) {
 }
 
 // =============================
-//  Agregar al carrito (vende 1 unidad)
+//  Agregar al carrito
 // =============================
 async function agregarProducto(prenda, tallaSel, precioFinal) {
   try {
-    // 1) Ajustar stock en Firestore (transacción)
     await ajustarStock(prenda.id, tallaSel.talla, -1);
-
-    // 2) Actualizar vista y carrito local
     const texto = `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`;
     productosSeleccionados.push({
       id: prenda.id,
@@ -142,16 +136,13 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
 }
 
 // =============================
-//  Eliminar del carrito (repone 1 unidad)
+//  Eliminar del carrito
 // =============================
 async function eliminarProducto(index) {
   const prod = productosSeleccionados[index];
   if (!prod) return;
   try {
-    // 1) Reponer stock en Firestore
     await ajustarStock(prod.id, prod.talla, +1);
-
-    // 2) Quitar del carrito local y ajustar total
     total -= Number(prod.precio);
     productosSeleccionados.splice(index, 1);
 
@@ -178,18 +169,23 @@ function actualizarInterfaz() {
 }
 
 // =============================
-//  Finalizar venta (guarda en ventas)
+//  Finalizar venta (actualizado)
 // =============================
 async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
   const ahora = new Date();
+  const usuario = localStorage.getItem("usuarioActivo") || "desconocido";
+
   try {
     await db.collection("ventas").add({
       fecha: ahora.toLocaleDateString("es-PE"),
       hora: ahora.toLocaleTimeString("es-PE"),
+      timestamp: firebase.firestore.Timestamp.now(), // <-- para filtros futuros
+      usuario: usuario, // <-- quién realizó la venta
       productos: productosSeleccionados.map(p => p.texto),
       total: Number(total)
     });
+
     total = 0;
     productosSeleccionados = [];
     actualizarInterfaz();
@@ -220,7 +216,7 @@ async function cargarHistorial() {
 }
 
 // =============================
-//  Exportar TXT (ventas)
+//  Exportar TXT
 // =============================
 function descargarTXT() {
   db.collection("ventas").orderBy("fecha", "desc").get()
@@ -263,7 +259,7 @@ async function borrarHistorial() {
 }
 
 // =============================
-//  Reiniciar carrito (no toca Firebase)
+//  Reiniciar carrito
 // =============================
 function reiniciarCarrito() {
   if (!confirm("¿Deseas reiniciar el carrito?")) return;
