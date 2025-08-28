@@ -7,10 +7,6 @@ let total = 0;
 let productosSeleccionados = []; // {id, talla, precio, texto}
 let prendas = [];
 
-// ✅ Formatear soles
-const formatearSoles = (valor) =>
-  new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
-
 // =============================
 //  Cargar productos
 // =============================
@@ -169,7 +165,7 @@ function actualizarInterfaz() {
 }
 
 // =============================
-//  Finalizar venta (actualizado)
+//  Finalizar venta
 // =============================
 async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return alert("¡Agrega productos primero!");
@@ -180,8 +176,8 @@ async function finalizarVenta() {
     await db.collection("ventas").add({
       fecha: ahora.toLocaleDateString("es-PE"),
       hora: ahora.toLocaleTimeString("es-PE"),
-      timestamp: firebase.firestore.Timestamp.now(), // <-- para filtros futuros
-      usuario: usuario, // <-- quién realizó la venta
+      timestamp: firebase.firestore.Timestamp.now(),
+      usuario: usuario,
       productos: productosSeleccionados.map(p => p.texto),
       total: Number(total)
     });
@@ -216,29 +212,17 @@ async function cargarHistorial() {
 }
 
 // =============================
-//  Exportar TXT
+//  Exportar TXT usando helper
 // =============================
-function descargarTXT() {
-  db.collection("ventas").orderBy("fecha", "desc").get()
-    .then(snapshot => {
-      if (snapshot.empty) return alert("⚠️ No hay historial de ventas.");
-      let contenido = `🛍️ Historial de Ventas - Frutisha Store\n\n`;
-      snapshot.forEach((doc, i) => {
-        const v = doc.data();
-        contenido += `Venta ${i + 1}\nFecha: ${v.fecha} - Hora: ${v.hora}\nProductos:\n`;
-        (v.productos || []).forEach(p => contenido += ` - ${p}\n`);
-        contenido += `Total: ${formatearSoles(v.total)}\n---------------------------\n\n`;
-      });
-      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `ventas_frutisha_${new Date().toLocaleDateString("es-PE")}.txt`;
-      a.click();
-    })
-    .catch(err => {
-      console.error("Error exportando TXT:", err);
-      alert("❌ Error al exportar ventas.");
-    });
+async function descargarTXT() {
+  try {
+    const snapshot = await db.collection("ventas").orderBy("fecha", "desc").get();
+    const ventas = snapshot.docs.map(doc => doc.data());
+    descargarTxt(ventas); // función de ventas-helper.js
+  } catch (err) {
+    console.error("Error exportando TXT:", err);
+    alert("❌ Error al exportar ventas.");
+  }
 }
 
 // =============================
