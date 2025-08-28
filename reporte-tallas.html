@@ -9,29 +9,25 @@
 <body>
 
 <script>
-  // ✅ Verificar login (y opcionalmente rol)
+  // ✅ Verificar login
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
 
   if (!usuario) {
     window.location.href = "login.html";
   }
-  // Si quieres que solo admin lo vea, descomenta esto:
-  /*
-  else if (rol !== "admin") {
-    alert("Acceso restringido: solo para administradores.");
-    window.location.href = "index.html";
-  }
-  */
 </script>
 
 <h1>📏 Reporte de Tallas</h1>
 
-<div class="acciones" style="margin-bottom:10px;">
+<div class="acciones" style="margin-bottom:10px; text-align:center;">
+  <input type="date" id="fechaInicio" />
+  <input type="date" id="fechaFin" />
+  <button onclick="cargarReporteTallas()">🔍 Ver Reporte</button>
+  <button onclick="descargarTxt()">📄 Descargar TXT</button>
   <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
 </div>
 
-<!-- Aquí va tu reporte de tallas -->
 <section id="reporte-tallas"></section>
 
 <!-- Firebase -->
@@ -51,33 +47,94 @@
 </script>
 
 <script>
-  // Aquí cargas el reporte de tallas
+  let reporteFiltrado = [];
+
+  function parseFechaEs(fechaStr) {
+    if (!fechaStr) return null;
+    const [d,m,y] = fechaStr.split('/').map(x => parseInt(x,10));
+    return new Date(y, m-1, d);
+  }
+
   async function cargarReporteTallas() {
+    const inicio = document.getElementById("fechaInicio").value;
+    const fin = document.getElementById("fechaFin").value;
+
     const contenedor = document.getElementById("reporte-tallas");
     contenedor.innerHTML = "<p>Cargando reporte...</p>";
 
     try {
-      const snap = await db.collection("tallas").get();
-      if (snap.empty) {
-        contenedor.innerHTML = "<p>No hay datos de tallas disponibles.</p>";
+      const snap = await db.collection("ventas").get();
+      const ventas = snap.docs.map(d => d.data());
+
+      // Filtrar ventas por rango si hay fechas
+      let ventasFiltradas = ventas;
+      if (inicio && fin) {
+        const dInicio = new Date(inicio);
+        const dFin = new Date(fin);
+        dFin.setHours(23,59,59,999);
+
+        ventasFiltradas = ventas.filter(v => {
+          const vFecha = parseFechaEs(v.fecha);
+          return vFecha && vFecha >= dInicio && vFecha <= dFin;
+        });
+      }
+
+      if (ventasFiltradas.length === 0) {
+        contenedor.innerHTML = "<p>No hay ventas en ese rango.</p>";
         return;
       }
 
-      contenedor.innerHTML = snap.docs.map(doc => {
-        const t = doc.data();
-        return `
-          <div class="talla">
-            <strong>${t.nombre}</strong> - Cantidad: ${t.cantidad}
-          </div>
-        `;
-      }).join("");
+      // Contar tallas
+      const tallasContadas = {};
+      ventasFiltradas.forEach(v => {
+        (v.productos || []).forEach(p => {
+          // Suponemos formato: "Nombre T<Talla> - S/Precio"
+          const match = p.match(/T(\d+)/);
+          if (match) {
+            const talla = match[1];
+            if (!tallasContadas[talla]) tallasContadas[talla] = 0;
+            tallasContadas[talla]++;
+          }
+        });
+      });
+
+      // Mostrar reporte
+      contenedor.innerHTML = Object.keys(tallasContadas).sort().map(t => `
+        <div class="talla">
+          <strong>Talla ${t}</strong> - Cantidad vendida: ${tallasContadas[t]}
+        </div>
+      `).join("");
+      
+      // Guardar para descarga
+      reporteFiltrado = tallasContadas;
+
     } catch (e) {
       console.error(e);
       contenedor.innerHTML = "<p>❌ Error al cargar reporte de tallas.</p>";
     }
   }
 
-  cargarReporteTallas();
+  function descargarTxt() {
+    if (!reporteFiltrado || Object.keys(reporteFiltrado).length === 0) {
+      alert("⚠️ No hay datos para exportar.");
+      return;
+    }
+    const inicio = document.getElementById("fechaInicio").value || "inicio";
+    const fin = document.getElementById("fechaFin").value || "fin";
+
+    let contenido = `📏 Reporte de Tallas del ${inicio} al ${fin} - Frutisha Store\n\n`;
+    for (const t in reporteFiltrado) {
+      contenido += `Talla ${t}: ${reporteFiltrado[t]}\n`;
+    }
+
+    const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `reporte_tallas_${inicio}_a_${fin}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 </script>
 
 </body>
