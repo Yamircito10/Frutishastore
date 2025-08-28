@@ -13,7 +13,7 @@
     <input type="date" id="fechaInicio" />
     <input type="date" id="fechaFin" />
     <button onclick="buscarPorRango()">🔍 Ver Ventas</button>
-    <button onclick="descargarTxt()">📄 Descargar TXT</button>
+    <button onclick="descargarHistorial()">📄 Descargar TXT</button>
     <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
   </div>
 
@@ -35,11 +35,10 @@
     const db = firebase.firestore();
   </script>
 
-  <script>
-    function formatearSoles(valor) {
-      return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
-    }
+  <!-- Importar helper antes de tu script -->
+  <script src="ventas-helper.js"></script>
 
+  <script>
     let ventasFiltradas = [];
 
     function parseFechaEs(fechaStr) {
@@ -89,28 +88,29 @@
       }
     }
 
-    function descargarTxt() {
-      if (ventasFiltradas.length === 0) {
+    function descargarHistorial() {
+      if (!ventasFiltradas || ventasFiltradas.length === 0) {
         alert("⚠️ No hay ventas para exportar.");
         return;
       }
+
       const inicio = document.getElementById("fechaInicio").value || "inicio";
       const fin = document.getElementById("fechaFin").value || "fin";
 
-      let contenido = `🛍️ Ventas del ${inicio} al ${fin} - Frutisha Store\n\n`;
-      ventasFiltradas.forEach((venta, i) => {
-        contenido += `Venta ${i + 1} - ${venta.hora}\n`;
-        venta.productos.forEach(p => contenido += `  - ${p}\n`);
-        contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
-      });
+      let filtradas = ventasFiltradas;
 
-      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `ventas_${inicio}_a_${fin}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Solo usar rango si se seleccionó
+      if (inicio !== "inicio" && fin !== "fin") {
+        const dInicio = new Date(inicio);
+        const dFin = new Date(fin);
+        dFin.setHours(23, 59, 59, 999);
+        filtradas = ventasFiltradas.filter(v => {
+          const vFecha = parseFechaEs(v.fecha);
+          return vFecha && vFecha >= dInicio && vFecha <= dFin;
+        });
+      }
+
+      descargarTxt(filtradas, `${inicio}_a_${fin}`);
     }
   </script>
 </body>
