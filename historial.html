@@ -19,6 +19,9 @@
 <h1>📚 Historial de Ventas</h1>
 
 <div class="acciones" style="text-align:center; margin-bottom:10px;">
+  <input type="date" id="fechaInicio" />
+  <input type="date" id="fechaFin" />
+  <button onclick="cargarHistorial()">🔍 Filtrar por Fechas</button>
   <button onclick="descargarHistorial()">📥 Descargar Historial</button>
   <button onclick="borrarHistorial()">🗑 Borrar Todo</button>
   <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
@@ -45,7 +48,16 @@
 <script>
   let historial = [];
 
+  function parseFechaEs(fechaStr) {
+    if (!fechaStr) return null;
+    const [d,m,y] = fechaStr.split('/').map(x => parseInt(x,10));
+    return new Date(y, m-1, d);
+  }
+
   async function cargarHistorial() {
+    const inicio = document.getElementById("fechaInicio").value;
+    const fin = document.getElementById("fechaFin").value;
+
     const lista = document.getElementById("listaHistorial");
     lista.innerHTML = "<li>Cargando...</li>";
 
@@ -53,18 +65,31 @@
       const snap = await db.collection("ventas").orderBy("fecha", "desc").get();
       historial = snap.docs.map(d => d.data());
 
-      if (historial.length === 0) {
-        lista.innerHTML = "<li>No hay ventas registradas.</li>";
+      // Filtrar por rango de fechas si hay fechas seleccionadas
+      let historialFiltrado = historial;
+      if (inicio && fin) {
+        const dInicio = new Date(inicio);
+        const dFin = new Date(fin);
+        dFin.setHours(23,59,59,999);
+        historialFiltrado = historial.filter(v => {
+          const vFecha = parseFechaEs(v.fecha);
+          return vFecha && vFecha >= dInicio && vFecha <= dFin;
+        });
+      }
+
+      if (historialFiltrado.length === 0) {
+        lista.innerHTML = "<li>No hay ventas registradas en ese rango.</li>";
         return;
       }
 
-      lista.innerHTML = historial.map((venta, i) => `
+      lista.innerHTML = historialFiltrado.map((venta, i) => `
         <li>
           <strong>Venta ${i + 1}</strong> — 📅 ${venta.fecha} 🕒 ${venta.hora}<br>
           ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
           <br>💵 Total: <strong>S/ ${venta.total.toFixed(2)}</strong>
         </li>
       `).join("");
+
     } catch (e) {
       console.error(e);
       lista.innerHTML = "<li>❌ Error al cargar el historial.</li>";
@@ -72,22 +97,25 @@
   }
 
   function descargarHistorial() {
-    if (historial.length === 0) {
+    if (!historial || historial.length === 0) {
       alert("⚠️ No hay historial para exportar.");
       return;
     }
 
-    let contenido = "📚 Historial de Ventas - Frutisha Store\n\n";
+    const inicio = document.getElementById("fechaInicio").value || "inicio";
+    const fin = document.getElementById("fechaFin").value || "fin";
+
+    let contenido = `📚 Historial de Ventas del ${inicio} al ${fin} - Frutisha Store\n\n`;
     historial.forEach((venta, i) => {
       contenido += `Venta ${i + 1} - ${venta.fecha} ${venta.hora}\n`;
-      venta.productos.forEach(p => contenido += `  - ${p}\n`);
+      (venta.productos || []).forEach(p => contenido += `  - ${p}\n`);
       contenido += `Total: S/ ${venta.total.toFixed(2)}\n-------------------------\n`;
     });
 
     const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `historial_${new Date().toISOString().slice(0,10)}.txt`;
+    a.download = `historial_${inicio}_a_${fin}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
