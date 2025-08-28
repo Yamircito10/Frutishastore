@@ -49,26 +49,79 @@
 <script src="ventas-helper.js"></script>
 
 <script>
-let historial = [];
+  // =============================
+  // Variables
+  // =============================
+  let historial = [];
 
-function parseFechaEs(fechaStr) {
-  if (!fechaStr) return null;
-  const [d,m,y] = fechaStr.split('/').map(x => parseInt(x,10));
-  return new Date(y, m-1, d);
-}
+  // =============================
+  // Parsear fechas "DD/MM/YYYY" -> Date
+  // =============================
+  function parseFechaEs(fechaStr) {
+    if (!fechaStr) return null;
+    const [d,m,y] = fechaStr.split('/').map(x => parseInt(x,10));
+    return new Date(y, m-1, d);
+  }
 
-async function cargarHistorial() {
-  const inicio = document.getElementById("fechaInicio").value;
-  const fin = document.getElementById("fechaFin").value;
-  const lista = document.getElementById("listaHistorial");
-  lista.innerHTML = "<li>Cargando...</li>";
+  // =============================
+  // Cargar historial de Firebase
+  // =============================
+  async function cargarHistorial() {
+    const inicio = document.getElementById("fechaInicio").value;
+    const fin = document.getElementById("fechaFin").value;
+    const lista = document.getElementById("listaHistorial");
+    lista.innerHTML = "<li>Cargando...</li>";
 
-  try {
-    const snap = await db.collection("ventas").orderBy("fecha","desc").get();
-    historial = snap.docs.map(d => d.data());
+    try {
+      const snap = await db.collection("ventas").orderBy("fecha","desc").get();
+      historial = snap.docs.map(d => d.data());
+
+      // Filtrar por rango de fechas si hay fechas seleccionadas
+      let historialFiltrado = historial;
+      if (inicio && fin) {
+        const dInicio = new Date(inicio);
+        const dFin = new Date(fin);
+        dFin.setHours(23,59,59,999);
+        historialFiltrado = historial.filter(v => {
+          const vFecha = parseFechaEs(v.fecha);
+          return vFecha && vFecha >= dInicio && vFecha <= dFin;
+        });
+      }
+
+      // Mostrar resultados
+      if (historialFiltrado.length === 0) {
+        lista.innerHTML = "<li>No hay ventas registradas en ese rango.</li>";
+        return;
+      }
+
+      lista.innerHTML = historialFiltrado.map((venta,i) => `
+        <li>
+          <strong>Venta ${i+1}</strong> — 📅 ${venta.fecha} 🕒 ${venta.hora}<br>
+          ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+          <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+        </li>
+      `).join("");
+
+    } catch(e) {
+      console.error(e);
+      lista.innerHTML = "<li>❌ Error al cargar el historial.</li>";
+    }
+  }
+
+  // =============================
+  // Descargar historial como TXT
+  // =============================
+  function descargarHistorial() {
+    if (!historial || historial.length === 0) {
+      alert("⚠️ No hay historial para exportar.");
+      return;
+    }
+
+    const inicio = document.getElementById("fechaInicio").value || "inicio";
+    const fin = document.getElementById("fechaFin").value || "fin";
 
     let historialFiltrado = historial;
-    if (inicio && fin) {
+    if (inicio !== "inicio" && fin !== "fin") {
       const dInicio = new Date(inicio);
       const dFin = new Date(fin);
       dFin.setHours(23,59,59,999);
@@ -78,65 +131,31 @@ async function cargarHistorial() {
       });
     }
 
-    if (historialFiltrado.length === 0) {
-      lista.innerHTML = "<li>No hay ventas registradas en ese rango.</li>";
-      return;
+    descargarTxt(historialFiltrado, `${inicio}_a_${fin}`);
+  }
+
+  // =============================
+  // Borrar historial completo
+  // =============================
+  async function borrarHistorial() {
+    if (!confirm("¿Seguro que quieres borrar todo el historial?")) return;
+    try {
+      const snap = await db.collection("ventas").get();
+      const batch = db.batch();
+      snap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      alert("🗑 Historial borrado correctamente.");
+      cargarHistorial();
+    } catch(e) {
+      console.error(e);
+      alert("❌ Error al borrar historial.");
     }
-
-    lista.innerHTML = historialFiltrado.map((venta,i) => `
-      <li>
-        <strong>Venta ${i+1}</strong> — 📅 ${venta.fecha} 🕒 ${venta.hora}<br>
-        ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
-        <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
-      </li>
-    `).join("");
-
-  } catch(e) {
-    console.error(e);
-    lista.innerHTML = "<li>❌ Error al cargar el historial.</li>";
-  }
-}
-
-function descargarHistorial() {
-  if (!historial || historial.length === 0) {
-    alert("⚠️ No hay historial para exportar.");
-    return;
   }
 
-  const inicio = document.getElementById("fechaInicio").value || "inicio";
-  const fin = document.getElementById("fechaFin").value || "fin";
-
-  let historialFiltrado = historial;
-  if (inicio !== "inicio" && fin !== "fin") {
-    const dInicio = new Date(inicio);
-    const dFin = new Date(fin);
-    dFin.setHours(23,59,59,999);
-    historialFiltrado = historial.filter(v => {
-      const vFecha = parseFechaEs(v.fecha);
-      return vFecha && vFecha >= dInicio && vFecha <= dFin;
-    });
-  }
-
-  descargarTxt(historialFiltrado, `${inicio}_a_${fin}`);
-}
-
-async function borrarHistorial() {
-  if (!confirm("¿Seguro que quieres borrar todo el historial?")) return;
-  try {
-    const snap = await db.collection("ventas").get();
-    const batch = db.batch();
-    snap.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
-    alert("🗑 Historial borrado correctamente.");
-    cargarHistorial();
-  } catch(e) {
-    console.error(e);
-    alert("❌ Error al borrar historial.");
-  }
-}
-
-// Cargar historial al abrir
-cargarHistorial();
+  // =============================
+  // Inicializar
+  // =============================
+  cargarHistorial();
 </script>
 
 </body>
