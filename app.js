@@ -2,7 +2,7 @@
 //  Frutisha Store - Firebase
 // =============================
 
-// ✅ Variables globales
+// Variables globales
 let total = 0;
 let productosSeleccionados = []; // {id, talla, precio, texto}
 let prendas = [];
@@ -43,8 +43,7 @@ function generarVistaPrendas() {
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
 
-    const tallas = Array.isArray(prenda.tallas) ? prenda.tallas : [];
-    tallas.forEach(t => {
+    (Array.isArray(prenda.tallas) ? prenda.tallas : []).forEach(t => {
       const btn = document.createElement("button");
       btn.className = "boton-talla";
       btn.innerText = `T${t.talla}`;
@@ -71,10 +70,8 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   const descDiv = contenedor.querySelector(".descuentos");
   descDiv.innerHTML = "";
 
-  const precioBase = (tallaSel.precio ?? prenda.precio);
-  const descuentos = [0, 1, 2, 3];
-
-  descuentos.forEach(desc => {
+  const precioBase = tallaSel.precio ?? prenda.precio;
+  [0,1,2,3].forEach(desc => {
     const btn = document.createElement("button");
     btn.className = "descuento-btn";
     btn.innerText = desc === 0 ? "Sin Desc." : `-S/${desc}`;
@@ -84,10 +81,10 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
 }
 
 // =============================
-//  Transacción: ajustar stock talla + stock total
+//  Ajustar stock
 // =============================
 async function ajustarStock(prendaId, tallaNumero, delta) {
-  return db.runTransaction(async (tx) => {
+  return db.runTransaction(async tx => {
     const ref = db.collection("inventario").doc(prendaId);
     const snap = await tx.get(ref);
     if (!snap.exists) throw new Error("Prenda no encontrada");
@@ -102,7 +99,6 @@ async function ajustarStock(prendaId, tallaNumero, delta) {
 
     tallas[idx].stockTalla = actual;
     const nuevoTotal = tallas.reduce((acc, x) => acc + Number(x.stockTalla || 0), 0);
-
     tx.update(ref, { tallas, stock: nuevoTotal });
     return { nuevoTotal, tallas };
   });
@@ -114,12 +110,11 @@ async function ajustarStock(prendaId, tallaNumero, delta) {
 async function agregarProducto(prenda, tallaSel, precioFinal) {
   try {
     await ajustarStock(prenda.id, tallaSel.talla, -1);
-    const texto = `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`;
     productosSeleccionados.push({
       id: prenda.id,
       talla: Number(tallaSel.talla),
       precio: Number(precioFinal),
-      texto
+      texto: `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}`
     });
     total += Number(precioFinal);
 
@@ -177,7 +172,7 @@ async function finalizarVenta() {
       fecha: ahora.toLocaleDateString("es-PE"),
       hora: ahora.toLocaleTimeString("es-PE"),
       timestamp: firebase.firestore.Timestamp.now(),
-      usuario: usuario,
+      usuario,
       productos: productosSeleccionados.map(p => p.texto),
       total: Number(total)
     });
@@ -194,7 +189,7 @@ async function finalizarVenta() {
 }
 
 // =============================
-//  Historial (lee de ventas)
+//  Historial
 // =============================
 async function cargarHistorial() {
   try {
@@ -212,13 +207,13 @@ async function cargarHistorial() {
 }
 
 // =============================
-//  Exportar TXT usando helper
+//  Exportar TXT usando ventas-helper.js
 // =============================
 async function descargarTXT() {
   try {
     const snapshot = await db.collection("ventas").orderBy("fecha", "desc").get();
     const ventas = snapshot.docs.map(doc => doc.data());
-    descargarTxt(ventas); // función de ventas-helper.js
+    descargarTxt(ventas); // <- función de ventas-helper.js
   } catch (err) {
     console.error("Error exportando TXT:", err);
     alert("❌ Error al exportar ventas.");
