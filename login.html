@@ -36,6 +36,11 @@
     .login-container button:hover {
       background-color: var(--rosa-oscuro);
     }
+    .error-msg {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -45,18 +50,27 @@
 <div class="login-container">
   <input type="text" id="usuario" placeholder="Usuario">
   <input type="password" id="contrasena" placeholder="Contraseña">
-  <button onclick="iniciarSesion()">Entrar</button>
+  <button id="btnEntrar">Entrar</button>
+  <div id="mensajeError" class="error-msg"></div>
 </div>
 
 <script>
+  // Si ya hay sesión activa, redirigir
+  if (localStorage.getItem("usuarioActivo")) {
+    window.location.href = "index.html";
+  }
+
   const usuarios = [
     { usuario: 'admin', contrasena: '100922', rol: 'admin' },
     { usuario: 'trabajador', contrasena: '1234', rol: 'trabajador' }
   ];
 
-  function iniciarSesion() {
+  document.getElementById("btnEntrar").addEventListener("click", () => {
     const user = document.getElementById('usuario').value.trim();
     const pass = document.getElementById('contrasena').value.trim();
+    const mensaje = document.getElementById('mensajeError');
+
+    mensaje.textContent = ""; // Limpiar mensaje previo
 
     const encontrado = usuarios.find(u => u.usuario === user && u.contrasena === pass);
 
@@ -65,9 +79,9 @@
       localStorage.setItem("rolActivo", encontrado.rol);
       window.location.href = 'index.html';
     } else {
-      alert("❌ Usuario o contraseña incorrectos");
+      mensaje.textContent = "❌ Usuario o contraseña incorrectos";
     }
-  }
+  });
 </script>
 
 </body>
