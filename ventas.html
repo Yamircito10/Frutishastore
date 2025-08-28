@@ -7,115 +7,140 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>🗓️ Ventas por Rango de Fechas</h1>
 
-  <div class="acciones" style="text-align:center; margin-bottom:10px;">
-    <input type="date" id="fechaInicio" />
-    <input type="date" id="fechaFin" />
-    <button onclick="buscarPorRango()">🔍 Ver Ventas</button>
-    <button onclick="descargarHistorial()">📄 Descargar TXT</button>
-    <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
-  </div>
+<script>
+  // ✅ Verificar login antes de mostrar ventas
+  const usuario = localStorage.getItem("usuarioActivo");
+  if (!usuario) {
+    window.location.href = "login.html";
+  }
+</script>
 
-  <ul id="listaVentas"></ul>
+<h1>🗓️ Ventas por Rango de Fechas</h1>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
-      authDomain: "frutisha-store.firebaseapp.com",
-      projectId: "inventario-ab270",
-      storageBucket: "frutisha-store.appspot.com",
-      messagingSenderId: "15388676345",
-      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-  </script>
+<div class="acciones" style="text-align:center; margin-bottom:10px;">
+  <input type="date" id="fechaInicio" />
+  <input type="date" id="fechaFin" />
+  <button onclick="buscarPorRango()">🔍 Ver Ventas</button>
+  <button onclick="descargarHistorial()">📄 Descargar TXT</button>
+  <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
+</div>
 
-  <!-- Importar helper antes de tu script -->
-  <script src="ventas-helper.js"></script>
+<ul id="listaVentas"></ul>
 
-  <script>
-    let ventasFiltradas = [];
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+    authDomain: "frutisha-store.firebaseapp.com",
+    projectId: "inventario-ab270",
+    storageBucket: "frutisha-store.appspot.com",
+    messagingSenderId: "15388676345",
+    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 
-    function parseFechaEs(fechaStr) {
-      // Convierte "DD/MM/YYYY" -> Date
-      if (!fechaStr) return null;
-      const [d,m,y] = fechaStr.split('/').map(x => parseInt(x,10));
-      return new Date(y, m-1, d);
-    }
+<!-- Helper -->
+<script src="ventas-helper.js"></script>
 
-    async function buscarPorRango() {
-      const inicio = document.getElementById("fechaInicio").value;
-      const fin = document.getElementById("fechaFin").value;
-      if (!inicio || !fin) return alert("⚠️ Selecciona ambas fechas.");
+<script>
+  // =============================
+  // Variables
+  // =============================
+  let ventasFiltradas = [];
 
-      const lista = document.getElementById("listaVentas");
-      lista.innerHTML = "<li>Cargando...</li>";
+  // =============================
+  // Parsear fechas "DD/MM/YYYY" -> Date
+  // =============================
+  function parseFechaEs(fechaStr) {
+    if (!fechaStr) return null;
+    const [d,m,y] = fechaStr.split('/').map(x => parseInt(x,10));
+    return new Date(y, m-1, d);
+  }
 
-      const dInicio = new Date(inicio);
-      const dFin = new Date(fin);
-      dFin.setHours(23, 59, 59, 999);
+  // =============================
+  // Buscar ventas por rango de fechas
+  // =============================
+  async function buscarPorRango() {
+    const inicio = document.getElementById("fechaInicio").value;
+    const fin = document.getElementById("fechaFin").value;
+    if (!inicio || !fin) return alert("⚠️ Selecciona ambas fechas.");
 
-      try {
-        const snap = await db.collection("ventas").get();
-        const todasVentas = snap.docs.map(d => d.data());
+    const lista = document.getElementById("listaVentas");
+    lista.innerHTML = "<li>Cargando...</li>";
 
-        // Filtrar por rango
-        ventasFiltradas = todasVentas.filter(v => {
-          const vFecha = parseFechaEs(v.fecha);
-          return vFecha && vFecha >= dInicio && vFecha <= dFin;
-        });
+    const dInicio = new Date(inicio);
+    const dFin = new Date(fin);
+    dFin.setHours(23, 59, 59, 999);
 
-        if (ventasFiltradas.length === 0) {
-          lista.innerHTML = "<li>No hay ventas en ese rango.</li>";
-          return;
-        }
+    try {
+      const snap = await db.collection("ventas").get();
+      const todasVentas = snap.docs.map(d => d.data());
 
-        lista.innerHTML = ventasFiltradas.map((venta, i) => `
-          <li>
-            <strong>Venta ${i + 1}</strong> — 🕒 ${venta.hora}<br>
-            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
-            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
-          </li>
-        `).join("");
-      } catch (e) {
-        console.error(e);
-        lista.innerHTML = "<li>❌ Error al cargar ventas.</li>";
-      }
-    }
+      // Filtrar por rango
+      ventasFiltradas = todasVentas.filter(v => {
+        const vFecha = parseFechaEs(v.fecha);
+        return vFecha && vFecha >= dInicio && vFecha <= dFin;
+      });
 
-    function descargarHistorial() {
-      if (!ventasFiltradas || ventasFiltradas.length === 0) {
-        alert("⚠️ No hay ventas para exportar.");
+      // Mostrar resultados
+      if (ventasFiltradas.length === 0) {
+        lista.innerHTML = "<li>No hay ventas en ese rango.</li>";
         return;
       }
 
-      const inicio = document.getElementById("fechaInicio").value || "inicio";
-      const fin = document.getElementById("fechaFin").value || "fin";
+      lista.innerHTML = ventasFiltradas.map((venta, i) => `
+        <li>
+          <strong>Venta ${i + 1}</strong> — 📅 ${venta.fecha} 🕒 ${venta.hora}<br>
+          ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+          <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+        </li>
+      `).join("");
 
-      let filtradas = ventasFiltradas;
+    } catch (e) {
+      console.error(e);
+      lista.innerHTML = "<li>❌ Error al cargar ventas.</li>";
+    }
+  }
 
-      // Solo usar rango si se seleccionó
-      if (inicio !== "inicio" && fin !== "fin") {
-        const dInicio = new Date(inicio);
-        const dFin = new Date(fin);
-        dFin.setHours(23, 59, 59, 999);
-        filtradas = ventasFiltradas.filter(v => {
-          const vFecha = parseFechaEs(v.fecha);
-          return vFecha && vFecha >= dInicio && vFecha <= dFin;
-        });
-      }
-
-      descargarTxt(filtradas, `${inicio}_a_${fin}`);
+  // =============================
+  // Descargar historial filtrado como TXT
+  // =============================
+  function descargarHistorial() {
+    if (!ventasFiltradas || ventasFiltradas.length === 0) {
+      alert("⚠️ No hay ventas para exportar.");
+      return;
     }
 
-    function formatearSoles(valor) {
-      return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
+    const inicio = document.getElementById("fechaInicio").value || "inicio";
+    const fin = document.getElementById("fechaFin").value || "fin";
+
+    let filtradas = ventasFiltradas;
+
+    if (inicio !== "inicio" && fin !== "fin") {
+      const dInicio = new Date(inicio);
+      const dFin = new Date(fin);
+      dFin.setHours(23, 59, 59, 999);
+      filtradas = ventasFiltradas.filter(v => {
+        const vFecha = parseFechaEs(v.fecha);
+        return vFecha && vFecha >= dInicio && vFecha <= dFin;
+      });
     }
-  </script>
+
+    descargarTxt(filtradas, `${inicio}_a_${fin}`);
+  }
+
+  // =============================
+  // Formatear monto en soles
+  // =============================
+  function formatearSoles(valor) {
+    return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
+  }
+</script>
+
 </body>
 </html>
