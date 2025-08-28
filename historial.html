@@ -45,6 +45,9 @@
   const db = firebase.firestore();
 </script>
 
+<!-- Importar helper antes de tu script -->
+<script src="ventas-helper.js"></script>
+
 <script>
   let historial = [];
 
@@ -86,7 +89,7 @@
         <li>
           <strong>Venta ${i + 1}</strong> — 📅 ${venta.fecha} 🕒 ${venta.hora}<br>
           ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
-          <br>💵 Total: <strong>S/ ${venta.total.toFixed(2)}</strong>
+          <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
         </li>
       `).join("");
 
@@ -97,6 +100,7 @@
   }
 
   function descargarHistorial() {
+    // Usar helper para descargar
     if (!historial || historial.length === 0) {
       alert("⚠️ No hay historial para exportar.");
       return;
@@ -105,20 +109,19 @@
     const inicio = document.getElementById("fechaInicio").value || "inicio";
     const fin = document.getElementById("fechaFin").value || "fin";
 
-    let contenido = `📚 Historial de Ventas del ${inicio} al ${fin} - Frutisha Store\n\n`;
-    historial.forEach((venta, i) => {
-      contenido += `Venta ${i + 1} - ${venta.fecha} ${venta.hora}\n`;
-      (venta.productos || []).forEach(p => contenido += `  - ${p}\n`);
-      contenido += `Total: S/ ${venta.total.toFixed(2)}\n-------------------------\n`;
-    });
+    let historialFiltrado = historial;
 
-    const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `historial_${inicio}_a_${fin}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if (inicio && fin && inicio !== "inicio" && fin !== "fin") {
+      const dInicio = new Date(inicio);
+      const dFin = new Date(fin);
+      dFin.setHours(23,59,59,999);
+      historialFiltrado = historial.filter(v => {
+        const vFecha = parseFechaEs(v.fecha);
+        return vFecha && vFecha >= dInicio && vFecha <= dFin;
+      });
+    }
+
+    descargarTxt(historialFiltrado, `${inicio}_a_${fin}`);
   }
 
   async function borrarHistorial() {
