@@ -42,6 +42,13 @@
 
     let ventasFiltradas = [];
 
+    function parseFechaEs(fechaStr) {
+      // Convierte "DD/MM/YYYY" -> Date
+      if (!fechaStr) return null;
+      const [d,m,y] = fechaStr.split('/').map(x => parseInt(x,10));
+      return new Date(y, m-1, d);
+    }
+
     async function buscarPorRango() {
       const inicio = document.getElementById("fechaInicio").value;
       const fin = document.getElementById("fechaFin").value;
@@ -50,17 +57,19 @@
       const lista = document.getElementById("listaVentas");
       lista.innerHTML = "<li>Cargando...</li>";
 
-      const startDate = new Date(inicio);
-      const endDate = new Date(fin);
-      endDate.setHours(23, 59, 59, 999); // Incluir todo el día final
+      const dInicio = new Date(inicio);
+      const dFin = new Date(fin);
+      dFin.setHours(23, 59, 59, 999);
 
       try {
-        const snap = await db.collection("ventas")
-          .where("timestamp", ">=", startDate)
-          .where("timestamp", "<=", endDate)
-          .get();
+        const snap = await db.collection("ventas").get();
+        const todasVentas = snap.docs.map(d => d.data());
 
-        ventasFiltradas = snap.docs.map(d => d.data());
+        // Filtrar por rango
+        ventasFiltradas = todasVentas.filter(v => {
+          const vFecha = parseFechaEs(v.fecha);
+          return vFecha && vFecha >= dInicio && vFecha <= dFin;
+        });
 
         if (ventasFiltradas.length === 0) {
           lista.innerHTML = "<li>No hay ventas en ese rango.</li>";
