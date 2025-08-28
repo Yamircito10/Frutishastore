@@ -7,92 +7,101 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>🗓️ Ventas por Fecha</h1>
 
-  <div class="acciones" style="text-align:center; margin-bottom:10px;">
-    <input type="date" id="fechaSeleccionada" />
-    <button onclick="buscarPorFecha()">🔍 Ver Ventas</button>
-    <button onclick="descargarTxt()">📄 Descargar TXT</button>
-    <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
-  </div>
+<script>
+  // ✅ Verificar login antes de mostrar la página
+  const usuario = localStorage.getItem("usuarioActivo");
+  if (!usuario) {
+    window.location.href = "login.html";
+  }
+</script>
 
-  <ul id="listaVentas"></ul>
+<h1>🗓️ Ventas por Fecha</h1>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
-      authDomain: "frutisha-store.firebaseapp.com",
-      projectId: "inventario-ab270",
-      storageBucket: "frutisha-store.appspot.com",
-      messagingSenderId: "15388676345",
-      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-  </script>
+<div class="acciones" style="text-align:center; margin-bottom:10px;">
+  <input type="date" id="fechaSeleccionada" />
+  <button onclick="buscarPorFecha()">🔍 Ver Ventas</button>
+  <button onclick="descargarTxt()">📄 Descargar TXT</button>
+  <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
+</div>
 
-  <script>
-    function formatearSoles(valor) {
-      return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
-    }
+<ul id="listaVentas"></ul>
 
-    let ventasFiltradas = [];
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+    authDomain: "frutisha-store.firebaseapp.com",
+    projectId: "inventario-ab270",
+    storageBucket: "frutisha-store.appspot.com",
+    messagingSenderId: "15388676345",
+    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 
-    async function buscarPorFecha() {
-      const fecha = document.getElementById("fechaSeleccionada").value;
-      if (!fecha) return alert("⚠️ Selecciona una fecha válida");
+<script>
+  function formatearSoles(valor) {
+    return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
+  }
 
-      const lista = document.getElementById("listaVentas");
-      lista.innerHTML = "<li>Cargando...</li>";
+  let ventasFiltradas = [];
 
-      const fechaPE = new Date(fecha).toLocaleDateString("es-PE");
-      try {
-        const snap = await db.collection("ventas").where("fecha", "==", fechaPE).get();
-        ventasFiltradas = snap.docs.map(d => d.data());
+  async function buscarPorFecha() {
+    const fecha = document.getElementById("fechaSeleccionada").value;
+    if (!fecha) return alert("⚠️ Selecciona una fecha válida");
 
-        if (ventasFiltradas.length === 0) {
-          lista.innerHTML = "<li>No hay ventas para esta fecha.</li>";
-          return;
-        }
+    const lista = document.getElementById("listaVentas");
+    lista.innerHTML = "<li>Cargando...</li>";
 
-        lista.innerHTML = ventasFiltradas.map((venta, i) => `
-          <li>
-            <strong>Venta ${i + 1}</strong> — 🕒 ${venta.hora}<br>
-            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
-            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
-          </li>
-        `).join("");
-      } catch (e) {
-        console.error(e);
-        lista.innerHTML = "<li>❌ Error al cargar ventas.</li>";
-      }
-    }
+    const fechaPE = new Date(fecha).toLocaleDateString("es-PE");
+    try {
+      const snap = await db.collection("ventas").where("fecha", "==", fechaPE).get();
+      ventasFiltradas = snap.docs.map(d => d.data());
 
-    function descargarTxt() {
       if (ventasFiltradas.length === 0) {
-        alert("⚠️ No hay ventas para exportar.");
+        lista.innerHTML = "<li>No hay ventas para esta fecha.</li>";
         return;
       }
-      const fecha = document.getElementById("fechaSeleccionada").value || new Date().toISOString().slice(0,10);
 
-      let contenido = "🛍️ Ventas del Día - Frutisha Store\n\n";
-      ventasFiltradas.forEach((venta, i) => {
-        contenido += `Venta ${i + 1} - ${venta.hora}\n`;
-        venta.productos.forEach(p => contenido += `  - ${p}\n`);
-        contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
-      });
-
-      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `ventas_${fecha}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      lista.innerHTML = ventasFiltradas.map((venta, i) => `
+        <li>
+          <strong>Venta ${i + 1}</strong> — 🕒 ${venta.hora}<br>
+          ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+          <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+        </li>
+      `).join("");
+    } catch (e) {
+      console.error(e);
+      lista.innerHTML = "<li>❌ Error al cargar ventas.</li>";
     }
-  </script>
+  }
+
+  function descargarTxt() {
+    if (ventasFiltradas.length === 0) {
+      alert("⚠️ No hay ventas para exportar.");
+      return;
+    }
+    const fecha = document.getElementById("fechaSeleccionada").value || new Date().toISOString().slice(0,10);
+
+    let contenido = "🛍️ Ventas del Día - Frutisha Store\n\n";
+    ventasFiltradas.forEach((venta, i) => {
+      contenido += `Venta ${i + 1} - ${venta.hora}\n`;
+      venta.productos.forEach(p => contenido += `  - ${p}\n`);
+      contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
+    });
+
+    const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `ventas_${fecha}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+</script>
 </body>
 </html>
