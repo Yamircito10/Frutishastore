@@ -4,7 +4,7 @@
 
 // ✅ Variables globales
 let total = 0;
-let productosSeleccionados = []; // {id, talla, precio, texto}
+let productosSeleccionados = [];
 let prendas = [];
 
 // ✅ Formatear soles
@@ -183,6 +183,36 @@ function cargarCarrito() {
     localStorage.removeItem("carrito");
     productosSeleccionados = [];
     total = 0;
+  }
+}
+
+// =============================
+//  Reiniciar carrito (también limpia localStorage)
+// =============================
+function reiniciarCarrito() {
+  if (!confirm("¿Deseas reiniciar el carrito?")) return;
+  total = 0;
+  productosSeleccionados = [];
+  localStorage.removeItem("carrito");
+  actualizarInterfaz();
+}
+
+// =============================
+//  Borrar historial
+// =============================
+async function borrarHistorial() {
+  if (!confirm("¿Deseas borrar el historial de ventas?")) return;
+  try {
+    const snap = await db.collection("ventas").get();
+    const batch = db.batch();
+    snap.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    document.getElementById("ventasDia").innerHTML = "";
+    alert("🗑 Historial eliminado.");
+  } catch (err) {
+    console.error("Error eliminando historial:", err);
+    alert("⚠️ No se pudo borrar el historial.");
   }
 }
 
