@@ -1,0 +1,139 @@
+/* 🎨 Estilos generales */
+:root {
+  --rosa: #ff69b4;
+  --rosa-oscuro: #e055a5;
+  --texto: #444;
+  --borde: #ffe4ec;
+  --fondo: #fff0f5;
+  --principal: #d63384;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  padding: 15px;
+  text-align: center;
+}
+
+h1, h2 {
+  color: var(--principal);
+}
+
+/* 🔘 Botones generales */
+.boton, .acciones button {
+  padding: 8px 12px;
+  margin: 5px;
+  background-color: var(--rosa);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.boton:hover, .acciones button:hover {
+  background-color: var(--rosa-oscuro);
+}
+
+.reiniciar-btn { background-color: #dc3545; }
+.reiniciar-btn:hover { background-color: #c82333; }
+
+.borrar-btn { background-color: #ff3366; }
+.borrar-btn:hover { background-color: #cc2952; }
+
+/* 💰 Total y listas */
+#total, #lista, #historial {
+  font-size: 18px;
+  color: #c2185b;
+  margin-top: 20px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  background-color: var(--borde);
+  border-radius: 8px;
+  padding: 8px;
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+/* 🛍 Productos en 3 columnas */
+.productos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* ✅ Fuerza 3 columnas */
+  gap: 12px;
+  margin-top: 20px;
+  justify-items: center;
+}
+
+.producto-card {
+  background: white;
+  border: 1px solid var(--rosa);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔠 Botones de tallas */
+.tallas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.boton-talla {
+  padding: 5px 8px;
+  font-size: 13px;
+  margin: 2px;
+  border-radius: 8px;
+  background-color: #d4e1f5;
+  border: none;
+  cursor: pointer;
+}
+
+.boton-talla:hover {
+  background-color: #a3c3ee;
+}
+
+/* 💲 Botones de descuento */
+.descuentos {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.descuento-btn {
+  padding: 5px 8px;
+  font-size: 13px;
+  border-radius: 6px;
+  background-color: #ffd700;
+  border: none;
+  cursor: pointer;
+}
+
+.descuento-btn:hover {
+  background-color: #ffc107;
+}
+
+/* 📱 Ajustes móviles */
+@media screen and (max-width: 600px) {
+  .productos {
+    grid-template-columns: repeat(3, 1fr); /* ✅ 2 columnas en móviles */
+  }
+  .tallas, .descuentos {
+    gap: 3px;
+  }
+}
