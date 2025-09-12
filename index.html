@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frutisha Store</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <nav>
+    <button onclick="mostrarSeccion('dashboard')">Inicio</button>
+    <button onclick="mostrarSeccion('inventario')">Inventario</button>
+    <button onclick="mostrarSeccion('ventas')">Ventas</button>
+    <button onclick="mostrarSeccion('historial')">Historial</button>
+    <button onclick="mostrarSeccion('reporte-tallas')">Reporte</button>
+  </nav>
+  <main>
+    <section id="dashboard">
+<h2>Catálogo de Prendas</h2>
+<div id='lista-prendas'></div>
+
+    </section>
+    <section id="historial" style="display:none;">
+<h1>📚 Historial General de Ventas</h1>
+
+  <div class="acciones" style="text-align:center; margin-bottom:10px;">
+    <button onclick="cargarHistorial()">🔄 Actualizar Historial</button>
+    <button onclick="descargarTxt()">📥 Exportar Todo en TXT</button>
+    <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
+  </div>
+
+  <ul id="listaHistorial"></ul>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "inventario-ab270",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "15388676345",
+      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
+  <script>
+    function formatearSoles(valor) {
+      return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
+    }
+
+    let historialVentas = [];
+
+    async function cargarHistorial() {
+      const lista = document.getElementById("listaHistorial");
+      lista.innerHTML = "<li>Cargando...</li>";
+      try {
+        const snap = await db.collection("ventas").orderBy("fecha", "desc").get();
+        historialVentas = snap.docs.map(d => d.data());
+
+        if (historialVentas.length === 0) {
+          lista.innerHTML = "<li>No hay ventas registradas aún.</li>";
+          return;
+        }
+
+        lista.innerHTML = historialVentas.map((venta, i) => `
+          <li>
+            <strong>${venta.fecha}</strong> — 🕒 ${venta.hora}<br>
+            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+          </li>
+        `).join("");
+      } catch (e) {
+        console.error(e);
+        lista.innerHTML = "<li>❌ Error al cargar historial.</li>";
+      }
+    }
+
+    function descargarTxt() {
+      if (historialVentas.length === 0) {
+        alert("⚠️ No hay datos para exportar.");
+        return;
+      }
+
+      let contenido = "🛍️ Historial General de Ventas - Frutisha Store\n\n";
+      historialVentas.forEach((venta, i) => {
+        contenido += `Venta ${i + 1} - ${venta.fecha} ${venta.hora}\n`;
+        venta.productos.forEach(p => contenido += `  - ${p}\n`);
+        contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
+      });
+
+      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `historial_completo.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    window.onload = cargarHistorial;
+  </script>
+    </section>
+    <section id="importar" style="display:none;">
+<h2>📦 Importar inventario a Firebase</h2>
+  <button onclick="importarInventario()">🚀 Subir inventario</button>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "inventario-ab270",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "15388676345",
+      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 👇 Aquí va tu inventario:
+    const inventario = [
+  {
+    "nombre": "Polos 1",
+    "precio": 35,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 35 }, { "talla": 6, "precio": 35 }, { "talla": 8, "precio": 35 }, { "talla": 10, "precio": 35 }, { "talla": 12, "precio": 35 }, { "talla": 14, "precio": 35 }, { "talla": 16, "precio": 35 }, { "talla": 18, "precio": 35 } ]
+  },
+  {
+    "nombre": "Polos 2",
+    "precio": 30,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 30 }, { "talla": 6, "precio": 30 }, { "talla": 8, "precio": 30 }, { "talla": 10, "precio": 30 }, { "talla": 12, "precio": 30 }, { "talla": 14, "precio": 30 }, { "talla": 16, "precio": 30 } ]
+  },
+  {
+    "nombre": "Polos mangalarga niño",
+    "precio": 35,
+    "stock": 20,
+    "tallas": [ { "talla": 2, "precio": 35 }, { "talla": 4, "precio": 35 }, { "talla": 6, "precio": 35 }, { "talla": 8, "precio": 35 }, { "talla": 10, "precio": 35 }, { "talla": 12, "precio": 35 }, { "talla": 14, "precio": 35 }, { "talla": 16, "precio": 35 } ]
+  },
+  {
+    "nombre": "Polos mangacorta niño",
+    "precio": 28,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 28 }, { "talla": 6, "precio": 28 }, { "talla": 8, "precio": 28 }, { "talla": 10, "precio": 28 }, { "talla": 12, "precio": 28 }, { "talla": 14, "precio": 28 }, { "talla": 16, "precio": 28 } ]
+  },
+  {
+    "nombre": "Polo mangalarga algodón niña",
+    "precio": 30,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 30 }, { "talla": 6, "precio": 30 }, { "talla": 8, "precio": 30 }, { "talla": 10, "precio": 30 }, { "talla": 12, "precio": 30 }, { "talla": 14, "precio": 30 }, { "talla": 16, "precio": 30 } ]
+  },
+  {
+    "nombre": "Jean 1",
+    "precio": 55,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 55 }, { "talla": 6, "precio": 55 }, { "talla": 8, "precio": 55 }, { "talla": 10, "precio": 55 }, { "talla": 12, "precio": 55 }, { "talla": 14, "precio": 55 }, { "talla": 16, "precio": 60 } ]
+  },
+  {
+    "nombre": "Jean 2",
+    "precio": 60,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
+  },
+  {
+    "nombre": "Jean 3",
+    "precio": 65,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 65 }, { "talla": 6, "precio": 65 }, { "talla": 8, "precio": 65 }, { "talla": 10, "precio": 65 }, { "talla": 12, "precio": 65 }, { "talla": 14, "precio": 65 }, { "talla": 16, "precio": 65 } ]
+  },
+  {
+    "nombre": "Jean bebé",
+    "precio": 50,
+    "stock": 20,
+    "tallas": [ { "talla": 2, "precio": 50 }, { "talla": 4, "precio": 50 }, { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 } ]
+  },
+  {
+    "nombre": "Conjunto jean",
+    "precio": 130,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 130 }, { "talla": 6, "precio": 130 }, { "talla": 8, "precio": 130 }, { "talla": 10, "precio": 130 }, { "talla": 12, "precio": 130 }, { "talla": 14, "precio": 130 }, { "talla": 16, "precio": 135 } ]
+  },
+  {
+    "nombre": "Conjunto de piedrita",
+    "precio": 70,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 70 }, { "talla": 6, "precio": 70 }, { "talla": 8, "precio": 70 }, { "talla": 10, "precio": 70 }, { "talla": 12, "precio": 70 }, { "talla": 14, "precio": 70 }, { "talla": 16, "precio": 70 } ]
+  },
+  {
+    "nombre": "Casaca tíoe",
+    "precio": 75,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 75 }, { "talla": 6, "precio": 75 }, { "talla": 8, "precio": 75 }, { "talla": 10, "precio": 75 }, { "talla": 12, "precio": 75 }, { "talla": 14, "precio": 75 }, { "talla": 16, "precio": 75 } ]
+  },
+  {
+    "nombre": "Conjunto flores",
+    "precio": 60,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
+  },
+  {
+    "nombre": "Casaca impermeable",
+    "precio": 50,
+    "stock": 20,
+    "tallas": [ { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 }, { "talla": 10, "precio": 50 }, { "talla": 12, "precio": 50 }, { "talla": 14, "precio": 50 } ]
+  },
+  {
+    "nombre": "Casaca cuero niño",
+    "precio": 60,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
+  },
+  {
+    "nombre": "Casaca cuero niña",
+    "precio": 50,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 50 }, { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 }, { "talla": 10, "precio": 50 }, { "talla": 12, "precio": 50 }, { "talla": 14, "precio": 50 } ]
+  },
+  {
+    "nombre": "Chaleco cuero niña",
+    "precio": 45,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 45 }, { "talla": 6, "precio": 45 }, { "talla": 8, "precio": 45 }, { "talla": 10, "precio": 45 }, { "talla": 12, "precio": 45 }, { "talla": 14, "precio": 45 }, { "talla": 16, "precio": 45 } ]
+  },
+  {
+    "nombre": "Cafarena",
+    "precio": 10,
+    "stock": 20,
+    "tallas": [ { "talla": 4, "precio": 10 }, { "talla": 6, "precio": 10 }, { "talla": 8, "precio": 10 }, { "talla": 10, "precio": 10 }, { "talla": 12, "precio": 10 }, { "talla": 14, "precio": 10 } ]
+  }
+]
+
+    function generarTallas(inicio, fin, precio) {
+      const tallas = [];
+      for (let i = inicio; i <= fin; i += 2) {
+        tallas.push({ talla: i, precio: precio });
+      }
+      return tallas;
+    }
+
+    async function importarInventario() {
+      for (const prenda of inventario) {
+        try {
+          await db.collection("inventario").add(prenda);
+          console.log("✅ Agregado:", prenda.nombre);
+        } catch (error) {
+          console.error("❌ Error con:", prenda.nombre, error);
+        }
+      }
+      alert("✅ Inventario importado correctamente.");
+    }
+  </script>
+    </section>
+    <section id="index" style="display:none;">
+<script>
+  // ✅ Verificar login
+  const usuario = localStorage.getItem("usuarioActivo");
+  const rol = localStorage.getItem("rolActivo");
+  if (!usuario) {
+    window.location.href = "login.html";
+  }
+</script>
+
+<h1>🛍 Frutisha Store</h1>
+
+<!-- 🔗 Navegación (Reportes / Historial / Tallas / Inventario / Cerrar sesión) -->
+<div class="acciones nav-acciones">
+  <button onclick="location.href='ventas.html'">📈 Reporte de ventas</button>
+  <button onclick="location.href='historial.html'">📚 Historial</button>
+  <!-- Este botón de Inventario solo lo verá el admin (se muestra por JS abajo) -->
+  <button id="btn-inventario" style="display:none;" onclick="location.href='inventario.html'">📦 Inventario</button>
+  <button onclick="cerrarSesion()">🔒 Cerrar sesión</button>
+</div>
+
+<!-- 🧾 Productos de la tienda -->
+<section id="lista-prendas" class="productos"></section>
+
+<!-- 💵 Carrito -->
+<div id="total">Total: S/ 0.00</div>
+<div id="lista">
+  <p><strong>Productos seleccionados:</strong></p>
+  <ul id="productos"></ul>
+</div>
+
+<div class="acciones">
+  <button onclick="finalizarVenta()">💾 Finalizar Venta</button>
+  <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
+</div>
+
+<!-- 🗂 Historial en la portada (últimas ventas) -->
+<div id="historial" style="margin-top:30px;">
+  <h2>📋 Historial del Día</h2>
+  <ul id="ventasDia"></ul>
+  <div class="acciones">
+    <button class="borrar-btn" onclick="borrarHistorial()">🗑 Borrar Historial</button>
+    <button onclick="descargarTXT()">📥 Descargar TXT</button>
+  </div>
+</div>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+    authDomain: "frutisha-store.firebaseapp.com",
+    projectId: "inventario-ab270",
+    storageBucket: "frutisha-store.appspot.com",
+    messagingSenderId: "15388676345",
+    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<!-- Lógica principal -->
+<script src="app.js"></script>
+
+<script>
+  // Mostrar botón “Inventario” solo a admin
+  if (rol === "admin") {
+    document.getElementById("btn-inventario").style.display = "inline-block";
+  }
+
+  function cerrarSesion() {
+    localStorage.removeItem("usuarioActivo");
+    localStorage.removeItem("rolActivo");
+    window.location.href = "login.html";
+  }
+</script>
+    </section>
+    <section id="inventario" style="display:none;">
+<script>
+  const usuario = localStorage.getItem("usuarioActivo");
+  const rol = localStorage.getItem("rolActivo");
+  if (!usuario || rol !== "admin") {
+    alert("❌ Acceso denegado. Solo administradores.");
+    window.location.href = "index.html";
+  }
+</script>
+
+<h1>📦 Inventario - Frutisha Store</h1>
+
+<div class="acciones" style="margin-bottom:10px;">
+  <button onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
+</div>
+
+<div class="inventario-container" id="contenedor-inventario"></div>
+
+<div class="nuevo-item">
+  <h3>➕ Agregar nueva prenda</h3>
+  <input type="text" id="nuevo-nombre" placeholder="Nombre de la prenda" />
+  <input type="number" id="nuevo-precio" placeholder="Precio base (opcional)" min="0" />
+  <input type="number" id="nuevo-stock" placeholder="Stock total (se calcula solo)" disabled />
+  <div class="tallas-box" id="nuevo-tallas">
+    <div class="mini">Tallas (talla / precio / stockTalla)</div>
+    <!-- filas se agregan aquí -->
+  </div>
+  <button class="btn-mini btn-add" onclick="agregarFilaTalla('nuevo-tallas')">➕ Añadir talla</button>
+  <button class="guardar-btn" onclick="agregarPrenda()">✅ Guardar prenda</button>
+</div>
+
+<div class="acciones-globales">
+  <button class="guardar-btn" onclick="guardarTodos()">💾 Guardar TODOS</button>
+</div>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+    authDomain: "frutisha-store.firebaseapp.com",
+    projectId: "inventario-ab270",
+    storageBucket: "frutisha-store.appspot.com",
+    messagingSenderId: "15388676345",
+    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+  let prendasInv = [];
+
+  function agregarFilaTalla(contenedorId, data={talla:"", precio:"", stockTalla:""}) {
+    const cont = document.getElementById(contenedorId);
+    const row = document.createElement("div");
+    row.className = "talla-row";
+    row.innerHTML = `
+      <input type="number" step="1" placeholder="Talla" value="${data.talla}" />
+      <input type="number" step="0.01" placeholder="Precio" value="${data.precio}" />
+      <input type="number" step="1" placeholder="Stock talla" value="${data.stockTalla}" />
+      <button class="btn-mini btn-del" onclick="this.parentElement.remove()">🗑</button>
+    `;
+    cont.appendChild(row);
+  }
+
+  function leerTallasDeContenedor(contenedorId){
+    const cont = document.getElementById(contenedorId);
+    const filas = [...cont.querySelectorAll(".talla-row")];
+    const tallas = [];
+    let total = 0;
+    filas.forEach(f=>{
+      const [tallaInp, precioInp, stockInp] = f.querySelectorAll("input");
+      const talla = Number(tallaInp.value);
+      const precio = precioInp.value === "" ? null : Number(precioInp.value);
+      const stockTalla = Number(stockInp.value||0);
+      if(!isNaN(talla)){
+        tallas.push({talla, precio, stockTalla});
+        total += stockTalla;
+      }
+    });
+    return { tallas, total };
+  }
+
+  async function cargarInventario(){
+    const snap = await db.collection("inventario").get();
+    prendasInv = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderInventario();
+  }
+
+  function renderInventario(){
+    const cont = document.getElementById("contenedor-inventario");
+    cont.innerHTML = "";
+    if(prendasInv.length===0){
+      cont.innerHTML = "<p>⚠️ No hay productos.</p>";
+      return;
+    }
+    prendasInv.forEach((p,idx)=>{
+      const card = document.createElement("div");
+      card.className = "producto-item";
+      const contTallasId = `tallas-${idx}`;
+      card.innerHTML = `
+        <h3>${p.nombre}</h3>
+        <input type="text" id="nombre-${idx}" value="${p.nombre}" placeholder="Nombre"/>
+        <input type="number" id="precio-${idx}" value="${p.precio ?? ''}" placeholder="Precio base (opcional)"/>
+        <input type="number" id="stock-${idx}" value="${p.stock ?? 0}" placeholder="Stock total" disabled />
+
+        <div class="tallas-box" id="${contTallasId}">
+          <div class="mini">Tallas (talla / precio / stockTalla)</div>
+        </div>
+        <button class="btn-mini btn-add" onclick="agregarFilaTalla('${contTallasId}')">➕ Añadir talla</button>
+
+        <div style="margin-top:8px;">
+          <button class="guardar-btn" onclick="guardarUno(${idx})">💾 Guardar</button>
+          <button class="guardar-btn" style="background:#dc3545" onclick="eliminarPrenda('${p.id}')">🗑 Eliminar</button>
+        </div>
+      `;
+      cont.appendChild(card);
+      // rellenar tallas
+      const t = Array.isArray(p.tallas) ? p.tallas : [];
+      t.forEach(tt=>agregarFilaTalla(contTallasId, tt));
+    });
+  }
+
+  async function guardarUno(idx){
+    const p = prendasInv[idx];
+    const nombre = document.getElementById(`nombre-${idx}`).value.trim();
+    const precioBaseRaw = document.getElementById(`precio-${idx}`).value;
+    const precio = precioBaseRaw === "" ? null : Number(precioBaseRaw);
+    const {tallas, total} = leerTallasDeContenedor(`tallas-${idx}`);
+
+    await db.collection("inventario").doc(p.id).update({
+      nombre,
+      precio,
+      stock: total,
+      tallas
+    });
+    alert("✅ Guardado.");
+    cargarInventario();
+  }
+
+  async function guardarTodos(){
+    for(let i=0;i<prendasInv.length;i++){
+      await guardarUno(i);
+    }
+  }
+
+  async function agregarPrenda(){
+    const nombre = document.getElementById("nuevo-nombre").value.trim();
+    const precioBaseRaw = document.getElementById("nuevo-precio").value;
+    const precio = precioBaseRaw === "" ? null : Number(precioBaseRaw);
+    const {tallas, total} = leerTallasDeContenedor("nuevo-tallas");
+    if(!nombre){ alert("Ingresa nombre"); return; }
+    if(tallas.length===0){ alert("Agrega al menos una talla"); return; }
+
+    await db.collection("inventario").add({
+      nombre,
+      precio,
+      stock: total,
+      tallas
+    });
+
+    document.getElementById("nuevo-nombre").value = "";
+    document.getElementById("nuevo-precio").value = "";
+    document.getElementById("nuevo-tallas").innerHTML = `<div class="mini">Tallas (talla / precio / stockTalla)</div>`;
+    alert("✅ Prenda agregada.");
+    cargarInventario();
+  }
+
+  async function eliminarPrenda(id){
+    if(!confirm("¿Eliminar prenda?")) return;
+    await db.collection("inventario").doc(id).delete();
+    alert("🗑 Eliminado.");
+    cargarInventario();
+  }
+
+  // Inicial
+  // agrega una fila por defecto en "nuevo" para comodidad
+  document.addEventListener("DOMContentLoaded", ()=>{
+    agregarFilaTalla("nuevo-tallas");
+    cargarInventario();
+  });
+</script>
+    </section>
+    <section id="login" style="display:none;">
+<h1>🔐 Iniciar Sesión</h1>
+
+<div class="login-container">
+  <input type="text" id="usuario" placeholder="Usuario">
+  <input type="password" id="contrasena" placeholder="Contraseña">
+  <button onclick="iniciarSesion()">Entrar</button>
+</div>
+
+<script>
+  const usuarios = [
+    { usuario: 'admin', contrasena: '100922', rol: 'admin' },
+    { usuario: 'trabajador', contrasena: '1234', rol: 'trabajador' }
+  ];
+
+  function iniciarSesion() {
+    const user = document.getElementById('usuario').value.trim();
+    const pass = document.getElementById('contrasena').value.trim();
+
+    const encontrado = usuarios.find(u => u.usuario === user && u.contrasena === pass);
+
+    if (encontrado) {
+      localStorage.setItem("usuarioActivo", encontrado.usuario);
+      localStorage.setItem("rolActivo", encontrado.rol);
+      window.location.href = 'index.html';
+    } else {
+      alert("❌ Usuario o contraseña incorrectos");
+    }
+  }
+</script>
+    </section>
+    <section id="reporte-tallas" style="display:none;">
+<script>
+  // Requiere sesión
+  const usuario = localStorage.getItem("usuarioActivo");
+  if (!usuario) { window.location.href = "login.html"; }
+</script>
+
+<h1>📊 Reporte por Tallas</h1>
+
+<div class="topbar">
+  <button class="boton" onclick="location.href='index.html'">🏪 Volver a la tienda</button>
+  <button class="boton" onclick="location.href='ventas.html'">🧾 Ventas</button>
+  <button class="boton" onclick="location.href='historial.html'">📚 Historial</button>
+</div>
+
+<div class="filtros">
+  <span>📅 Desde:</span>
+  <input type="date" id="desde">
+  <span>Hasta:</span>
+  <input type="date" id="hasta">
+  <button class="boton" onclick="cargarReporte()">Aplicar</button>
+  <button class="boton" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+</div>
+
+<div class="kpis" style="margin-top:12px;">
+  <div class="kpi">
+    <div class="muted">Unidades vendidas</div>
+    <div id="kpi-unidades" style="font-size:20px; font-weight:700;">0</div>
+  </div>
+  <div class="kpi">
+    <div class="muted">Ingresos totales</div>
+    <div id="kpi-ingresos" style="font-size:20px; font-weight:700;">S/ 0.00</div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>🥇 Unidades por talla (global)</h2>
+    <div class="muted">Suma de todas las prendas</div>
+    <div style="overflow:auto; max-height:50vh;">
+      <table id="tabla-tallas">
+        <thead>
+          <tr><th>Talla</th><th>Unidades</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧵 Ventas por prenda y talla</h2>
+    <div class="muted">Incluye cantidad e ingresos; total por prenda al final</div>
+    <div style="overflow:auto; max-height:50vh;">
+      <table id="tabla-prenda-talla">
+        <thead>
+          <tr><th>Prenda</th><th>Talla</th><th>Unidades</th><th>Ingresos</th></tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot id="tfoot-prenda"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  // Usa el MISMO config que en index.html
+  const firebaseConfig = {
+    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+    authDomain: "inventario-ab270.firebaseapp.com",
+    projectId: "inventario-ab270",
+    storageBucket: "inventario-ab270.firebasestorage.app",
+    messagingSenderId: "15388676345",
+    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+  // Utilidades
+  const formatearSoles = v => new Intl.NumberFormat("es-PE",{style:"currency",currency:"PEN"}).format(v||0);
+
+  function parseFechaEs(fechaStr) {
+    // Espera "DD/MM/YYYY"
+    if (!fechaStr) return null;
+    const [d,m,y] = fechaStr.split('/').map(x=>parseInt(x,10));
+    if(!d||!m||!y) return null;
+    return new Date(y, m-1, d);
+  }
+
+  // Extrae: nombre, talla (número) y precio (number) desde "Nombre T16 - S/ 35.00"
+  function parseLineaProducto(linea) {
+    if (!linea || typeof linea !== 'string') return null;
+    // Busca el último " - " para separar precio
+    const sep = linea.lastIndexOf(' - ');
+    if (sep === -1) return null;
+    const left = linea.slice(0, sep).trim();   // "Nombre T16"
+    const right = linea.slice(sep + 3).trim(); // "S/ 35.00"
+
+    // Talla: último 'T' seguido de números
+    const mTalla = left.match(/T\s*(\d+)/i);
+    const talla = mTalla ? parseInt(mTalla[1],10) : null;
+
+    // Nombre: lo que esté antes del " T"
+    const nombre = mTalla ? left.slice(0, mTalla.index).trim() : left;
+
+    // Precio: quitar S/ y comas
+    const num = right.replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',', '.');
+    const precio = parseFloat(num);
+    return { nombre, talla, precio: isNaN(precio)?0:precio };
+  }
+
+  let cacheVentas = []; // guardamos últimas ventas cargadas (ya filtradas)
+
+  async function cargarReporte() {
+    // 1) Traer ventas
+    const snap = await db.collection("ventas").get();
+    const ventas = snap.docs.map(d => d.data());
+
+    // 2) Filtro por fecha (client-side porque guardaste fecha como string)
+    const d1 = document.getElementById('desde').value ? new Date(document.getElementById('desde').value) : null;
+    const d2 = document.getElementById('hasta').value ? new Date(document.getElementById('hasta').value) : null;
+
+    const filtradas = ventas.filter(v => {
+      const fv = parseFechaEs(v.fecha);
+      if (!fv) return true; // si no se puede parsear, incluimos
+      if (d1 && fv < d1) return false;
+      if (d2) {
+        // incluir todo el día hasta 23:59:59
+        const limite = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate(), 23,59,59);
+        if (fv > limite) return false;
+      }
+      return true;
+    });
+
+    cacheVentas = filtradas;
+
+    // 3) Agregado
+    const aggTalla = new Map();        // talla -> unidades
+    const aggPrendaTalla = new Map();  // "prenda|talla" -> {unidades, ingresos}
+    const aggPrenda = new Map();       // prenda -> {unidades, ingresos}
+    let totalUnidades = 0;
+    let totalIngresos = 0;
+
+    filtradas.forEach(v => {
+      const arr = Array.isArray(v.productos) ? v.productos : [];
+      arr.forEach(linea => {
+        const p = parseLineaProducto(linea);
+        if (!p) return;
+
+        // Unidades (cada línea = 1 und)
+        totalUnidades += 1;
+
+        // Ingresos (sumamos precio de la línea)
+        totalIngresos += (p.precio || 0);
+
+        // Por talla (global)
+        if (p.talla != null) {
+          aggTalla.set(p.talla, (aggTalla.get(p.talla) || 0) + 1);
+        }
+
+        // Por prenda y talla
+        const keyPT = `${p.nombre}|${p.talla ?? '-'}`;
+        const curPT = aggPrendaTalla.get(keyPT) || { unidades:0, ingresos:0 };
+        curPT.unidades += 1;
+        curPT.ingresos += (p.precio || 0);
+        aggPrendaTalla.set(keyPT, curPT);
+
+        // Totales por prenda
+        const curP = aggPrenda.get(p.nombre) || { unidades:0, ingresos:0 };
+        curP.unidades += 1;
+        curP.ingresos += (p.precio || 0);
+        aggPrenda.set(p.nombre, curP);
+      });
+    });
+
+    // 4) Render KPIs
+    document.getElementById('kpi-unidades').textContent = String(totalUnidades);
+    document.getElementById('kpi-ingresos').textContent = formatearSoles(totalIngresos);
+
+    // 5) Render tablas
+    renderTablaTallas(aggTalla);
+    renderTablaPrendaTalla(aggPrendaTalla, aggPrenda);
+  }
+
+  function renderTablaTallas(aggTalla) {
+    const tbody = document.querySelector('#tabla-tallas tbody');
+    tbody.innerHTML = '';
+    // ordenar por talla (num asc)
+    const filas = [...aggTalla.entries()].sort((a,b)=>a[0]-b[0]);
+    filas.forEach(([talla, unidades]) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>T${talla}</td><td>${unidades}</td>`;
+      tbody.appendChild(tr);
+    });
+    if (filas.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="2">Sin datos en el rango seleccionado.</td></tr>`;
+    }
+  }
+
+  function renderTablaPrendaTalla(aggPT, aggP) {
+    const tbody = document.querySelector('#tabla-prenda-talla tbody');
+    const tfoot = document.getElementById('tfoot-prenda');
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
+
+    // ordenar por prenda y talla
+    const filas = [...aggPT.entries()].sort((a,b)=>{
+      const [pa,ta] = a[0].split('|');
+      const [pb,tb] = b[0].split('|');
+      if (pa.toLowerCase() < pb.toLowerCase()) return -1;
+      if (pa.toLowerCase() > pb.toLowerCase()) return 1;
+      return (parseInt(ta,10)||0) - (parseInt(tb,10)||0);
+    });
+
+    let prendaActual = null;
+    filas.forEach(([key, val]) => {
+      const [prenda, talla] = key.split('|');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${prenda}</td>
+        <td>${talla === '-' ? '—' : 'T'+talla}</td>
+        <td>${val.unidades}</td>
+        <td>${formatearSoles(val.ingresos)}</td>
+      `;
+      tbody.appendChild(tr);
+      prendaActual = prenda;
+    });
+
+    // Totales por prenda (pie simple)
+    const totales = [...aggP.entries()].sort((a,b)=>{
+      return a[0].toLowerCase() < b[0].toLowerCase() ? -1 : 1;
+    });
+    if (totales.length) {
+      const trHead = document.createElement('tr');
+      trHead.innerHTML = `<td colspan="4" style="font-weight:700; padding-top:10px;">Totales por prenda</td>`;
+      tfoot.appendChild(trHead);
+
+      totales.forEach(([prenda, v]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight:600;">${prenda}</td>
+          <td>—</td>
+          <td style="font-weight:600;">${v.unidades}</td>
+          <td style="font-weight:600;">${formatearSoles(v.ingresos)}</td>
+        `;
+        tfoot.appendChild(tr);
+      });
+    } else {
+      tbody.innerHTML = `<tr><td colspan="4">Sin datos en el rango seleccionado.</td></tr>`;
+    }
+  }
+
+  function exportarCSV() {
+    // A partir de cacheVentas (rango ya aplicado), generamos un CSV detalle por línea.
+    if (!cacheVentas.length) {
+      alert("⚠️ No hay datos para exportar.");
+      return;
+    }
+    let filas = [["Fecha","Hora","Prenda","Talla","Precio"]];
+
+    cacheVentas.forEach(v => {
+      const arr = Array.isArray(v.productos) ? v.productos : [];
+      arr.forEach(linea => {
+        const p = parseLineaProducto(linea);
+        if (!p) return;
+        filas.push([v.fecha, v.hora, p.nombre, p.talla ?? "", (p.precio||0).toString().replace('.',',')]);
+      });
+    });
+
+    const csv = filas.map(r => r.map(c=>{
+      const s = String(c ?? "");
+      return /[",;\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+    }).join(";")).join("\n");
+
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `reporte_tallas_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  // Carga inicial
+  cargarReporte();
+</script>
+    </section>
+    <section id="ventas" style="display:none;">
+<h1>🗓️ Ventas por Fecha</h1>
+
+  <div class="acciones" style="text-align:center; margin-bottom:10px;">
+    <input type="date" id="fechaSeleccionada" />
+    <button onclick="buscarPorFecha()">🔍 Ver Ventas</button>
+    <button onclick="descargarTxt()">📄 Descargar TXT</button>
+    <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
+  </div>
+
+  <ul id="listaVentas"></ul>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+      authDomain: "frutisha-store.firebaseapp.com",
+      projectId: "inventario-ab270",
+      storageBucket: "frutisha-store.appspot.com",
+      messagingSenderId: "15388676345",
+      appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
+  <script>
+    function formatearSoles(valor) {
+      return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
+    }
+
+    let ventasFiltradas = [];
+
+    async function buscarPorFecha() {
+      const fecha = document.getElementById("fechaSeleccionada").value;
+      if (!fecha) return alert("⚠️ Selecciona una fecha válida");
+
+      const lista = document.getElementById("listaVentas");
+      lista.innerHTML = "<li>Cargando...</li>";
+
+      const fechaPE = new Date(fecha).toLocaleDateString("es-PE");
+      try {
+        const snap = await db.collection("ventas").where("fecha", "==", fechaPE).get();
+        ventasFiltradas = snap.docs.map(d => d.data());
+
+        if (ventasFiltradas.length === 0) {
+          lista.innerHTML = "<li>No hay ventas para esta fecha.</li>";
+          return;
+        }
+
+        lista.innerHTML = ventasFiltradas.map((venta, i) => `
+          <li>
+            <strong>Venta ${i + 1}</strong> — 🕒 ${venta.hora}<br>
+            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
+            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
+          </li>
+        `).join("");
+      } catch (e) {
+        console.error(e);
+        lista.innerHTML = "<li>❌ Error al cargar ventas.</li>";
+      }
+    }
+
+    function descargarTxt() {
+      if (ventasFiltradas.length === 0) {
+        alert("⚠️ No hay ventas para exportar.");
+        return;
+      }
+      const fecha = document.getElementById("fechaSeleccionada").value || new Date().toISOString().slice(0,10);
+
+      let contenido = "🛍️ Ventas del Día - Frutisha Store\n\n";
+      ventasFiltradas.forEach((venta, i) => {
+        contenido += `Venta ${i + 1} - ${venta.hora}\n`;
+        venta.productos.forEach(p => contenido += `  - ${p}\n`);
+        contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
+      });
+
+      const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `ventas_${fecha}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+    </section>
+  </main>
+  <script src="firebase-init.js"></script>
+  <script src="app.js"></script>
+  <script>
+    function mostrarSeccion(id) {
+      const secciones = document.querySelectorAll("main section");
+      secciones.forEach(sec => sec.style.display = "none");
+      const activa = document.getElementById(id);
+      activa.style.display = "block";
+
+      if (id === "dashboard" && typeof initDashboard === "function") initDashboard();
+      if (id === "inventario" && typeof initInventario === "function") initInventario();
+      if (id === "ventas" && typeof initVentas === "function") initVentas();
+      if (id === "historial" && typeof initHistorial === "function") initHistorial();
+      if (id === "reporte-tallas" && typeof initReporte === "function") initReporte();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      if (typeof initDashboard === "function") initDashboard();
+    });
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
