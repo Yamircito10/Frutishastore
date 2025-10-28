@@ -4,9 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Frutisha Store - Perú</title>
-  <link rel="stylesheet" href="styles.css" />
+
+  <!-- ✅ Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
   <style>
-    /* Opcional: hace que la fila de botones se vea ordenada en móvil */
     .nav-acciones {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -15,10 +18,9 @@
     }
   </style>
 </head>
-<body>
+<body class="container py-4">
 
 <script>
-  // ✅ Verificar login
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
   if (!usuario) {
@@ -26,43 +28,42 @@
   }
 </script>
 
-<h1>🛍 Frutisha Store</h1>
+<h1 class="mb-4 text-center">🛍 Frutisha Store</h1>
 
-<!-- 🔗 Navegación (Reportes / Historial / Tallas / Inventario / Cerrar sesión) -->
-<div class="acciones nav-acciones">
-  <button onclick="location.href='ventas.html'">📈 Reporte de ventas</button>
-  <button onclick="location.href='historial.html'">📚 Historial</button>
-  <!-- Este botón de Inventario solo lo verá el admin (se muestra por JS abajo) -->
-  <button id="btn-inventario" style="display:none;" onclick="location.href='inventario.html'">📦 Inventario</button>
-  <button onclick="cerrarSesion()">🔒 Cerrar sesión</button>
+<!-- 🔗 Navegación -->
+<div class="nav-acciones mb-4">
+  <button class="btn btn-primary" onclick="location.href='ventas.html'">📈 Reporte de ventas</button>
+  <button class="btn btn-secondary" onclick="location.href='historial.html'">📚 Historial</button>
+  <button id="btn-inventario" class="btn btn-warning" style="display:none;" onclick="location.href='inventario.html'">📦 Inventario</button>
+  <button class="btn btn-danger" onclick="cerrarSesion()">🔒 Cerrar sesión</button>
 </div>
 
-<!-- 🧾 Productos de la tienda -->
-<section id="lista-prendas" class="productos"></section>
+<!-- 🧾 Productos -->
+<section id="lista-prendas" class="productos mb-4"></section>
 
 <!-- 💵 Carrito -->
-<div id="total">Total: S/ 0.00</div>
-<div id="lista">
+<div id="total" class="mb-2 fw-bold">Total: S/ 0.00</div>
+<div id="lista" class="mb-4">
   <p><strong>Productos seleccionados:</strong></p>
-  <ul id="productos"></ul>
+  <ul id="productos" class="list-group"></ul>
 </div>
 
-<div class="acciones">
-  <button onclick="finalizarVenta()">💾 Finalizar Venta</button>
-  <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
+<div class="d-flex gap-2 mb-4">
+  <button class="btn btn-success" onclick="finalizarVenta()">💾 Finalizar Venta</button>
+  <button class="btn btn-outline-secondary" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
 </div>
 
-<!-- 🗂 Historial en la portada (últimas ventas) -->
-<div id="historial" style="margin-top:30px;">
+<!-- 🗂 Historial -->
+<div id="historial" class="mt-5">
   <h2>📋 Historial del Día</h2>
-  <ul id="ventasDia"></ul>
-  <div class="acciones">
-    <button class="borrar-btn" onclick="borrarHistorial()">🗑 Borrar Historial</button>
-    <button onclick="descargarTXT()">📥 Descargar TXT</button>
+  <ul id="ventasDia" class="list-group mb-3"></ul>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-danger" onclick="borrarHistorial()">🗑 Borrar Historial</button>
+    <button class="btn btn-info text-white" onclick="descargarTXT()">📥 Descargar TXT</button>
   </div>
 </div>
 
-<!-- Firebase (compat) -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
@@ -82,7 +83,6 @@
 <script src="app.js"></script>
 
 <script>
-  // Mostrar botón “Inventario” solo a admin
   if (rol === "admin") {
     document.getElementById("btn-inventario").style.display = "inline-block";
   }
