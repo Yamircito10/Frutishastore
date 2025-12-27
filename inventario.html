@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Inventario | Frutisha Admin</title>
+  <link rel="stylesheet" href="admin.css"/>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">F</div>
+        <div class="title">
+          <strong>Frutisha Admin</strong>
+          <span>Panel administrativo</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a data-nav href="index.html"><span>Dashboard</span><span class="pill">Inicio</span></a>
+        <a data-nav href="inventario.html"><span>Inventario</span><span class="pill">Stock</span></a>
+      </nav>
+
+      <div class="bottom">
+        <button class="btn danger" id="btnSalir">Cerrar sesión</button>
+        <small>Tip: inventario = fuente única.</small>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <span>🔎</span>
+          <input placeholder="Buscar (solo inventario)…" disabled />
+        </div>
+        <div class="actions">
+          <a class="btn" href="inventario.html">Ir a Inventario</a>
+          <a class="btn primary" href="index.html">Dashboard</a>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      
+<div class="card">
+  <h2>Inventario</h2>
+  <p class="muted">Crear / editar productos en Firestore (colección: inventario).</p>
+
+  <div class="form-row" style="margin-top:12px">
+    <div class="field">
+      <label>Nombre</label>
+      <input id="nombre" placeholder="Polo Oversize"/>
+    </div>
+    <div class="field">
+      <label>Categoría</label>
+      <input id="categoria" placeholder="Polos"/>
+    </div>
+    <div class="field">
+      <label>Precio (PEN)</label>
+      <input id="precio" type="number" inputmode="decimal" placeholder="49.90"/>
+    </div>
+    <div class="field">
+      <label>Talla</label>
+      <select id="talla">
+        <option>S</option><option selected>M</option><option>L</option><option>XL</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Stock</label>
+      <input id="stock" type="number" inputmode="numeric" placeholder="10"/>
+    </div>
+    <div class="field">
+      <label>SKU (opcional)</label>
+      <input id="sku" placeholder="FRU-001"/>
+    </div>
+    <div class="field full" style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn" id="btnLimpiar">Limpiar</button>
+      <button class="btn primary" id="btnGuardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h2>Listado</h2>
+  <div class="search" style="max-width:none;margin:10px 0">
+    <span>🔎</span>
+    <input id="qInv" placeholder="Buscar por nombre, categoría, talla o SKU…"/>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Producto</th><th>Categoría</th><th>Talla</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+      <tbody id="tablaInventario"></tbody>
+    </table>
+  </div>
+</div>
+
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

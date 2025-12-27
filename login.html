@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login | Frutisha Admin</title>
+  <link rel="stylesheet" href="admin.css"/>
+  <style>
+    body{display:grid;place-items:center}
+    .login{width:min(420px, calc(100vw - 32px))}
+  </style>
+</head>
+<body>
+  <div class="login card">
+    <h2>Iniciar sesión</h2>
+    <p class="muted">Sesión simple (localStorage) como tu proyecto anterior.</p>
+
+    <div class="form-row" style="margin-top:12px">
+      <div class="field full">
+        <label>Usuario</label>
+        <input id="user" placeholder="admin"/>
+      </div>
+      <div class="field full">
+        <label>Contraseña</label>
+        <input id="pass" type="password" placeholder="••••••••"/>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+      <button class="btn primary" id="btnLogin">Entrar</button>
+    </div>
+    <small>Tip: luego podemos conectar Auth real de Firebase si quieres.</small>
+  </div>
+
+  <script>
+    document.getElementById("btnLogin").onclick = ()=>{
+      const u=(document.getElementById("user").value||"").trim();
+      const p=(document.getElementById("pass").value||"").trim();
+      if(!u||!p){ alert("Completa usuario y contraseña"); return; }
+      localStorage.setItem("usuarioActivo", u);
+      location.href="index.html";
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dashboard | Frutisha Admin</title>
+  <link rel="stylesheet" href="admin.css"/>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">F</div>
+        <div class="title">
+          <strong>Frutisha Admin</strong>
+          <span>Panel administrativo</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a data-nav href="index.html"><span>Dashboard</span><span class="pill">Inicio</span></a>
+        <a data-nav href="inventario.html"><span>Inventario</span><span class="pill">Stock</span></a>
+      </nav>
+
+      <div class="bottom">
+        <button class="btn danger" id="btnSalir">Cerrar sesión</button>
+        <small>Tip: inventario = fuente única.</small>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <span>🔎</span>
+          <input placeholder="Buscar (solo inventario)…" disabled />
+        </div>
+        <div class="actions">
+          <a class="btn" href="inventario.html">Ir a Inventario</a>
+          <a class="btn primary" href="index.html">Dashboard</a>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      
+<section class="kpis">
+  <div class="kpi"><div class="label">Productos</div><div class="value" id="kpiProductos">—</div></div>
+  <div class="kpi"><div class="label">Stock bajo (≤5)</div><div class="value" id="kpiBajo">—</div></div>
+  <div class="kpi"><div class="label">Stock crítico (≤2)</div><div class="value" id="kpiCritico">—</div></div>
+  <div class="kpi"><div class="label">Estado</div><div class="value">OK</div></div>
+</section>
+
+<div class="card" style="margin-top:14px">
+  <h2>Inventario (stock más bajo)</h2>
+  <p class="muted">Top 10 para reponer.</p>
+  <div class="table-wrap" style="margin-top:10px">
+    <table>
+      <thead><tr><th>Producto</th><th>Categoría</th><th>Talla</th><th>Precio</th><th>Stock</th></tr></thead>
+      <tbody id="tablaResumen"></tbody>
+    </table>
+  </div>
+</div>
+
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
