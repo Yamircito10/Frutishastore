@@ -1,105 +1,214 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Inventario | Frutisha Admin</title>
-  <link rel="stylesheet" href="admin.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventario - Frutisha Store</title>
+  <link rel="stylesheet" href="admin.css" />
+  <style>
+    .inventario-container{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:12px; margin-top:16px;
+    }
+    .producto-item{
+      background:#fff; border:1px solid var(--rosa);
+      border-radius:12px; padding:12px; text-align:center;
+      box-shadow:0 2px 5px rgba(0,0,0,.1)
+    }
+    .producto-item input{
+      width:95%; padding:6px; margin:5px 0;
+      border:1px solid #ccc; border-radius:6px; text-align:center;
+    }
+    .tallas-box{ background:#fafafa; border:1px dashed #ddd; border-radius:8px; padding:8px; margin-top:8px;}
+    .talla-row{ display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:6px; align-items:center; margin-bottom:6px;}
+    .mini{ font-size:12px; color:#666; }
+    .btn-mini{ padding:6px 8px; font-size:12px; border-radius:8px; border:none; cursor:pointer; }
+    .btn-add{ background:#e6f4ea; }
+    .btn-del{ background:#ffe5e5; }
+    .acciones-globales{ text-align:center; margin-top:16px; }
+    .guardar-btn{
+      background:var(--rosa); color:#fff; border:none; padding:8px 12px;
+      border-radius:8px; cursor:pointer; margin:4px;
+    }
+    .guardar-btn:hover{ background:var(--rosa-oscuro); }
+    .nuevo-item{ background:#f8f9fa; border:2px dashed var(--rosa); border-radius:10px; padding:12px; margin-top:18px; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">F</div>
-        <div class="title">
-          <strong>Frutisha Admin</strong>
-          <span>Panel administrativo</span>
-        </div>
-      </div>
 
-      <nav class="nav">
-        <a data-nav href="index.html"><span>Dashboard</span><span class="pill">Inicio</span></a>
-        <a data-nav href="inventario.html"><span>Inventario</span><span class="pill">Stock</span></a>
-      </nav>
+<script>
+  const usuario = localStorage.getItem("usuarioActivo");
+  const rol = localStorage.getItem("rolActivo");
+  if (!usuario || rol !== "admin") {
+    alert("❌ Acceso denegado. Solo administradores.");
+    window.location.href = "index.html";
+  }
+</script>
 
-      <div class="bottom">
-        <button class="btn danger" id="btnSalir">Cerrar sesión</button>
-        <small>Tip: inventario = fuente única.</small>
-      </div>
-    </aside>
+<h1>📦 Inventario - Frutisha Store</h1>
 
-    <main class="main">
-      <header class="topbar">
-        <div class="search">
-          <span>🔎</span>
-          <input placeholder="Buscar (solo inventario)…" disabled />
-        </div>
-        <div class="actions">
-          <a class="btn" href="inventario.html">Ir a Inventario</a>
-          <a class="btn primary" href="index.html">Dashboard</a>
-        </div>
-      </header>
-
-      <!-- CONTENT -->
-      
-<div class="card">
-  <h2>Inventario</h2>
-  <p class="muted">Crear / editar productos en Firestore (colección: inventario).</p>
-
-  <div class="form-row" style="margin-top:12px">
-    <div class="field">
-      <label>Nombre</label>
-      <input id="nombre" placeholder="Polo Oversize"/>
-    </div>
-    <div class="field">
-      <label>Categoría</label>
-      <input id="categoria" placeholder="Polos"/>
-    </div>
-    <div class="field">
-      <label>Precio (PEN)</label>
-      <input id="precio" type="number" inputmode="decimal" placeholder="49.90"/>
-    </div>
-    <div class="field">
-      <label>Talla</label>
-      <select id="talla">
-        <option>S</option><option selected>M</option><option>L</option><option>XL</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Stock</label>
-      <input id="stock" type="number" inputmode="numeric" placeholder="10"/>
-    </div>
-    <div class="field">
-      <label>SKU (opcional)</label>
-      <input id="sku" placeholder="FRU-001"/>
-    </div>
-    <div class="field full" style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn" id="btnLimpiar">Limpiar</button>
-      <button class="btn primary" id="btnGuardar">Guardar</button>
-    </div>
-  </div>
+<div class="acciones" style="margin-bottom:10px;">
+  <button onclick="location.href='index.html'">🏪 Volver a la Tienda</button>
 </div>
 
-<div class="card" style="margin-top:14px">
-  <h2>Listado</h2>
-  <div class="search" style="max-width:none;margin:10px 0">
-    <span>🔎</span>
-    <input id="qInv" placeholder="Buscar por nombre, categoría, talla o SKU…"/>
+<div class="inventario-container" id="contenedor-inventario"></div>
+
+<div class="nuevo-item">
+  <h3>➕ Agregar nueva prenda</h3>
+  <input type="text" id="nuevo-nombre" placeholder="Nombre de la prenda" />
+  <input type="number" id="nuevo-precio" placeholder="Precio base (opcional)" min="0" />
+  <input type="number" id="nuevo-stock" placeholder="Stock total (se calcula solo)" disabled />
+  <div class="tallas-box" id="nuevo-tallas">
+    <div class="mini">Tallas (talla / precio / stockTalla)</div>
+    <!-- filas se agregan aquí -->
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Producto</th><th>Categoría</th><th>Talla</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
-      <tbody id="tablaInventario"></tbody>
-    </table>
-  </div>
+  <button class="btn-mini btn-add" onclick="agregarFilaTalla('nuevo-tallas')">➕ Añadir talla</button>
+  <button class="guardar-btn" onclick="agregarPrenda()">✅ Guardar prenda</button>
 </div>
 
-    </main>
-  </div>
+<div class="acciones-globales">
+  <button class="guardar-btn" onclick="guardarTodos()">💾 Guardar TODOS</button>
+</div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-init.js"></script>
-  <script src="app.js"></script>
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="firebase-init.js"></script>
+
+<script>
+  let prendasInv = [];
+
+  function agregarFilaTalla(contenedorId, data={talla:"", precio:"", stockTalla:""}) {
+    const cont = document.getElementById(contenedorId);
+    const row = document.createElement("div");
+    row.className = "talla-row";
+    row.innerHTML = `
+      <input type="number" step="1" placeholder="Talla" value="${data.talla}" />
+      <input type="number" step="0.01" placeholder="Precio" value="${data.precio}" />
+      <input type="number" step="1" placeholder="Stock talla" value="${data.stockTalla}" />
+      <button class="btn-mini btn-del" onclick="this.parentElement.remove()">🗑</button>
+    `;
+    cont.appendChild(row);
+  }
+
+  function leerTallasDeContenedor(contenedorId){
+    const cont = document.getElementById(contenedorId);
+    const filas = [...cont.querySelectorAll(".talla-row")];
+    const tallas = [];
+    let total = 0;
+    filas.forEach(f=>{
+      const [tallaInp, precioInp, stockInp] = f.querySelectorAll("input");
+      const talla = Number(tallaInp.value);
+      const precio = precioInp.value === "" ? null : Number(precioInp.value);
+      const stockTalla = Number(stockInp.value||0);
+      if(!isNaN(talla)){
+        tallas.push({talla, precio, stockTalla});
+        total += stockTalla;
+      }
+    });
+    return { tallas, total };
+  }
+
+  async function cargarInventario(){
+    const snap = await db.collection("inventario").get();
+    prendasInv = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderInventario();
+  }
+
+  function renderInventario(){
+    const cont = document.getElementById("contenedor-inventario");
+    cont.innerHTML = "";
+    if(prendasInv.length===0){
+      cont.innerHTML = "<p>⚠️ No hay productos.</p>";
+      return;
+    }
+    prendasInv.forEach((p,idx)=>{
+      const card = document.createElement("div");
+      card.className = "producto-item";
+      const contTallasId = `tallas-${idx}`;
+      card.innerHTML = `
+        <h3>${p.nombre}</h3>
+        <input type="text" id="nombre-${idx}" value="${p.nombre}" placeholder="Nombre"/>
+        <input type="number" id="precio-${idx}" value="${p.precio ?? ''}" placeholder="Precio base (opcional)"/>
+        <input type="number" id="stock-${idx}" value="${p.stock ?? 0}" placeholder="Stock total" disabled />
+
+        <div class="tallas-box" id="${contTallasId}">
+          <div class="mini">Tallas (talla / precio / stockTalla)</div>
+        </div>
+        <button class="btn-mini btn-add" onclick="agregarFilaTalla('${contTallasId}')">➕ Añadir talla</button>
+
+        <div style="margin-top:8px;">
+          <button class="guardar-btn" onclick="guardarUno(${idx})">💾 Guardar</button>
+          <button class="guardar-btn" style="background:#dc3545" onclick="eliminarPrenda('${p.id}')">🗑 Eliminar</button>
+        </div>
+      `;
+      cont.appendChild(card);
+      // rellenar tallas
+      const t = Array.isArray(p.tallas) ? p.tallas : [];
+      t.forEach(tt=>agregarFilaTalla(contTallasId, tt));
+    });
+  }
+
+  async function guardarUno(idx){
+    const p = prendasInv[idx];
+    const nombre = document.getElementById(`nombre-${idx}`).value.trim();
+    const precioBaseRaw = document.getElementById(`precio-${idx}`).value;
+    const precio = precioBaseRaw === "" ? null : Number(precioBaseRaw);
+    const {tallas, total} = leerTallasDeContenedor(`tallas-${idx}`);
+
+    await db.collection("inventario").doc(p.id).update({
+      nombre,
+      precio,
+      stock: total,
+      tallas
+    });
+    alert("✅ Guardado.");
+    cargarInventario();
+  }
+
+  async function guardarTodos(){
+    for(let i=0;i<prendasInv.length;i++){
+      await guardarUno(i);
+    }
+  }
+
+  async function agregarPrenda(){
+    const nombre = document.getElementById("nuevo-nombre").value.trim();
+    const precioBaseRaw = document.getElementById("nuevo-precio").value;
+    const precio = precioBaseRaw === "" ? null : Number(precioBaseRaw);
+    const {tallas, total} = leerTallasDeContenedor("nuevo-tallas");
+    if(!nombre){ alert("Ingresa nombre"); return; }
+    if(tallas.length===0){ alert("Agrega al menos una talla"); return; }
+
+    await db.collection("inventario").add({
+      nombre,
+      precio,
+      stock: total,
+      tallas
+    });
+
+    document.getElementById("nuevo-nombre").value = "";
+    document.getElementById("nuevo-precio").value = "";
+    document.getElementById("nuevo-tallas").innerHTML = `<div class="mini">Tallas (talla / precio / stockTalla)</div>`;
+    alert("✅ Prenda agregada.");
+    cargarInventario();
+  }
+
+  async function eliminarPrenda(id){
+    if(!confirm("¿Eliminar prenda?")) return;
+    await db.collection("inventario").doc(id).delete();
+    alert("🗑 Eliminado.");
+    cargarInventario();
+  }
+
+  // Inicial
+  // agrega una fila por defecto en "nuevo" para comodidad
+  document.addEventListener("DOMContentLoaded", ()=>{
+    agregarFilaTalla("nuevo-tallas");
+    cargarInventario();
+  });
+</script>
+
 </body>
 </html>
