@@ -1,0 +1,40 @@
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dashboard | Frutisha Admin</title>
+<link rel="stylesheet" href="assets/css/admin.css"/>
+</head><body>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+    <h1 style="margin:8px 0">Frutisha Admin</h1>
+    <div style="display:flex;gap:10px">
+      <a class="btn" href="inventario.html">Inventario</a>
+      <button class="btn" onclick="localStorage.removeItem('usuarioActivo');location.href='login.html'">Salir</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="opacity:.8;font-size:12px">Productos</div>
+        <div id="kpiProductos" style="font-size:28px;font-weight:800">—</div>
+      </div>
+      <a class="btn primary" href="inventario.html">+ Nuevo / Editar</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 10px 0">Inventario (stock más bajo)</h2>
+    <div style="overflow:auto;border-radius:16px">
+      <table>
+        <thead><tr><th>Producto</th><th>Talla</th><th>Precio</th><th>Stock</th></tr></thead>
+        <tbody id="tablaResumen"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-init.js"></script>
+<script src="assets/js/app.js"></script>
+</body></html>
