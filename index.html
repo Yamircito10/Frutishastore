@@ -2,67 +2,103 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Frutisha Store - Perú</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* Opcional: hace que la fila de botones se vea ordenada en móvil */
+    /* MEJORA: Diseño tipo App para los botones principales */
     .nav-acciones {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 8px;
-      margin-bottom: 12px;
+      grid-template-columns: 1fr 1fr; /* Dos columnas fijas para que no se muevan */
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .nav-acciones button {
+      padding: 12px;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      border: none;
+      background: #f0f0f0;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* MEJORA: Hacer que el total "flote" o resalte más */
+    #total {
+      background: #27ae60;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 1.5rem;
+      text-align: center;
+      font-weight: bold;
+      margin: 20px 0;
+      position: sticky; /* Se queda arriba al bajar */
+      top: 10px;
+      z-index: 100;
+    }
+
+    /* MEJORA: Lista de carrito más limpia */
+    #productos li {
+      background: #fff;
+      margin-bottom: 5px;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 5px solid #e67e22;
     }
   </style>
 </head>
 <body>
 
 <script>
-  // ✅ Verificar login
+  // Bloqueo de seguridad inmediato
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
-  if (!usuario) {
-    window.location.href = "login.html";
-  }
+  if (!usuario) window.location.href = "login.html";
 </script>
 
-<h1>🛍 Frutisha Store</h1>
+<header style="text-align: center;">
+  <h1>🛍 Frutisha Store</h1>
+  <p>Hola, <strong><span id="nombre-usuario"></span></strong></p>
+</header>
 
-<!-- 🔗 Navegación (Reportes / Historial / Tallas / Inventario / Cerrar sesión) -->
 <div class="acciones nav-acciones">
-  <button onclick="location.href='ventas.html'">📈 Reporte de ventas</button>
+  <button onclick="location.href='ventas.html'">📈 Ventas</button>
   <button onclick="location.href='historial.html'">📚 Historial</button>
-  <!-- Este botón de Inventario solo lo verá el admin (se muestra por JS abajo) -->
   <button id="btn-inventario" style="display:none;" onclick="location.href='inventario.html'">📦 Inventario</button>
-  <button onclick="cerrarSesion()">🔒 Cerrar sesión</button>
+  <button onclick="cerrarSesion()" style="background: #ff7675; color: white;">🔒 Salir</button>
 </div>
 
-<!-- 🧾 Productos de la tienda -->
+<div id="loader" style="text-align:center; display:none;">Cargando productos...</div>
+
 <section id="lista-prendas" class="productos"></section>
 
-<!-- 💵 Carrito -->
 <div id="total">Total: S/ 0.00</div>
+
 <div id="lista">
-  <p><strong>Productos seleccionados:</strong></p>
+  <p><strong>🛒 Carrito:</strong></p>
   <ul id="productos"></ul>
 </div>
 
-<div class="acciones">
-  <button onclick="finalizarVenta()">💾 Finalizar Venta</button>
-  <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Reiniciar Carrito</button>
+<div class="acciones" style="display: flex; flex-direction: column; gap: 10px;">
+  <button onclick="finalizarVenta()" style="background: #2ecc71; color: white; padding: 15px; font-size: 1.2rem;">💰 FINALIZAR VENTA</button>
+  <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="background: #95a5a6;">🔄 Vaciar Carrito</button>
 </div>
 
-<!-- 🗂 Historial en la portada (últimas ventas) -->
-<div id="historial" style="margin-top:30px;">
-  <h2>📋 Historial del Día</h2>
+<hr>
+
+<div id="historial">
+  <h2>📋 Últimas del Día</h2>
   <ul id="ventasDia"></ul>
   <div class="acciones">
-    <button class="borrar-btn" onclick="borrarHistorial()">🗑 Borrar Historial</button>
-    <button onclick="descargarTXT()">📥 Descargar TXT</button>
+    <button class="borrar-btn" onclick="borrarHistorial()">🗑 Limpiar</button>
+    <button onclick="descargarTXT()">📥 Exportar</button>
   </div>
 </div>
 
-<!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
@@ -78,18 +114,17 @@
   const db = firebase.firestore();
 </script>
 
-<!-- Lógica principal -->
 <script src="app.js"></script>
 
 <script>
-  // Mostrar botón “Inventario” solo a admin
+  // UI Dinámica
+  document.getElementById("nombre-usuario").innerText = usuario;
   if (rol === "admin") {
-    document.getElementById("btn-inventario").style.display = "inline-block";
+    document.getElementById("btn-inventario").style.display = "block";
   }
 
   function cerrarSesion() {
-    localStorage.removeItem("usuarioActivo");
-    localStorage.removeItem("rolActivo");
+    localStorage.clear(); // Limpia todo de un solo golpe
     window.location.href = "login.html";
   }
 </script>
