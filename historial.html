@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Historial de Ventas - Frutisha Store</title>
   <link rel="stylesheet" href="styles.css" />
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
   <style>
     /* Diseño tipo "Ticket" para cada venta */
     #listaHistorial {
@@ -61,13 +66,33 @@
       padding: 12px;
       font-size: 1rem;
       border-radius: 10px;
+      border: none;
+      cursor: pointer;
     }
+
+    .botones-exportar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .botones-exportar button {
+      flex: 1;
+      min-width: 30%;
+      font-size: 0.9rem;
+      padding: 10px;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .btn-txt { background: #6c757d; }
+    .btn-excel { background: #217346; } /* Verde Excel */
+    .btn-pdf { background: #e74c3c; } /* Rojo PDF */
   </style>
 </head>
 <body>
 
   <script>
-    // ✅ Candado de Seguridad: Solo usuarios logueados pueden ver esto
+    // ✅ Candado de Seguridad
     const usuario = localStorage.getItem("usuarioActivo");
     if (!usuario) {
       window.location.href = "login.html";
@@ -75,19 +100,23 @@
   </script>
 
   <header style="text-align: center;">
-    <h1>📚 Historial de Ventas</h1>
+    <h1>📚 Historial General</h1>
+    <p style="color: #666; font-size: 0.9rem; margin-top: -10px;">Todas las ventas registradas</p>
   </header>
 
   <div class="acciones nav-acciones">
     <button onclick="location.href='index.html'" style="background: #f0f0f0; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">⬅️ Volver a la Tienda</button>
-    <div style="display: flex; gap: 10px;">
-      <button onclick="cargarHistorial()" style="flex: 1; background: var(--rosa);">🔄 Actualizar</button>
-      <button onclick="descargarTxt()" style="flex: 1; background: #007bff;">📥 Exportar TXT</button>
+    <button onclick="cargarHistorial()" style="background: var(--rosa); color: white; font-weight: bold;">🔄 Actualizar Historial</button>
+    
+    <div class="botones-exportar">
+      <button class="btn-txt" onclick="descargarTxt()">📄 TXT</button>
+      <button class="btn-excel" onclick="descargarExcel()">📊 Excel</button>
+      <button class="btn-pdf" onclick="descargarPDF()">📕 PDF</button>
     </div>
   </div>
 
   <div id="estado-carga" style="text-align: center; color: #666; margin-top: 20px;">
-    Cargando registros...
+    Cargando todos los registros...
   </div>
 
   <ul id="listaHistorial"></ul>
@@ -113,6 +142,7 @@
     }
 
     let historialVentas = [];
+    let sumaTotalHistorico = 0;
 
     async function cargarHistorial() {
       const lista = document.getElementById("listaHistorial");
@@ -123,19 +153,20 @@
       estadoCarga.innerText = "Cargando registros...";
 
       try {
-        // MEJORA: Ahora ordena por la fecha real del servidor para evitar desórdenes
         const snap = await db.collection("ventas").orderBy("fechaServidor", "desc").get();
         historialVentas = snap.docs.map(d => d.data());
 
         estadoCarga.style.display = "none";
+        sumaTotalHistorico = 0;
 
         if (historialVentas.length === 0) {
-          lista.innerHTML = "<div style='text-align:center; padding: 20px; background: white; border-radius: 10px;'>Aún no hay ventas registradas.</div>";
+          lista.innerHTML = "<div style='text-align:center; padding: 20px; background: white; border-radius: 10px;'>Aún no hay ventas registradas en el sistema.</div>";
           return;
         }
 
         lista.innerHTML = historialVentas.map((venta, i) => {
-          // Extraemos los productos (manejando si es un texto simple o un objeto por la actualización de app.js)
+          sumaTotalHistorico += Number(venta.total);
+
           const productosHtml = venta.productos.map(p => {
             const textoProducto = typeof p === 'string' ? p : p.texto;
             return `<div>🔹 ${textoProducto}</div>`;
@@ -160,21 +191,16 @@
       } catch (e) {
         console.error(e);
         estadoCarga.innerText = "❌ Error al cargar el historial. Revisa tu conexión.";
-        
-        // Si falla porque no existe el índice 'fechaServidor' en Firebase, intentamos con la antigua
-        if(e.message.includes("index")) {
-            estadoCarga.innerHTML = "⚠️ Firebase requiere un índice. Intenta creando un ticket de soporte en Firebase o cambia temporalmente a order by 'fecha'.";
-        }
       }
     }
 
+    // ==========================================
+    // EXPORTAR A TXT
+    // ==========================================
     function descargarTxt() {
-      if (historialVentas.length === 0) {
-        alert("⚠️ No hay datos para exportar.");
-        return;
-      }
+      if (historialVentas.length === 0) return alert("⚠️ No hay datos para exportar.");
 
-      let contenido = "🛍️ HISTORIAL DE VENTAS - FRUTISHA STORE\n";
+      let contenido = "🛍️ HISTORIAL COMPLETO DE VENTAS - FRUTISHA STORE\n";
       contenido += "========================================\n\n";
       
       historialVentas.forEach((venta, i) => {
@@ -194,14 +220,93 @@
       const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      
-      // Nombre de archivo con la fecha de hoy
       const fechaHoy = new Date().toISOString().split('T')[0];
-      a.download = `Frutisha_Ventas_${fechaHoy}.txt`;
-      
+      a.download = `Frutisha_Historial_${fechaHoy}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    }
+
+    // ==========================================
+    // EXPORTAR A EXCEL (.xlsx)
+    // ==========================================
+    function descargarExcel() {
+      if (historialVentas.length === 0) return alert("⚠️ No hay datos para exportar.");
+
+      const datosExcel = historialVentas.map((venta, i) => {
+        const listadoProductos = venta.productos.map(p => typeof p === 'string' ? p : p.texto).join(" | ");
+        return {
+          "N°": historialVentas.length - i, // Enumeración inversa para que la más vieja sea la 1
+          "Fecha": venta.fechaTexto || venta.fecha,
+          "Hora": venta.hora,
+          "Productos": listadoProductos,
+          "Monto (S/)": Number(venta.total)
+        };
+      });
+
+      datosExcel.push({ "N°": "", "Fecha": "", "Hora": "", "Productos": "TOTAL ACUMULADO:", "Monto (S/)": sumaTotalHistorico });
+
+      const hoja = XLSX.utils.json_to_sheet(datosExcel);
+      const libro = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(libro, hoja, "Historial_Completo");
+
+      // Ajuste de columnas
+      const wscols = [ {wch:5}, {wch:12}, {wch:10}, {wch:65}, {wch:15} ];
+      hoja['!cols'] = wscols;
+
+      const fechaHoy = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(libro, `Historial_Frutisha_${fechaHoy}.xlsx`);
+    }
+
+    // ==========================================
+    // EXPORTAR A PDF (.pdf)
+    // ==========================================
+    function descargarPDF() {
+      if (historialVentas.length === 0) return alert("⚠️ No hay datos para exportar.");
+      
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const fechaHoy = new Date().toLocaleDateString("es-PE");
+
+      // Título y Cabecera
+      doc.setFontSize(18);
+      doc.setTextColor(214, 51, 132); 
+      doc.text("Frutisha Store - Historial General", 14, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generado el: ${fechaHoy}`, 14, 28);
+      doc.text(`Total Histórico: S/ ${sumaTotalHistorico.toFixed(2)}`, 14, 34);
+
+      const columnas = ["Fecha", "Hora", "Productos", "Total"];
+      const filas = historialVentas.map((venta) => {
+        const listadoProductos = venta.productos.map(p => typeof p === 'string' ? p : p.texto).join("\n");
+        return [
+          venta.fechaTexto || venta.fecha,
+          venta.hora,
+          listadoProductos,
+          `S/ ${Number(venta.total).toFixed(2)}`
+        ];
+      });
+
+      filas.push([{ content: 'TOTAL GENERAL', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } }, { content: `S/ ${sumaTotalHistorico.toFixed(2)}`, styles: { fontStyle: 'bold', textColor: [39, 174, 96] } }]);
+
+      doc.autoTable({
+        startY: 40,
+        head: [columnas],
+        body: filas,
+        theme: 'grid',
+        headStyles: { fillColor: [214, 51, 132] },
+        styles: { fontSize: 8, cellPadding: 2 },
+        columnStyles: {
+          0: { cellWidth: 20 },
+          1: { cellWidth: 15 },
+          2: { cellWidth: 'auto' },
+          3: { cellWidth: 25, halign: 'right' }
+        }
+      });
+
+      doc.save(`Historial_Frutisha_${new Date().toISOString().split('T')[0]}.pdf`);
     }
 
     // Inicializar
