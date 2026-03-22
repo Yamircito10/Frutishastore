@@ -2,14 +2,92 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Importar Inventario</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Importar Inventario - Frutisha</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--fondo);
+      padding: 20px;
+    }
+    .import-container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    .btn-importar {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 15px;
+      font-size: 1.2rem;
+      border-radius: 10px;
+      font-weight: bold;
+      width: 100%;
+      cursor: pointer;
+      margin-top: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .btn-importar:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+    .btn-volver {
+      background: #f0f0f0;
+      color: #333;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      width: 100%;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    #log {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #666;
+      text-align: left;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 8px;
+      height: 100px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+    }
+  </style>
 </head>
 <body>
-  <h2>📦 Importar inventario a Firebase</h2>
-  <button onclick="importarInventario()">🚀 Subir inventario</button>
 
+  <script>
+    // ✅ Seguridad: Solo el admin debería poder importar inventario masivo
+    const rol = localStorage.getItem("rolActivo");
+    if (rol !== "admin") {
+      alert("❌ Acceso denegado. Solo administradores.");
+      window.location.href = "login.html";
+    }
+  </script>
+
+  <div class="import-container">
+    <h2 style="color: var(--principal); margin-bottom: 5px;">📦 Importar Catálogo</h2>
+    <p style="color: #666; font-size: 0.9rem;">Carga inicial de mercadería a Firebase</p>
+    
+    <button id="btn-subir" class="btn-importar" onclick="importarInventario()">🚀 Iniciar Subida</button>
+    <button class="btn-volver" onclick="location.href='inventario.html'">⬅️ Volver a Inventario</button>
+    
+    <div id="log">Esperando orden...</div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
@@ -22,136 +100,88 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 👇 Aquí va tu inventario:
-    const inventario = [
-  {
-    "nombre": "Polos 1",
-    "precio": 35,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 35 }, { "talla": 6, "precio": 35 }, { "talla": 8, "precio": 35 }, { "talla": 10, "precio": 35 }, { "talla": 12, "precio": 35 }, { "talla": 14, "precio": 35 }, { "talla": 16, "precio": 35 }, { "talla": 18, "precio": 35 } ]
-  },
-  {
-    "nombre": "Polos 2",
-    "precio": 30,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 30 }, { "talla": 6, "precio": 30 }, { "talla": 8, "precio": 30 }, { "talla": 10, "precio": 30 }, { "talla": 12, "precio": 30 }, { "talla": 14, "precio": 30 }, { "talla": 16, "precio": 30 } ]
-  },
-  {
-    "nombre": "Polos mangalarga niño",
-    "precio": 35,
-    "stock": 20,
-    "tallas": [ { "talla": 2, "precio": 35 }, { "talla": 4, "precio": 35 }, { "talla": 6, "precio": 35 }, { "talla": 8, "precio": 35 }, { "talla": 10, "precio": 35 }, { "talla": 12, "precio": 35 }, { "talla": 14, "precio": 35 }, { "talla": 16, "precio": 35 } ]
-  },
-  {
-    "nombre": "Polos mangacorta niño",
-    "precio": 28,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 28 }, { "talla": 6, "precio": 28 }, { "talla": 8, "precio": 28 }, { "talla": 10, "precio": 28 }, { "talla": 12, "precio": 28 }, { "talla": 14, "precio": 28 }, { "talla": 16, "precio": 28 } ]
-  },
-  {
-    "nombre": "Polo mangalarga algodón niña",
-    "precio": 30,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 30 }, { "talla": 6, "precio": 30 }, { "talla": 8, "precio": 30 }, { "talla": 10, "precio": 30 }, { "talla": 12, "precio": 30 }, { "talla": 14, "precio": 30 }, { "talla": 16, "precio": 30 } ]
-  },
-  {
-    "nombre": "Jean 1",
-    "precio": 55,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 55 }, { "talla": 6, "precio": 55 }, { "talla": 8, "precio": 55 }, { "talla": 10, "precio": 55 }, { "talla": 12, "precio": 55 }, { "talla": 14, "precio": 55 }, { "talla": 16, "precio": 60 } ]
-  },
-  {
-    "nombre": "Jean 2",
-    "precio": 60,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
-  },
-  {
-    "nombre": "Jean 3",
-    "precio": 65,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 65 }, { "talla": 6, "precio": 65 }, { "talla": 8, "precio": 65 }, { "talla": 10, "precio": 65 }, { "talla": 12, "precio": 65 }, { "talla": 14, "precio": 65 }, { "talla": 16, "precio": 65 } ]
-  },
-  {
-    "nombre": "Jean bebé",
-    "precio": 50,
-    "stock": 20,
-    "tallas": [ { "talla": 2, "precio": 50 }, { "talla": 4, "precio": 50 }, { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 } ]
-  },
-  {
-    "nombre": "Conjunto jean",
-    "precio": 130,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 130 }, { "talla": 6, "precio": 130 }, { "talla": 8, "precio": 130 }, { "talla": 10, "precio": 130 }, { "talla": 12, "precio": 130 }, { "talla": 14, "precio": 130 }, { "talla": 16, "precio": 135 } ]
-  },
-  {
-    "nombre": "Conjunto de piedrita",
-    "precio": 70,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 70 }, { "talla": 6, "precio": 70 }, { "talla": 8, "precio": 70 }, { "talla": 10, "precio": 70 }, { "talla": 12, "precio": 70 }, { "talla": 14, "precio": 70 }, { "talla": 16, "precio": 70 } ]
-  },
-  {
-    "nombre": "Casaca tíoe",
-    "precio": 75,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 75 }, { "talla": 6, "precio": 75 }, { "talla": 8, "precio": 75 }, { "talla": 10, "precio": 75 }, { "talla": 12, "precio": 75 }, { "talla": 14, "precio": 75 }, { "talla": 16, "precio": 75 } ]
-  },
-  {
-    "nombre": "Conjunto flores",
-    "precio": 60,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
-  },
-  {
-    "nombre": "Casaca impermeable",
-    "precio": 50,
-    "stock": 20,
-    "tallas": [ { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 }, { "talla": 10, "precio": 50 }, { "talla": 12, "precio": 50 }, { "talla": 14, "precio": 50 } ]
-  },
-  {
-    "nombre": "Casaca cuero niño",
-    "precio": 60,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ]
-  },
-  {
-    "nombre": "Casaca cuero niña",
-    "precio": 50,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 50 }, { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 }, { "talla": 10, "precio": 50 }, { "talla": 12, "precio": 50 }, { "talla": 14, "precio": 50 } ]
-  },
-  {
-    "nombre": "Chaleco cuero niña",
-    "precio": 45,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 45 }, { "talla": 6, "precio": 45 }, { "talla": 8, "precio": 45 }, { "talla": 10, "precio": 45 }, { "talla": 12, "precio": 45 }, { "talla": 14, "precio": 45 }, { "talla": 16, "precio": 45 } ]
-  },
-  {
-    "nombre": "Cafarena",
-    "precio": 10,
-    "stock": 20,
-    "tallas": [ { "talla": 4, "precio": 10 }, { "talla": 6, "precio": 10 }, { "talla": 8, "precio": 10 }, { "talla": 10, "precio": 10 }, { "talla": 12, "precio": 10 }, { "talla": 14, "precio": 10 } ]
-  }
-]
-
-    function generarTallas(inicio, fin, precio) {
-      const tallas = [];
-      for (let i = inicio; i <= fin; i += 2) {
-        tallas.push({ talla: i, precio: precio });
-      }
-      return tallas;
+    // Función para escribir en la pantallita de LOG
+    function logMsg(mensaje) {
+      const logDiv = document.getElementById("log");
+      logDiv.innerHTML += `<div>${mensaje}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight; // Auto-scroll
     }
 
+    // 👇 El inventario que me pasaste
+    const inventario = [
+      { "nombre": "Polos 1", "precio": 35, "tallas": [ { "talla": 4, "precio": 35 }, { "talla": 6, "precio": 35 }, { "talla": 8, "precio": 35 }, { "talla": 10, "precio": 35 }, { "talla": 12, "precio": 35 }, { "talla": 14, "precio": 35 }, { "talla": 16, "precio": 35 }, { "talla": 18, "precio": 35 } ] },
+      { "nombre": "Polos 2", "precio": 30, "tallas": [ { "talla": 4, "precio": 30 }, { "talla": 6, "precio": 30 }, { "talla": 8, "precio": 30 }, { "talla": 10, "precio": 30 }, { "talla": 12, "precio": 30 }, { "talla": 14, "precio": 30 }, { "talla": 16, "precio": 30 } ] },
+      { "nombre": "Polos mangalarga niño", "precio": 35, "tallas": [ { "talla": 2, "precio": 35 }, { "talla": 4, "precio": 35 }, { "talla": 6, "precio": 35 }, { "talla": 8, "precio": 35 }, { "talla": 10, "precio": 35 }, { "talla": 12, "precio": 35 }, { "talla": 14, "precio": 35 }, { "talla": 16, "precio": 35 } ] },
+      { "nombre": "Polos mangacorta niño", "precio": 28, "tallas": [ { "talla": 4, "precio": 28 }, { "talla": 6, "precio": 28 }, { "talla": 8, "precio": 28 }, { "talla": 10, "precio": 28 }, { "talla": 12, "precio": 28 }, { "talla": 14, "precio": 28 }, { "talla": 16, "precio": 28 } ] },
+      { "nombre": "Polo mangalarga algodón niña", "precio": 30, "tallas": [ { "talla": 4, "precio": 30 }, { "talla": 6, "precio": 30 }, { "talla": 8, "precio": 30 }, { "talla": 10, "precio": 30 }, { "talla": 12, "precio": 30 }, { "talla": 14, "precio": 30 }, { "talla": 16, "precio": 30 } ] },
+      { "nombre": "Jean 1", "precio": 55, "tallas": [ { "talla": 4, "precio": 55 }, { "talla": 6, "precio": 55 }, { "talla": 8, "precio": 55 }, { "talla": 10, "precio": 55 }, { "talla": 12, "precio": 55 }, { "talla": 14, "precio": 55 }, { "talla": 16, "precio": 60 } ] },
+      { "nombre": "Jean 2", "precio": 60, "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ] },
+      { "nombre": "Jean 3", "precio": 65, "tallas": [ { "talla": 4, "precio": 65 }, { "talla": 6, "precio": 65 }, { "talla": 8, "precio": 65 }, { "talla": 10, "precio": 65 }, { "talla": 12, "precio": 65 }, { "talla": 14, "precio": 65 }, { "talla": 16, "precio": 65 } ] },
+      { "nombre": "Jean bebé", "precio": 50, "tallas": [ { "talla": 2, "precio": 50 }, { "talla": 4, "precio": 50 }, { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 } ] },
+      { "nombre": "Conjunto jean", "precio": 130, "tallas": [ { "talla": 4, "precio": 130 }, { "talla": 6, "precio": 130 }, { "talla": 8, "precio": 130 }, { "talla": 10, "precio": 130 }, { "talla": 12, "precio": 130 }, { "talla": 14, "precio": 130 }, { "talla": 16, "precio": 135 } ] },
+      { "nombre": "Conjunto de piedrita", "precio": 70, "tallas": [ { "talla": 4, "precio": 70 }, { "talla": 6, "precio": 70 }, { "talla": 8, "precio": 70 }, { "talla": 10, "precio": 70 }, { "talla": 12, "precio": 70 }, { "talla": 14, "precio": 70 }, { "talla": 16, "precio": 70 } ] },
+      { "nombre": "Casaca tíoe", "precio": 75, "tallas": [ { "talla": 4, "precio": 75 }, { "talla": 6, "precio": 75 }, { "talla": 8, "precio": 75 }, { "talla": 10, "precio": 75 }, { "talla": 12, "precio": 75 }, { "talla": 14, "precio": 75 }, { "talla": 16, "precio": 75 } ] },
+      { "nombre": "Conjunto flores", "precio": 60, "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ] },
+      { "nombre": "Casaca impermeable", "precio": 50, "tallas": [ { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 }, { "talla": 10, "precio": 50 }, { "talla": 12, "precio": 50 }, { "talla": 14, "precio": 50 } ] },
+      { "nombre": "Casaca cuero niño", "precio": 60, "tallas": [ { "talla": 4, "precio": 60 }, { "talla": 6, "precio": 60 }, { "talla": 8, "precio": 60 }, { "talla": 10, "precio": 60 }, { "talla": 12, "precio": 60 }, { "talla": 14, "precio": 60 }, { "talla": 16, "precio": 60 } ] },
+      { "nombre": "Casaca cuero niña", "precio": 50, "tallas": [ { "talla": 4, "precio": 50 }, { "talla": 6, "precio": 50 }, { "talla": 8, "precio": 50 }, { "talla": 10, "precio": 50 }, { "talla": 12, "precio": 50 }, { "talla": 14, "precio": 50 } ] },
+      { "nombre": "Chaleco cuero niña", "precio": 45, "tallas": [ { "talla": 4, "precio": 45 }, { "talla": 6, "precio": 45 }, { "talla": 8, "precio": 45 }, { "talla": 10, "precio": 45 }, { "talla": 12, "precio": 45 }, { "talla": 14, "precio": 45 }, { "talla": 16, "precio": 45 } ] },
+      { "nombre": "Cafarena", "precio": 10, "tallas": [ { "talla": 4, "precio": 10 }, { "talla": 6, "precio": 10 }, { "talla": 8, "precio": 10 }, { "talla": 10, "precio": 10 }, { "talla": 12, "precio": 10 }, { "talla": 14, "precio": 10 } ] }
+    ];
+
     async function importarInventario() {
-      for (const prenda of inventario) {
-        try {
-          await db.collection("inventario").add(prenda);
-          console.log("✅ Agregado:", prenda.nombre);
-        } catch (error) {
-          console.error("❌ Error con:", prenda.nombre, error);
-        }
+      const btn = document.getElementById("btn-subir");
+      btn.disabled = true;
+      btn.innerText = "⏳ Subiendo...";
+      document.getElementById("log").innerHTML = ""; // Limpiar log previo
+
+      try {
+        // MEJORA: Usar Batch para enviar todo rápido y de golpe
+        const batch = db.batch();
+        const collectionRef = db.collection("inventario");
+
+        inventario.forEach((prenda) => {
+          // 1. Asignar un stockTalla inicial (ej: 5 por talla) para que el sistema funcione
+          const stockPorTalla = 5; 
+          
+          let stockTotalCalculado = 0;
+          const tallasAjustadas = prenda.tallas.map(t => {
+            stockTotalCalculado += stockPorTalla;
+            return {
+              talla: t.talla,
+              precio: t.precio,
+              stockTalla: stockPorTalla
+            };
+          });
+
+          // 2. Preparar el documento
+          const nuevoDocRef = collectionRef.doc(); // Crea un ID único
+          batch.set(nuevoDocRef, {
+            nombre: prenda.nombre,
+            precio: prenda.precio,
+            stock: stockTotalCalculado,
+            tallas: tallasAjustadas
+          });
+
+          logMsg(`Preparando: ${prenda.nombre} (Stock: ${stockTotalCalculado})`);
+        });
+
+        logMsg("Enviando paquete a Firebase...");
+        
+        // 3. Ejecutar la subida
+        await batch.commit();
+        
+        logMsg("✅ ¡Subida completada con éxito!");
+        alert("✅ Inventario importado correctamente. Tienes 5 unidades de stock por talla.");
+        
+        btn.innerText = "✅ Finalizado";
+
+      } catch (error) {
+        console.error("❌ Error en la importación:", error);
+        logMsg("❌ Error: " + error.message);
+        btn.innerText = "⚠️ Error. Intentar de nuevo";
+        btn.disabled = false;
       }
-      alert("✅ Inventario importado correctamente.");
     }
   </script>
 </body>
