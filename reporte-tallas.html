@@ -2,76 +2,126 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Reporte por Tallas - Frutisha Store</title>
   <link rel="stylesheet" href="styles.css"/>
   <style>
-    .topbar {
-      display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:10px;
+    /* Estilos adaptados al diseño App */
+    .nav-acciones {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 15px;
     }
+    
+    .nav-acciones button {
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      color: var(--principal);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
+    }
+
     .filtros {
-      display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center;
-      background:#fff; border:1px solid var(--borde); border-radius:12px; padding:10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #fff;
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.05);
     }
-    .filtros input[type="date"]{ padding:8px; border:1px solid #ccc; border-radius:8px; }
-    .grid {
-      display:grid; gap:12px; margin-top:12px;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+
+    .filtros-fila {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
     }
-    .card {
-      background:#fff; border:1px solid var(--borde); border-radius:12px; padding:12px; text-align:left;
-      box-shadow:0 2px 5px rgba(0,0,0,0.05);
+
+    .filtros input[type="date"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      flex: 1;
+      font-family: inherit;
     }
-    .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:10px; }
-    .kpi { background:#fff; border:1px solid var(--borde); border-radius:12px; padding:12px; text-align:center; }
-    table { width:100%; border-collapse:collapse; font-size:14px; }
-    th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; }
-    th { background:#fff7fb; color:#b02a6f; position:sticky; top:0; }
-    .acciones button { margin:5px; }
-    .muted { color:#666; font-size:12px; }
+
+    .btn-aplicar { background: var(--principal); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; }
+    .btn-exportar { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; }
+
+    .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .kpi { background: #fff; border-left: 5px solid var(--rosa); border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    
+    .grid { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+    
+    .card { background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 15px; text-align: left; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1.2rem; margin-top: 0; margin-bottom: 5px; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #eee; padding: 10px 8px; text-align: left; }
+    th { background: var(--fondo); color: var(--principal); position: sticky; top: 0; z-index: 10; }
+    
+    .muted { color: #666; font-size: 12px; }
+    #estado-carga { text-align: center; margin: 15px 0; color: #666; font-weight: bold; display: none; }
   </style>
 </head>
 <body>
 
 <script>
-  // Requiere sesión
+  // ✅ Verificación de seguridad
   const usuario = localStorage.getItem("usuarioActivo");
-  if (!usuario) { window.location.href = "login.html"; }
+  if (!usuario) window.location.href = "login.html";
 </script>
 
-<h1>📊 Reporte por Tallas</h1>
+<header style="text-align: center;">
+  <h1>📊 Reporte por Tallas</h1>
+</header>
 
-<div class="topbar">
-  <button class="boton" onclick="location.href='index.html'">🏪 Volver a la tienda</button>
-  <button class="boton" onclick="location.href='ventas.html'">🧾 Ventas</button>
-  <button class="boton" onclick="location.href='historial.html'">📚 Historial</button>
+<div class="nav-acciones">
+  <button onclick="location.href='index.html'">⬅️ Tienda</button>
+  <button onclick="location.href='ventas.html'">🧾 Ventas</button>
+  <button onclick="location.href='historial.html'">📚 Historial</button>
 </div>
 
 <div class="filtros">
-  <span>📅 Desde:</span>
-  <input type="date" id="desde">
-  <span>Hasta:</span>
-  <input type="date" id="hasta">
-  <button class="boton" onclick="cargarReporte()">Aplicar</button>
-  <button class="boton" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+  <div class="filtros-fila">
+    <span style="font-size: 13px; font-weight: bold; color: #555;">Desde:</span>
+    <input type="date" id="desde">
+  </div>
+  <div class="filtros-fila">
+    <span style="font-size: 13px; font-weight: bold; color: #555;">Hasta:</span>
+    <input type="date" id="hasta">
+  </div>
+  <div style="display: flex; gap: 10px; margin-top: 5px;">
+    <button class="btn-aplicar" style="flex: 1;" onclick="cargarReporte()">🔍 Filtrar</button>
+    <button class="btn-exportar" style="flex: 1;" onclick="exportarCSV()">⬇️ CSV</button>
+  </div>
 </div>
 
-<div class="kpis" style="margin-top:12px;">
+<div id="estado-carga">Calculando estadísticas...</div>
+
+<div class="kpis">
   <div class="kpi">
-    <div class="muted">Unidades vendidas</div>
-    <div id="kpi-unidades" style="font-size:20px; font-weight:700;">0</div>
+    <div class="muted">UNIDADES VENDIDAS</div>
+    <div id="kpi-unidades" style="font-size:22px; font-weight:900; color: #333;">0</div>
   </div>
   <div class="kpi">
-    <div class="muted">Ingresos totales</div>
-    <div id="kpi-ingresos" style="font-size:20px; font-weight:700;">S/ 0.00</div>
+    <div class="muted">INGRESOS TOTALES</div>
+    <div id="kpi-ingresos" style="font-size:20px; font-weight:900; color: #27ae60;">S/ 0.00</div>
   </div>
 </div>
 
 <div class="grid">
   <div class="card">
-    <h2>🥇 Unidades por talla (global)</h2>
-    <div class="muted">Suma de todas las prendas</div>
-    <div style="overflow:auto; max-height:50vh;">
+    <h2>🥇 Unidades por Talla (Global)</h2>
+    <div class="muted">Suma de todas las prendas vendidas</div>
+    <div style="overflow:auto; max-height:40vh; border-radius: 8px;">
       <table id="tabla-tallas">
         <thead>
           <tr><th>Talla</th><th>Unidades</th></tr>
@@ -82,12 +132,12 @@
   </div>
 
   <div class="card">
-    <h2>🧵 Ventas por prenda y talla</h2>
-    <div class="muted">Incluye cantidad e ingresos; total por prenda al final</div>
-    <div style="overflow:auto; max-height:50vh;">
+    <h2>🧵 Desglose por Prenda y Talla</h2>
+    <div class="muted">Incluye cantidades e ingresos recaudados</div>
+    <div style="overflow:auto; max-height:50vh; border-radius: 8px;">
       <table id="tabla-prenda-talla">
         <thead>
-          <tr><th>Prenda</th><th>Talla</th><th>Unidades</th><th>Ingresos</th></tr>
+          <tr><th>Prenda</th><th>Talla</th><th>Und.</th><th>Ingresos</th></tr>
         </thead>
         <tbody></tbody>
         <tfoot id="tfoot-prenda"></tfoot>
@@ -96,16 +146,14 @@
   </div>
 </div>
 
-<!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
-  // Usa el MISMO config que en index.html
   const firebaseConfig = {
     apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
-    authDomain: "inventario-ab270.firebaseapp.com",
+    authDomain: "frutisha-store.firebaseapp.com",
     projectId: "inventario-ab270",
-    storageBucket: "inventario-ab270.firebasestorage.app",
+    storageBucket: "frutisha-store.appspot.com",
     messagingSenderId: "15388676345",
     appId: "1:15388676345:web:72c8e22a2aece1d4151228"
   };
@@ -118,120 +166,143 @@
   const formatearSoles = v => new Intl.NumberFormat("es-PE",{style:"currency",currency:"PEN"}).format(v||0);
 
   function parseFechaEs(fechaStr) {
-    // Espera "DD/MM/YYYY"
     if (!fechaStr) return null;
-    const [d,m,y] = fechaStr.split('/').map(x=>parseInt(x,10));
+    const partes = fechaStr.split('/');
+    if(partes.length !== 3) return null;
+    const [d,m,y] = partes.map(x=>parseInt(x,10));
     if(!d||!m||!y) return null;
     return new Date(y, m-1, d);
   }
 
-  // Extrae: nombre, talla (número) y precio (number) desde "Nombre T16 - S/ 35.00"
-  function parseLineaProducto(linea) {
-    if (!linea || typeof linea !== 'string') return null;
-    // Busca el último " - " para separar precio
+  // MEJORA: Adaptado para leer tanto strings antiguos como los nuevos objetos de app.js
+  function parseLineaProducto(producto) {
+    if (!producto) return null;
+    
+    let linea = typeof producto === 'string' ? producto : producto.texto;
+    if (!linea) return null;
+
+    // Si es el objeto nuevo, ya tenemos talla y precio en números limpios
+    let tallaDirecta = (typeof producto === 'object' && producto.talla !== undefined) ? Number(producto.talla) : null;
+    let precioDirecto = (typeof producto === 'object' && producto.precio !== undefined) ? Number(producto.precio) : null;
+
+    // Extracción del texto para conseguir el nombre (o como respaldo si es venta vieja)
     const sep = linea.lastIndexOf(' - ');
     if (sep === -1) return null;
-    const left = linea.slice(0, sep).trim();   // "Nombre T16"
-    const right = linea.slice(sep + 3).trim(); // "S/ 35.00"
+    const left = linea.slice(0, sep).trim();
+    const right = linea.slice(sep + 3).trim();
 
-    // Talla: último 'T' seguido de números
     const mTalla = left.match(/T\s*(\d+)/i);
-    const talla = mTalla ? parseInt(mTalla[1],10) : null;
-
-    // Nombre: lo que esté antes del " T"
+    const tallaExtraida = mTalla ? parseInt(mTalla[1],10) : null;
     const nombre = mTalla ? left.slice(0, mTalla.index).trim() : left;
 
-    // Precio: quitar S/ y comas
-    const num = right.replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',', '.');
-    const precio = parseFloat(num);
-    return { nombre, talla, precio: isNaN(precio)?0:precio };
+    const numStr = right.replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',', '.');
+    const precioExtraido = parseFloat(numStr);
+
+    return { 
+      nombre, 
+      talla: tallaDirecta !== null ? tallaDirecta : tallaExtraida, 
+      precio: precioDirecto !== null ? precioDirecto : (isNaN(precioExtraido) ? 0 : precioExtraido) 
+    };
   }
 
-  let cacheVentas = []; // guardamos últimas ventas cargadas (ya filtradas)
+  let cacheVentas = []; 
+
+  // Establecer fechas por defecto al cargar (Mes actual)
+  document.addEventListener("DOMContentLoaded", () => {
+    const hoy = new Date();
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    
+    // Ajuste de zona horaria para inputs
+    const formatoInput = (fecha) => new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
+    
+    document.getElementById('desde').value = formatoInput(primerDia);
+    document.getElementById('hasta').value = formatoInput(hoy);
+    
+    cargarReporte(); // Carga inicial
+  });
 
   async function cargarReporte() {
-    // 1) Traer ventas
-    const snap = await db.collection("ventas").get();
-    const ventas = snap.docs.map(d => d.data());
+    document.getElementById('estado-carga').style.display = 'block';
+    
+    try {
+      const snap = await db.collection("ventas").get();
+      const ventas = snap.docs.map(d => d.data());
 
-    // 2) Filtro por fecha (client-side porque guardaste fecha como string)
-    const d1 = document.getElementById('desde').value ? new Date(document.getElementById('desde').value) : null;
-    const d2 = document.getElementById('hasta').value ? new Date(document.getElementById('hasta').value) : null;
+      const d1 = document.getElementById('desde').value ? new Date(document.getElementById('desde').value + "T00:00:00") : null;
+      const d2 = document.getElementById('hasta').value ? new Date(document.getElementById('hasta').value + "T23:59:59") : null;
 
-    const filtradas = ventas.filter(v => {
-      const fv = parseFechaEs(v.fecha);
-      if (!fv) return true; // si no se puede parsear, incluimos
-      if (d1 && fv < d1) return false;
-      if (d2) {
-        // incluir todo el día hasta 23:59:59
-        const limite = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate(), 23,59,59);
-        if (fv > limite) return false;
-      }
-      return true;
-    });
-
-    cacheVentas = filtradas;
-
-    // 3) Agregado
-    const aggTalla = new Map();        // talla -> unidades
-    const aggPrendaTalla = new Map();  // "prenda|talla" -> {unidades, ingresos}
-    const aggPrenda = new Map();       // prenda -> {unidades, ingresos}
-    let totalUnidades = 0;
-    let totalIngresos = 0;
-
-    filtradas.forEach(v => {
-      const arr = Array.isArray(v.productos) ? v.productos : [];
-      arr.forEach(linea => {
-        const p = parseLineaProducto(linea);
-        if (!p) return;
-
-        // Unidades (cada línea = 1 und)
-        totalUnidades += 1;
-
-        // Ingresos (sumamos precio de la línea)
-        totalIngresos += (p.precio || 0);
-
-        // Por talla (global)
-        if (p.talla != null) {
-          aggTalla.set(p.talla, (aggTalla.get(p.talla) || 0) + 1);
-        }
-
-        // Por prenda y talla
-        const keyPT = `${p.nombre}|${p.talla ?? '-'}`;
-        const curPT = aggPrendaTalla.get(keyPT) || { unidades:0, ingresos:0 };
-        curPT.unidades += 1;
-        curPT.ingresos += (p.precio || 0);
-        aggPrendaTalla.set(keyPT, curPT);
-
-        // Totales por prenda
-        const curP = aggPrenda.get(p.nombre) || { unidades:0, ingresos:0 };
-        curP.unidades += 1;
-        curP.ingresos += (p.precio || 0);
-        aggPrenda.set(p.nombre, curP);
+      const filtradas = ventas.filter(v => {
+        // Usamos fechaTexto o fecha
+        const fechaAUsar = v.fechaTexto || v.fecha;
+        const fv = parseFechaEs(fechaAUsar);
+        
+        if (!fv) return true; 
+        if (d1 && fv < d1) return false;
+        if (d2 && fv > d2) return false;
+        return true;
       });
-    });
 
-    // 4) Render KPIs
-    document.getElementById('kpi-unidades').textContent = String(totalUnidades);
-    document.getElementById('kpi-ingresos').textContent = formatearSoles(totalIngresos);
+      cacheVentas = filtradas;
 
-    // 5) Render tablas
-    renderTablaTallas(aggTalla);
-    renderTablaPrendaTalla(aggPrendaTalla, aggPrenda);
+      const aggTalla = new Map();
+      const aggPrendaTalla = new Map();
+      const aggPrenda = new Map();
+      let totalUnidades = 0;
+      let totalIngresos = 0;
+
+      filtradas.forEach(v => {
+        const arr = Array.isArray(v.productos) ? v.productos : [];
+        arr.forEach(linea => {
+          const p = parseLineaProducto(linea);
+          if (!p) return;
+
+          totalUnidades += 1;
+          totalIngresos += (p.precio || 0);
+
+          if (p.talla != null) {
+            aggTalla.set(p.talla, (aggTalla.get(p.talla) || 0) + 1);
+          }
+
+          const keyPT = `${p.nombre}|${p.talla ?? '-'}`;
+          const curPT = aggPrendaTalla.get(keyPT) || { unidades:0, ingresos:0 };
+          curPT.unidades += 1;
+          curPT.ingresos += (p.precio || 0);
+          aggPrendaTalla.set(keyPT, curPT);
+
+          const curP = aggPrenda.get(p.nombre) || { unidades:0, ingresos:0 };
+          curP.unidades += 1;
+          curP.ingresos += (p.precio || 0);
+          aggPrenda.set(p.nombre, curP);
+        });
+      });
+
+      document.getElementById('kpi-unidades').textContent = String(totalUnidades);
+      document.getElementById('kpi-ingresos').textContent = formatearSoles(totalIngresos);
+
+      renderTablaTallas(aggTalla);
+      renderTablaPrendaTalla(aggPrendaTalla, aggPrenda);
+
+    } catch (e) {
+      console.error("Error cargando reporte:", e);
+      alert("❌ Ocurrió un error al procesar los datos.");
+    } finally {
+      document.getElementById('estado-carga').style.display = 'none';
+    }
   }
 
   function renderTablaTallas(aggTalla) {
     const tbody = document.querySelector('#tabla-tallas tbody');
     tbody.innerHTML = '';
-    // ordenar por talla (num asc)
     const filas = [...aggTalla.entries()].sort((a,b)=>a[0]-b[0]);
+    
     filas.forEach(([talla, unidades]) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>T${talla}</td><td>${unidades}</td>`;
+      tr.innerHTML = `<td><strong style="color:var(--principal);">T${talla}</strong></td><td>${unidades}</td>`;
       tbody.appendChild(tr);
     });
+    
     if (filas.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="2">Sin datos en el rango seleccionado.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No hay datos en esta fecha.</td></tr>`;
     }
   }
 
@@ -241,7 +312,6 @@
     tbody.innerHTML = '';
     tfoot.innerHTML = '';
 
-    // ordenar por prenda y talla
     const filas = [...aggPT.entries()].sort((a,b)=>{
       const [pa,ta] = a[0].split('|');
       const [pb,tb] = b[0].split('|');
@@ -250,58 +320,55 @@
       return (parseInt(ta,10)||0) - (parseInt(tb,10)||0);
     });
 
-    let prendaActual = null;
     filas.forEach(([key, val]) => {
       const [prenda, talla] = key.split('|');
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${prenda}</td>
-        <td>${talla === '-' ? '—' : 'T'+talla}</td>
+        <td><strong style="color:var(--principal);">${talla === '-' ? '—' : 'T'+talla}</strong></td>
         <td>${val.unidades}</td>
         <td>${formatearSoles(val.ingresos)}</td>
       `;
       tbody.appendChild(tr);
-      prendaActual = prenda;
     });
 
-    // Totales por prenda (pie simple)
-    const totales = [...aggP.entries()].sort((a,b)=>{
-      return a[0].toLowerCase() < b[0].toLowerCase() ? -1 : 1;
-    });
+    const totales = [...aggP.entries()].sort((a,b) => a[0].toLowerCase() < b[0].toLowerCase() ? -1 : 1);
+    
     if (totales.length) {
       const trHead = document.createElement('tr');
-      trHead.innerHTML = `<td colspan="4" style="font-weight:700; padding-top:10px;">Totales por prenda</td>`;
+      trHead.innerHTML = `<td colspan="4" style="background:#f0f0f0; font-weight:700; text-align:center; padding-top:15px;">TOTALES POR PRENDA (SIN IMPORTAR TALLA)</td>`;
       tfoot.appendChild(trHead);
 
       totales.forEach(([prenda, v]) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="font-weight:600;">${prenda}</td>
+          <td style="font-weight:700; color:#333;">${prenda}</td>
           <td>—</td>
-          <td style="font-weight:600;">${v.unidades}</td>
-          <td style="font-weight:600;">${formatearSoles(v.ingresos)}</td>
+          <td style="font-weight:700;">${v.unidades}</td>
+          <td style="font-weight:700; color:#27ae60;">${formatearSoles(v.ingresos)}</td>
         `;
         tfoot.appendChild(tr);
       });
     } else {
-      tbody.innerHTML = `<tr><td colspan="4">Sin datos en el rango seleccionado.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay datos en esta fecha.</td></tr>`;
     }
   }
 
   function exportarCSV() {
-    // A partir de cacheVentas (rango ya aplicado), generamos un CSV detalle por línea.
     if (!cacheVentas.length) {
-      alert("⚠️ No hay datos para exportar.");
+      alert("⚠️ No hay datos para exportar en este rango de fechas.");
       return;
     }
     let filas = [["Fecha","Hora","Prenda","Talla","Precio"]];
 
     cacheVentas.forEach(v => {
+      const fechaAUsar = v.fechaTexto || v.fecha;
       const arr = Array.isArray(v.productos) ? v.productos : [];
+      
       arr.forEach(linea => {
         const p = parseLineaProducto(linea);
         if (!p) return;
-        filas.push([v.fecha, v.hora, p.nombre, p.talla ?? "", (p.precio||0).toString().replace('.',',')]);
+        filas.push([fechaAUsar, v.hora, p.nombre, p.talla ?? "", (p.precio||0).toString().replace('.',',')]);
       });
     });
 
@@ -310,15 +377,12 @@
       return /[",;\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
     }).join(";")).join("\n");
 
-    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}); // \uFEFF para que Excel lea bien las tildes y la Ñ
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `reporte_tallas_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `Reporte_Tallas_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
   }
-
-  // Carga inicial
-  cargarReporte();
 </script>
 
 </body>
