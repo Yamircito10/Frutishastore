@@ -6,102 +6,129 @@
   <title>Frutisha Store - Perú</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* MEJORA: Diseño tipo App para los botones principales */
+    /* ✅ MEJORAS DE DISEÑO TIPO APP (ESTILOS INTERNOS) */
     .nav-acciones {
       display: grid;
-      grid-template-columns: 1fr 1fr; /* Dos columnas fijas para que no se muevan */
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 10px;
-      margin: 15px 0;
-    }
-    .nav-acciones button {
-      padding: 12px;
-      font-size: 0.9rem;
-      border-radius: 8px;
-      border: none;
-      background: #f0f0f0;
-      font-weight: bold;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
     
-    /* MEJORA: Hacer que el total "flote" o resalte más */
+    .nav-acciones button {
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      color: var(--principal);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
+    }
+
     #total {
       background: #27ae60;
       color: white;
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 1.5rem;
+      padding: 18px;
+      border-radius: 12px;
+      font-size: 1.6rem;
       text-align: center;
       font-weight: bold;
       margin: 20px 0;
-      position: sticky; /* Se queda arriba al bajar */
+      position: sticky; /* Se queda arriba al bajar con el dedo */
       top: 10px;
       z-index: 100;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
-    /* MEJORA: Lista de carrito más limpia */
+    #productos {
+      margin: 15px 0;
+    }
+
     #productos li {
-      background: #fff;
-      margin-bottom: 5px;
-      padding: 10px;
-      border-radius: 5px;
+      background: white;
+      margin-bottom: 8px;
+      padding: 12px;
+      border-radius: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-left: 5px solid #e67e22;
+      border-left: 5px solid var(--rosa);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      font-size: 15px;
+    }
+
+    .btn-finalizar {
+      background: #2ecc71 !important;
+      color: white !important;
+      padding: 18px !important;
+      font-size: 1.2rem !important;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    header p {
+      font-size: 14px;
+      color: var(--texto);
+      margin-bottom: 15px;
     }
   </style>
 </head>
 <body>
 
 <script>
-  // Bloqueo de seguridad inmediato
+  // ✅ Verificación inmediata de seguridad
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
-  if (!usuario) window.location.href = "login.html";
+  if (!usuario) {
+    window.location.href = "login.html";
+  }
 </script>
 
-<header style="text-align: center;">
+<header>
   <h1>🛍 Frutisha Store</h1>
-  <p>Hola, <strong><span id="nombre-usuario"></span></strong></p>
+  <p>Bienvenido, <strong><span id="user-display"></span></strong></p>
 </header>
 
 <div class="acciones nav-acciones">
-  <button onclick="location.href='ventas.html'">📈 Ventas</button>
+  <button onclick="location.href='ventas.html'">📈 Reporte Ventas</button>
   <button onclick="location.href='historial.html'">📚 Historial</button>
   <button id="btn-inventario" style="display:none;" onclick="location.href='inventario.html'">📦 Inventario</button>
   <button onclick="cerrarSesion()" style="background: #ff7675; color: white;">🔒 Salir</button>
 </div>
 
-<div id="loader" style="text-align:center; display:none;">Cargando productos...</div>
-
-<section id="lista-prendas" class="productos"></section>
+<section id="lista-prendas" class="productos">
+  <p>Cargando productos...</p>
+</section>
 
 <div id="total">Total: S/ 0.00</div>
 
 <div id="lista">
-  <p><strong>🛒 Carrito:</strong></p>
+  <p><strong>🛒 Carrito de compras:</strong></p>
   <ul id="productos"></ul>
 </div>
 
-<div class="acciones" style="display: flex; flex-direction: column; gap: 10px;">
-  <button onclick="finalizarVenta()" style="background: #2ecc71; color: white; padding: 15px; font-size: 1.2rem;">💰 FINALIZAR VENTA</button>
-  <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="background: #95a5a6;">🔄 Vaciar Carrito</button>
+<div class="acciones" style="display: flex; flex-direction: column;">
+  <button class="btn-finalizar" onclick="finalizarVenta()">💾 FINALIZAR VENTA</button>
+  <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Vaciar Carrito</button>
 </div>
 
-<hr>
+<hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
 
 <div id="historial">
-  <h2>📋 Últimas del Día</h2>
+  <h2>📋 Últimas Ventas</h2>
   <ul id="ventasDia"></ul>
   <div class="acciones">
     <button class="borrar-btn" onclick="borrarHistorial()">🗑 Limpiar</button>
-    <button onclick="descargarTXT()">📥 Exportar</button>
+    <button onclick="descargarTXT()">📥 Exportar TXT</button>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
 <script>
+  // ✅ Configuración de Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
     authDomain: "frutisha-store.firebaseapp.com",
@@ -117,15 +144,18 @@
 <script src="app.js"></script>
 
 <script>
-  // UI Dinámica
-  document.getElementById("nombre-usuario").innerText = usuario;
+  // ✅ Lógica de Interfaz de Usuario
+  document.getElementById("user-display").innerText = usuario || "Usuario";
+
   if (rol === "admin") {
-    document.getElementById("btn-inventario").style.display = "block";
+    document.getElementById("btn-inventario").style.display = "inline-block";
   }
 
   function cerrarSesion() {
-    localStorage.clear(); // Limpia todo de un solo golpe
-    window.location.href = "login.html";
+    if(confirm("¿Seguro que quieres salir?")) {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
   }
 </script>
 
