@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Reporte por Tallas - Frutisha Store</title>
   <link rel="stylesheet" href="styles.css"/>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
   <style>
     /* Estilos adaptados al diseño App */
     .nav-acciones {
@@ -52,8 +57,28 @@
       font-family: inherit;
     }
 
-    .btn-aplicar { background: var(--principal); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; }
-    .btn-exportar { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; }
+    .btn-aplicar { background: var(--principal); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 5px; }
+
+    /* Botones de Exportación */
+    .botones-exportar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 5px;
+    }
+    .botones-exportar button {
+      flex: 1;
+      font-size: 0.9rem;
+      padding: 10px;
+      font-weight: bold;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .btn-csv { background: #6c757d; }
+    .btn-excel { background: #217346; }
+    .btn-pdf { background: #e74c3c; }
 
     .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
     .kpi { background: #fff; border-left: 5px solid var(--rosa); border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -98,9 +123,12 @@
     <span style="font-size: 13px; font-weight: bold; color: #555;">Hasta:</span>
     <input type="date" id="hasta">
   </div>
-  <div style="display: flex; gap: 10px; margin-top: 5px;">
-    <button class="btn-aplicar" style="flex: 1;" onclick="cargarReporte()">🔍 Filtrar</button>
-    <button class="btn-exportar" style="flex: 1;" onclick="exportarCSV()">⬇️ CSV</button>
+  <button class="btn-aplicar" onclick="cargarReporte()">🔍 Filtrar Fechas</button>
+  
+  <div class="botones-exportar">
+    <button class="btn-csv" onclick="exportarCSV()">📄 CSV</button>
+    <button class="btn-excel" onclick="descargarExcel()">📊 Excel</button>
+    <button class="btn-pdf" onclick="descargarPDF()">📕 PDF</button>
   </div>
 </div>
 
@@ -162,7 +190,6 @@
 </script>
 
 <script>
-  // Utilidades
   const formatearSoles = v => new Intl.NumberFormat("es-PE",{style:"currency",currency:"PEN"}).format(v||0);
 
   function parseFechaEs(fechaStr) {
@@ -174,18 +201,14 @@
     return new Date(y, m-1, d);
   }
 
-  // MEJORA: Adaptado para leer tanto strings antiguos como los nuevos objetos de app.js
   function parseLineaProducto(producto) {
     if (!producto) return null;
-    
     let linea = typeof producto === 'string' ? producto : producto.texto;
     if (!linea) return null;
 
-    // Si es el objeto nuevo, ya tenemos talla y precio en números limpios
     let tallaDirecta = (typeof producto === 'object' && producto.talla !== undefined) ? Number(producto.talla) : null;
     let precioDirecto = (typeof producto === 'object' && producto.precio !== undefined) ? Number(producto.precio) : null;
 
-    // Extracción del texto para conseguir el nombre (o como respaldo si es venta vieja)
     const sep = linea.lastIndexOf(' - ');
     if (sep === -1) return null;
     const left = linea.slice(0, sep).trim();
@@ -205,185 +228,29 @@
     };
   }
 
+  // Variables Globales para exportación
   let cacheVentas = []; 
+  let datosGlobalesReporte = {
+    totalUnidades: 0,
+    totalIngresos: 0,
+    aggTalla: new Map(),
+    aggPrendaTalla: new Map(),
+    aggPrenda: new Map()
+  };
 
-  // Establecer fechas por defecto al cargar (Mes actual)
   document.addEventListener("DOMContentLoaded", () => {
     const hoy = new Date();
     const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    
-    // Ajuste de zona horaria para inputs
     const formatoInput = (fecha) => new Date(fecha.getTime() - (fecha.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
     
     document.getElementById('desde').value = formatoInput(primerDia);
     document.getElementById('hasta').value = formatoInput(hoy);
     
-    cargarReporte(); // Carga inicial
+    cargarReporte(); 
   });
 
   async function cargarReporte() {
     document.getElementById('estado-carga').style.display = 'block';
     
     try {
-      const snap = await db.collection("ventas").get();
-      const ventas = snap.docs.map(d => d.data());
-
-      const d1 = document.getElementById('desde').value ? new Date(document.getElementById('desde').value + "T00:00:00") : null;
-      const d2 = document.getElementById('hasta').value ? new Date(document.getElementById('hasta').value + "T23:59:59") : null;
-
-      const filtradas = ventas.filter(v => {
-        // Usamos fechaTexto o fecha
-        const fechaAUsar = v.fechaTexto || v.fecha;
-        const fv = parseFechaEs(fechaAUsar);
-        
-        if (!fv) return true; 
-        if (d1 && fv < d1) return false;
-        if (d2 && fv > d2) return false;
-        return true;
-      });
-
-      cacheVentas = filtradas;
-
-      const aggTalla = new Map();
-      const aggPrendaTalla = new Map();
-      const aggPrenda = new Map();
-      let totalUnidades = 0;
-      let totalIngresos = 0;
-
-      filtradas.forEach(v => {
-        const arr = Array.isArray(v.productos) ? v.productos : [];
-        arr.forEach(linea => {
-          const p = parseLineaProducto(linea);
-          if (!p) return;
-
-          totalUnidades += 1;
-          totalIngresos += (p.precio || 0);
-
-          if (p.talla != null) {
-            aggTalla.set(p.talla, (aggTalla.get(p.talla) || 0) + 1);
-          }
-
-          const keyPT = `${p.nombre}|${p.talla ?? '-'}`;
-          const curPT = aggPrendaTalla.get(keyPT) || { unidades:0, ingresos:0 };
-          curPT.unidades += 1;
-          curPT.ingresos += (p.precio || 0);
-          aggPrendaTalla.set(keyPT, curPT);
-
-          const curP = aggPrenda.get(p.nombre) || { unidades:0, ingresos:0 };
-          curP.unidades += 1;
-          curP.ingresos += (p.precio || 0);
-          aggPrenda.set(p.nombre, curP);
-        });
-      });
-
-      document.getElementById('kpi-unidades').textContent = String(totalUnidades);
-      document.getElementById('kpi-ingresos').textContent = formatearSoles(totalIngresos);
-
-      renderTablaTallas(aggTalla);
-      renderTablaPrendaTalla(aggPrendaTalla, aggPrenda);
-
-    } catch (e) {
-      console.error("Error cargando reporte:", e);
-      alert("❌ Ocurrió un error al procesar los datos.");
-    } finally {
-      document.getElementById('estado-carga').style.display = 'none';
-    }
-  }
-
-  function renderTablaTallas(aggTalla) {
-    const tbody = document.querySelector('#tabla-tallas tbody');
-    tbody.innerHTML = '';
-    const filas = [...aggTalla.entries()].sort((a,b)=>a[0]-b[0]);
-    
-    filas.forEach(([talla, unidades]) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td><strong style="color:var(--principal);">T${talla}</strong></td><td>${unidades}</td>`;
-      tbody.appendChild(tr);
-    });
-    
-    if (filas.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">No hay datos en esta fecha.</td></tr>`;
-    }
-  }
-
-  function renderTablaPrendaTalla(aggPT, aggP) {
-    const tbody = document.querySelector('#tabla-prenda-talla tbody');
-    const tfoot = document.getElementById('tfoot-prenda');
-    tbody.innerHTML = '';
-    tfoot.innerHTML = '';
-
-    const filas = [...aggPT.entries()].sort((a,b)=>{
-      const [pa,ta] = a[0].split('|');
-      const [pb,tb] = b[0].split('|');
-      if (pa.toLowerCase() < pb.toLowerCase()) return -1;
-      if (pa.toLowerCase() > pb.toLowerCase()) return 1;
-      return (parseInt(ta,10)||0) - (parseInt(tb,10)||0);
-    });
-
-    filas.forEach(([key, val]) => {
-      const [prenda, talla] = key.split('|');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${prenda}</td>
-        <td><strong style="color:var(--principal);">${talla === '-' ? '—' : 'T'+talla}</strong></td>
-        <td>${val.unidades}</td>
-        <td>${formatearSoles(val.ingresos)}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    const totales = [...aggP.entries()].sort((a,b) => a[0].toLowerCase() < b[0].toLowerCase() ? -1 : 1);
-    
-    if (totales.length) {
-      const trHead = document.createElement('tr');
-      trHead.innerHTML = `<td colspan="4" style="background:#f0f0f0; font-weight:700; text-align:center; padding-top:15px;">TOTALES POR PRENDA (SIN IMPORTAR TALLA)</td>`;
-      tfoot.appendChild(trHead);
-
-      totales.forEach(([prenda, v]) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="font-weight:700; color:#333;">${prenda}</td>
-          <td>—</td>
-          <td style="font-weight:700;">${v.unidades}</td>
-          <td style="font-weight:700; color:#27ae60;">${formatearSoles(v.ingresos)}</td>
-        `;
-        tfoot.appendChild(tr);
-      });
-    } else {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay datos en esta fecha.</td></tr>`;
-    }
-  }
-
-  function exportarCSV() {
-    if (!cacheVentas.length) {
-      alert("⚠️ No hay datos para exportar en este rango de fechas.");
-      return;
-    }
-    let filas = [["Fecha","Hora","Prenda","Talla","Precio"]];
-
-    cacheVentas.forEach(v => {
-      const fechaAUsar = v.fechaTexto || v.fecha;
-      const arr = Array.isArray(v.productos) ? v.productos : [];
-      
-      arr.forEach(linea => {
-        const p = parseLineaProducto(linea);
-        if (!p) return;
-        filas.push([fechaAUsar, v.hora, p.nombre, p.talla ?? "", (p.precio||0).toString().replace('.',',')]);
-      });
-    });
-
-    const csv = filas.map(r => r.map(c=>{
-      const s = String(c ?? "");
-      return /[",;\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
-    }).join(";")).join("\n");
-
-    const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"}); // \uFEFF para que Excel lea bien las tildes y la Ñ
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `Reporte_Tallas_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-  }
-</script>
-
-</body>
-</html>
+      const snap =
