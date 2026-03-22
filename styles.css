@@ -1,4 +1,4 @@
-/* 🎨 Estilos generales */
+/* 🎨 Frutisha Store - Estilos Optimizados */
 :root {
   --rosa: #ff69b4;
   --rosa-oscuro: #e055a5;
@@ -6,134 +6,143 @@
   --borde: #ffe4ec;
   --fondo: #fff0f5;
   --principal: #d63384;
+  --blanco: #ffffff;
+  --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  box-sizing: border-box; /* Para que el padding no rompa el ancho */
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background: var(--fondo);
   color: var(--texto);
-  padding: 15px;
+  padding: 10px; /* Menos padding lateral para ganar espacio */
   text-align: center;
 }
 
 h1, h2 {
   color: var(--principal);
+  margin-bottom: 15px;
 }
 
-/* 🔘 Botones generales */
-.boton, .acciones button {
-  padding: 8px 12px;
+/* 🔘 Botones de Acción (Navegación) */
+.acciones button {
+  padding: 12px 15px;
   margin: 5px;
   background-color: var(--rosa);
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 15px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
-.boton:hover, .acciones button:hover {
-  background-color: var(--rosa-oscuro);
+.acciones button:active {
+  transform: scale(0.95); /* Efecto de presionar */
 }
 
-.reiniciar-btn { background-color: #dc3545; }
-.reiniciar-btn:hover { background-color: #c82333; }
-
-.borrar-btn { background-color: #ff3366; }
-.borrar-btn:hover { background-color: #cc2952; }
-
-/* 💰 Total y listas */
-#total, #lista, #historial {
-  font-size: 18px;
-  color: #c2185b;
-  margin-top: 20px;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  background-color: var(--borde);
-  border-radius: 8px;
-  padding: 8px;
-  margin: 5px 0;
-  font-size: 16px;
-}
-
-/* 🛍 Productos en 3 columnas */
+/* 🛍 Contenedor de Productos */
 .productos {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* ✅ Fuerza 3 columnas */
-  gap: 12px;
-  margin-top: 20px;
-  justify-items: center;
+  /* MEJORA: Se adapta solo. Mínimo 100px por columna */
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: center;
 }
 
 .producto-card {
-  background: white;
-  border: 1px solid var(--rosa);
-  border-radius: 12px;
-  padding: 10px;
-  text-align: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background: var(--blanco);
+  border: 1.5px solid var(--borde);
+  border-radius: 15px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
 }
 
-/* 🔠 Botones de tallas */
-.tallas {
+.producto-card h3 {
+  font-size: 13px;
+  margin: 0 0 8px 0;
+  color: var(--principal);
+  line-height: 1.2;
+}
+
+/* 🔠 Tallas y Descuentos */
+.tallas, .descuentos {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 5px;
+}
+
+.boton-talla, .descuento-btn {
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 8px;
+  cursor: pointer;
+  min-width: 35px;
 }
 
 .boton-talla {
-  padding: 5px 8px;
-  font-size: 13px;
-  margin: 2px;
-  border-radius: 8px;
-  background-color: #d4e1f5;
-  border: none;
-  cursor: pointer;
+  background-color: #f0f7ff;
+  color: #2980b9;
+  border: 1px solid #d4e1f5;
 }
 
-.boton-talla:hover {
-  background-color: #a3c3ee;
-}
-
-/* 💲 Botones de descuento */
-.descuentos {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 8px;
+/* MEJORA: Talla sin stock */
+.boton-talla:disabled {
+  background-color: #eee;
+  color: #aaa;
+  cursor: not-allowed;
+  border: 1px solid #ddd;
 }
 
 .descuento-btn {
-  padding: 5px 8px;
-  font-size: 13px;
-  border-radius: 6px;
   background-color: #ffd700;
+  color: #856404;
+  margin-top: 5px;
+}
+
+/* 🛒 Carrito y Totales */
+#total {
+  transition: all 0.3s ease;
+}
+
+#productos li {
+  background-color: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 10px;
+  margin: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+#productos button {
+  background: #ff7675;
   border: none;
+  color: white;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
   cursor: pointer;
 }
 
-.descuento-btn:hover {
-  background-color: #ffc107;
-}
-
-/* 📱 Ajustes móviles */
-@media screen and (max-width: 600px) {
+/* 📱 Ajustes específicos para pantallas pequeñas */
+@media screen and (max-width: 400px) {
   .productos {
-    grid-template-columns: repeat(3, 1fr); /* ✅ 2 columnas en móviles */
-  }
-  .tallas, .descuentos {
-    gap: 3px;
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas en pantallas muy pequeñas */
   }
 }
