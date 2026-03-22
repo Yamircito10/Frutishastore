@@ -2,53 +2,130 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Login - Frutisha Store</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    .login-container {
-      max-width: 300px;
-      margin: 80px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    /* Estilos centrados en móvil */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh; /* Ocupa toda la pantalla */
+      margin: 0;
+      background: var(--fondo);
+    }
+    
+    .login-header {
       text-align: center;
+      margin-bottom: 20px;
     }
+
+    .login-header h1 {
+      font-size: 2.2rem;
+      margin-bottom: 5px;
+    }
+
+    .login-header p {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 320px;
+      background: white;
+      padding: 30px 20px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      border-top: 5px solid var(--principal);
+    }
+
+    .input-grupo {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .input-grupo label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--texto);
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
     .login-container input {
-      width: 90%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 15px;
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box; /* Evita que se salga del contenedor */
+      transition: border-color 0.3s;
     }
-    .login-container button {
-      width: 95%;
-      padding: 10px;
+
+    .login-container input:focus {
+      border-color: var(--principal);
+      outline: none;
+      box-shadow: 0 0 5px rgba(214, 51, 132, 0.3);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
       background-color: var(--rosa);
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 1.1rem;
+      font-weight: bold;
       cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s;
+      margin-top: 10px;
+      box-shadow: 0 4px 6px rgba(255, 105, 180, 0.3);
     }
-    .login-container button:hover {
+
+    .btn-login:hover {
       background-color: var(--rosa-oscuro);
+    }
+
+    .btn-login:active {
+      transform: scale(0.97);
     }
   </style>
 </head>
 <body>
 
-<h1>🔐 Iniciar Sesión</h1>
+<script>
+  // ✅ Si el usuario ya está logueado, lo mandamos directo a la tienda
+  if (localStorage.getItem("usuarioActivo")) {
+    window.location.href = 'index.html';
+  }
+</script>
+
+<div class="login-header">
+  <h1>🛍️ Frutisha</h1>
+  <p>Sistema de Gestión de Ventas</p>
+</div>
 
 <div class="login-container">
-  <input type="text" id="usuario" placeholder="Usuario">
-  <input type="password" id="contrasena" placeholder="Contraseña">
-  <button onclick="iniciarSesion()">Entrar</button>
+  <div class="input-grupo">
+    <label for="usuario">👤 Usuario</label>
+    <input type="text" id="usuario" placeholder="Ingresa tu usuario" autocomplete="username">
+  </div>
+  
+  <div class="input-grupo">
+    <label for="contrasena">🔑 Contraseña</label>
+    <input type="password" id="contrasena" placeholder="Ingresa tu contraseña" autocomplete="current-password" onkeypress="verificarEnter(event)">
+  </div>
+  
+  <button class="btn-login" onclick="iniciarSesion()">Ingresar al Sistema</button>
 </div>
 
 <script>
+  // ⚠️ NOTA: Usuarios en código duro. Solo para fase de pruebas.
   const usuarios = [
     { usuario: 'admin', contrasena: '100922', rol: 'admin' },
     { usuario: 'trabajador', contrasena: '1234', rol: 'trabajador' }
@@ -57,15 +134,37 @@
   function iniciarSesion() {
     const user = document.getElementById('usuario').value.trim();
     const pass = document.getElementById('contrasena').value.trim();
+    const btn = document.querySelector('.btn-login');
 
-    const encontrado = usuarios.find(u => u.usuario === user && u.contrasena === pass);
+    if(!user || !pass) {
+      alert("⚠️ Por favor, llena ambos campos.");
+      return;
+    }
 
-    if (encontrado) {
-      localStorage.setItem("usuarioActivo", encontrado.usuario);
-      localStorage.setItem("rolActivo", encontrado.rol);
-      window.location.href = 'index.html';
-    } else {
-      alert("❌ Usuario o contraseña incorrectos");
+    btn.innerText = "Verificando...";
+    btn.disabled = true;
+
+    // Pequeño retraso visual para que se sienta como un login real
+    setTimeout(() => {
+      const encontrado = usuarios.find(u => u.usuario === user && u.contrasena === pass);
+
+      if (encontrado) {
+        localStorage.setItem("usuarioActivo", encontrado.usuario);
+        localStorage.setItem("rolActivo", encontrado.rol);
+        window.location.href = 'index.html';
+      } else {
+        alert("❌ Usuario o contraseña incorrectos");
+        btn.innerText = "Ingresar al Sistema";
+        btn.disabled = false;
+        document.getElementById('contrasena').value = ""; // Limpia la clave equivocada
+      }
+    }, 500);
+  }
+
+  // Función para iniciar sesión con la tecla Enter
+  function verificarEnter(evento) {
+    if (evento.key === "Enter") {
+      iniciarSesion();
     }
   }
 </script>
