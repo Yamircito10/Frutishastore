@@ -2,23 +2,112 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Ventas del Día - Frutisha Store</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Estilos adaptados al diseño App */
+    .nav-acciones {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .nav-acciones button, .nav-acciones input {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    
+    #resumen-dia {
+      background: #27ae60;
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      font-size: 1.3rem;
+      text-align: center;
+      font-weight: bold;
+      margin: 15px 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      display: none; /* Se oculta hasta que haya ventas */
+    }
+
+    /* Tarjetas de ventas */
+    #listaVentas {
+      padding: 0;
+      margin-top: 10px;
+      list-style: none;
+    }
+    .venta-card {
+      background: white;
+      border-left: 6px solid var(--rosa);
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+      text-align: left;
+    }
+    .venta-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .venta-productos {
+      font-size: 0.95rem;
+      color: var(--texto);
+      line-height: 1.5;
+    }
+    .venta-total {
+      font-size: 1.1rem;
+      color: #d63384;
+      font-weight: bold;
+      text-align: right;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+  </style>
 </head>
 <body>
-  <h1>🗓️ Ventas por Fecha</h1>
 
-  <div class="acciones" style="text-align:center; margin-bottom:10px;">
+  <script>
+    // ✅ Candado de Seguridad
+    const usuario = localStorage.getItem("usuarioActivo");
+    if (!usuario) window.location.href = "login.html";
+  </script>
+
+  <header style="text-align: center;">
+    <h1>🗓️ Reporte de Ventas</h1>
+  </header>
+
+  <div class="acciones nav-acciones">
     <input type="date" id="fechaSeleccionada" />
-    <button onclick="buscarPorFecha()">🔍 Ver Ventas</button>
-    <button onclick="descargarTxt()">📄 Descargar TXT</button>
-    <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
+    <button onclick="buscarPorFecha()" style="background: var(--principal); color: white; font-weight: bold;">🔍 Buscar Ventas</button>
+    
+    <div style="display: flex; gap: 10px;">
+      <button onclick="descargarTxt()" style="flex: 1; background: #007bff; color: white;">📄 Exportar TXT</button>
+      <button onclick="location.href='index.html'" style="flex: 1; background: #f0f0f0; color: #333; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">⬅️ Tienda</button>
+    </div>
+  </div>
+
+  <div id="resumen-dia">
+    Total del día: <span id="total-dinero-dia">S/ 0.00</span>
+  </div>
+
+  <div id="estado-carga" style="text-align: center; color: #666; margin-top: 20px; display: none;">
+    Buscando registros...
   </div>
 
   <ul id="listaVentas"></ul>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
@@ -39,56 +128,121 @@
       return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
     }
 
+    // Poner la fecha de hoy por defecto al cargar la página
+    document.addEventListener("DOMContentLoaded", () => {
+      const hoy = new Date();
+      // Ajuste para evitar diferencias de zona horaria al setear el input
+      const fechaLocal = new Date(hoy.getTime() - (hoy.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
+      document.getElementById("fechaSeleccionada").value = fechaLocal;
+    });
+
     let ventasFiltradas = [];
 
     async function buscarPorFecha() {
-      const fecha = document.getElementById("fechaSeleccionada").value;
-      if (!fecha) return alert("⚠️ Selecciona una fecha válida");
+      const fechaInput = document.getElementById("fechaSeleccionada").value;
+      if (!fechaInput) return alert("⚠️ Selecciona una fecha válida");
 
       const lista = document.getElementById("listaVentas");
-      lista.innerHTML = "<li>Cargando...</li>";
+      const resumen = document.getElementById("resumen-dia");
+      const estadoCarga = document.getElementById("estado-carga");
+      
+      lista.innerHTML = "";
+      resumen.style.display = "none";
+      estadoCarga.style.display = "block";
+      estadoCarga.innerText = "Buscando registros...";
 
-      const fechaPE = new Date(fecha).toLocaleDateString("es-PE");
+      // MEJORA: Evitar bug de zona horaria al convertir "YYYY-MM-DD"
+      const [year, month, day] = fechaInput.split("-");
+      const dateObj = new Date(year, month - 1, day);
+      const fechaPE = dateObj.toLocaleDateString("es-PE"); // Formato "D/M/YYYY" o "DD/MM/YYYY"
+
       try {
+        // Buscamos por el campo "fechaTexto" (que agregamos nuevo) o "fecha" (el antiguo)
         const snap = await db.collection("ventas").where("fecha", "==", fechaPE).get();
-        ventasFiltradas = snap.docs.map(d => d.data());
+        const snapNuevo = await db.collection("ventas").where("fechaTexto", "==", fechaPE).get();
+        
+        // Unimos los resultados por si hay de ambos formatos
+        const todasLasVentas = [...snap.docs, ...snapNuevo.docs];
+        
+        // Filtramos duplicados (por si un documento tiene ambos campos iguales)
+        const ventasUnicas = Array.from(new Set(todasLasVentas.map(a => a.id)))
+                                 .map(id => todasLasVentas.find(a => a.id === id).data());
+
+        ventasFiltradas = ventasUnicas;
+        estadoCarga.style.display = "none";
 
         if (ventasFiltradas.length === 0) {
-          lista.innerHTML = "<li>No hay ventas para esta fecha.</li>";
+          lista.innerHTML = "<div style='text-align:center; padding: 20px; background: white; border-radius: 10px;'>No hay ventas registradas en esta fecha.</div>";
           return;
         }
 
-        lista.innerHTML = ventasFiltradas.map((venta, i) => `
-          <li>
-            <strong>Venta ${i + 1}</strong> — 🕒 ${venta.hora}<br>
-            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
-            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
-          </li>
-        `).join("");
+        // Calcular el total del día
+        let sumaTotalDia = 0;
+
+        lista.innerHTML = ventasFiltradas.map((venta, i) => {
+          sumaTotalDia += Number(venta.total);
+
+          // Compatibilidad: por si es un array de strings (viejo) o de objetos (nuevo)
+          const productosHtml = venta.productos.map(p => {
+            const textoProducto = typeof p === 'string' ? p : p.texto;
+            return `<div>🔹 ${textoProducto}</div>`;
+          }).join("");
+
+          return `
+            <li class="venta-card">
+              <div class="venta-header">
+                <span>🧾 <strong>Venta #${i + 1}</strong></span>
+                <span>🕒 ${venta.hora}</span>
+              </div>
+              <div class="venta-productos">
+                ${productosHtml}
+              </div>
+              <div class="venta-total">
+                Total: ${formatearSoles(venta.total)}
+              </div>
+            </li>
+          `;
+        }).join("");
+
+        // Mostrar el resumen arriba
+        document.getElementById("total-dinero-dia").innerText = formatearSoles(sumaTotalDia);
+        resumen.style.display = "block";
+
       } catch (e) {
         console.error(e);
-        lista.innerHTML = "<li>❌ Error al cargar ventas.</li>";
+        estadoCarga.innerText = "❌ Error al cargar ventas. Revisa tu conexión.";
       }
     }
 
     function descargarTxt() {
       if (ventasFiltradas.length === 0) {
-        alert("⚠️ No hay ventas para exportar.");
+        alert("⚠️ No hay ventas para exportar en esta fecha.");
         return;
       }
-      const fecha = document.getElementById("fechaSeleccionada").value || new Date().toISOString().slice(0,10);
+      const fecha = document.getElementById("fechaSeleccionada").value;
+      const totalDia = document.getElementById("total-dinero-dia").innerText;
 
-      let contenido = "🛍️ Ventas del Día - Frutisha Store\n\n";
+      let contenido = "🛍️ REPORTE DE VENTAS DEL DÍA - FRUTISHA STORE\n";
+      contenido += `📅 Fecha: ${fecha}\n`;
+      contenido += `💰 Total Recaudado: ${totalDia}\n`;
+      contenido += "========================================\n\n";
+      
       ventasFiltradas.forEach((venta, i) => {
-        contenido += `Venta ${i + 1} - ${venta.hora}\n`;
-        venta.productos.forEach(p => contenido += `  - ${p}\n`);
-        contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
+        contenido += `[ VENTA #${i + 1} ] - 🕒 ${venta.hora}\n`;
+        
+        venta.productos.forEach(p => {
+          const textoProducto = typeof p === 'string' ? p : p.texto;
+          contenido += `   - ${textoProducto}\n`;
+        });
+        
+        contenido += `Total: ${formatearSoles(venta.total)}\n`;
+        contenido += `----------------------------------------\n\n`;
       });
 
       const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `ventas_${fecha}.txt`;
+      a.download = `Corte_Caja_${fecha}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
