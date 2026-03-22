@@ -2,22 +2,96 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Historial de Ventas - Frutisha Store</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Diseño tipo "Ticket" para cada venta */
+    #listaHistorial {
+      padding: 0;
+      margin-top: 20px;
+    }
+    
+    .historial-card {
+      background: white;
+      border-left: 6px solid var(--principal);
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+      text-align: left;
+    }
+
+    .historial-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .historial-productos {
+      font-size: 0.95rem;
+      color: var(--texto);
+      line-height: 1.5;
+    }
+
+    .historial-total {
+      font-size: 1.2rem;
+      color: #27ae60;
+      font-weight: bold;
+      text-align: right;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    /* Botones adaptados al estilo App */
+    .nav-acciones {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .nav-acciones button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-  <h1>📚 Historial General de Ventas</h1>
 
-  <div class="acciones" style="text-align:center; margin-bottom:10px;">
-    <button onclick="cargarHistorial()">🔄 Actualizar Historial</button>
-    <button onclick="descargarTxt()">📥 Exportar Todo en TXT</button>
-    <button onclick="location.href='index.html'">🏪 Volver a Tienda</button>
+  <script>
+    // ✅ Candado de Seguridad: Solo usuarios logueados pueden ver esto
+    const usuario = localStorage.getItem("usuarioActivo");
+    if (!usuario) {
+      window.location.href = "login.html";
+    }
+  </script>
+
+  <header style="text-align: center;">
+    <h1>📚 Historial de Ventas</h1>
+  </header>
+
+  <div class="acciones nav-acciones">
+    <button onclick="location.href='index.html'" style="background: #f0f0f0; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">⬅️ Volver a la Tienda</button>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="cargarHistorial()" style="flex: 1; background: var(--rosa);">🔄 Actualizar</button>
+      <button onclick="descargarTxt()" style="flex: 1; background: #007bff;">📥 Exportar TXT</button>
+    </div>
+  </div>
+
+  <div id="estado-carga" style="text-align: center; color: #666; margin-top: 20px;">
+    Cargando registros...
   </div>
 
   <ul id="listaHistorial"></ul>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
@@ -42,26 +116,55 @@
 
     async function cargarHistorial() {
       const lista = document.getElementById("listaHistorial");
-      lista.innerHTML = "<li>Cargando...</li>";
+      const estadoCarga = document.getElementById("estado-carga");
+      
+      lista.innerHTML = "";
+      estadoCarga.style.display = "block";
+      estadoCarga.innerText = "Cargando registros...";
+
       try {
-        const snap = await db.collection("ventas").orderBy("fecha", "desc").get();
+        // MEJORA: Ahora ordena por la fecha real del servidor para evitar desórdenes
+        const snap = await db.collection("ventas").orderBy("fechaServidor", "desc").get();
         historialVentas = snap.docs.map(d => d.data());
 
+        estadoCarga.style.display = "none";
+
         if (historialVentas.length === 0) {
-          lista.innerHTML = "<li>No hay ventas registradas aún.</li>";
+          lista.innerHTML = "<div style='text-align:center; padding: 20px; background: white; border-radius: 10px;'>Aún no hay ventas registradas.</div>";
           return;
         }
 
-        lista.innerHTML = historialVentas.map((venta, i) => `
-          <li>
-            <strong>${venta.fecha}</strong> — 🕒 ${venta.hora}<br>
-            ${venta.productos.map(p => `🔹 ${p}`).join("<br>")}
-            <br>💵 Total: <strong>${formatearSoles(venta.total)}</strong>
-          </li>
-        `).join("");
+        lista.innerHTML = historialVentas.map((venta, i) => {
+          // Extraemos los productos (manejando si es un texto simple o un objeto por la actualización de app.js)
+          const productosHtml = venta.productos.map(p => {
+            const textoProducto = typeof p === 'string' ? p : p.texto;
+            return `<div>🔹 ${textoProducto}</div>`;
+          }).join("");
+
+          return `
+            <li class="historial-card">
+              <div class="historial-header">
+                <span>📅 <strong>${venta.fechaTexto || venta.fecha}</strong></span>
+                <span>🕒 ${venta.hora}</span>
+              </div>
+              <div class="historial-productos">
+                ${productosHtml}
+              </div>
+              <div class="historial-total">
+                Total: ${formatearSoles(venta.total)}
+              </div>
+            </li>
+          `;
+        }).join("");
+
       } catch (e) {
         console.error(e);
-        lista.innerHTML = "<li>❌ Error al cargar historial.</li>";
+        estadoCarga.innerText = "❌ Error al cargar el historial. Revisa tu conexión.";
+        
+        // Si falla porque no existe el índice 'fechaServidor' en Firebase, intentamos con la antigua
+        if(e.message.includes("index")) {
+            estadoCarga.innerHTML = "⚠️ Firebase requiere un índice. Intenta creando un ticket de soporte en Firebase o cambia temporalmente a order by 'fecha'.";
+        }
       }
     }
 
@@ -71,22 +174,37 @@
         return;
       }
 
-      let contenido = "🛍️ Historial General de Ventas - Frutisha Store\n\n";
+      let contenido = "🛍️ HISTORIAL DE VENTAS - FRUTISHA STORE\n";
+      contenido += "========================================\n\n";
+      
       historialVentas.forEach((venta, i) => {
-        contenido += `Venta ${i + 1} - ${venta.fecha} ${venta.hora}\n`;
-        venta.productos.forEach(p => contenido += `  - ${p}\n`);
-        contenido += `Total: ${formatearSoles(venta.total)}\n-------------------------\n`;
+        contenido += `[ VENTA #${historialVentas.length - i} ]\n`;
+        contenido += `📅 Fecha: ${venta.fechaTexto || venta.fecha} | 🕒 Hora: ${venta.hora}\n`;
+        contenido += `📝 Productos:\n`;
+        
+        venta.productos.forEach(p => {
+          const textoProducto = typeof p === 'string' ? p : p.texto;
+          contenido += `   - ${textoProducto}\n`;
+        });
+        
+        contenido += `💰 Total Venta: ${formatearSoles(venta.total)}\n`;
+        contenido += `----------------------------------------\n\n`;
       });
 
       const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `historial_completo.txt`;
+      
+      // Nombre de archivo con la fecha de hoy
+      const fechaHoy = new Date().toISOString().split('T')[0];
+      a.download = `Frutisha_Ventas_${fechaHoy}.txt`;
+      
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     }
 
+    // Inicializar
     window.onload = cargarHistorial;
   </script>
 </body>
