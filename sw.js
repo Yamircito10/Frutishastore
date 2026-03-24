@@ -1,4 +1,5 @@
-const CACHE_NAME = 'frutisha-v1';
+const CACHE_NAME = 'frutisha-v2'; // Subimos a la versión 2 para forzar el cambio
+
 const urlsToCache = [
   '/',
   '/index.html',
@@ -11,23 +12,34 @@ const urlsToCache = [
   '/reporte-tallas.html'
 ];
 
-// Instalar el Service Worker y guardar los archivos en caché
+// Instalar y forzar a que tome el control
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// Interceptar las peticiones para que funcione sin internet
+// Activar y destruir la memoria caché vieja (La que tiene el error)
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            console.log("🗑️ Borrando caché vieja:", cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+// Estrategia: Primero internet (para ver tus cambios), si no hay red, usa la caché
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Si el archivo está en caché, lo devuelve. Si no, lo busca en internet.
-        return response || fetch(event.request);
-      })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
