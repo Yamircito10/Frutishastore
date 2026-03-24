@@ -41,6 +41,24 @@
     .btn-excel-mini { background: #217346 !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
     .btn-pdf-mini { background: #e74c3c !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
     header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
+
+    /* NUEVO: CABECERA FLEXIBLE PARA EL BOTÓN DE LUZ */
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-tema {
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      padding: 5px;
+      transition: transform 0.2s;
+    }
+    .btn-tema:active {
+      transform: scale(0.9);
+    }
   </style>
 </head>
 <body>
@@ -51,9 +69,12 @@
   if (!usuario) window.location.href = "login.html";
 </script>
 
-<header>
-  <h1>🛍 Frutisha Store</h1>
-  <p>Bienvenido, <strong><span id="user-display"></span></strong></p>
+<header class="header-container">
+  <div>
+    <h1>🛍 Frutisha Store</h1>
+    <p>Bienvenido, <strong><span id="user-display"></span></strong></p>
+  </div>
+  <button id="btn-tema" class="btn-tema" onclick="toggleTema()" title="Cambiar Tema">🌙</button>
 </header>
 
 <div class="acciones nav-acciones">
@@ -127,6 +148,41 @@
     }
   }
 
+  // ==========================================
+  // LÓGICA DEL MODO OSCURO
+  // ==========================================
+  function cargarTema() {
+    const temaGuardado = localStorage.getItem("temaFrutisha");
+    const btnTema = document.getElementById("btn-tema");
+    if (temaGuardado === "oscuro") {
+      document.body.classList.add("dark-mode");
+      if(btnTema) btnTema.innerText = "☀️";
+    } else {
+      document.body.classList.remove("dark-mode");
+      if(btnTema) btnTema.innerText = "🌙";
+    }
+  }
+
+  function toggleTema() {
+    document.body.classList.toggle("dark-mode");
+    const btnTema = document.getElementById("btn-tema");
+    
+    if (document.body.classList.contains("dark-mode")) {
+      localStorage.setItem("temaFrutisha", "oscuro");
+      if(btnTema) btnTema.innerText = "☀️";
+      Toastify({ text: "🌙 Modo Nocturno Activado", backgroundColor: "#333", duration: 1500, gravity: "bottom", position: "center" }).showToast();
+    } else {
+      localStorage.setItem("temaFrutisha", "claro");
+      if(btnTema) btnTema.innerText = "🌙";
+      Toastify({ text: "☀️ Modo Claro Activado", backgroundColor: "#f39c12", duration: 1500, gravity: "bottom", position: "center" }).showToast();
+    }
+  }
+
+  // Ejecutar al cargar la página
+  document.addEventListener("DOMContentLoaded", cargarTema);
+
+
+  // Exportaciones Rápidas
   function descargarExcelDiario() {
     const lista = document.getElementById("ventasDia").getElementsByTagName("li");
     if (lista.length === 0) return Toastify({ text: "⚠️ No hay ventas hoy", backgroundColor: "#ff9f43" }).showToast();
