@@ -205,3 +205,63 @@ body.dark-mode #buscador-prendas {
   color: #fff;
   border-color: #444;
 }
+/* =========================================
+   🌙 MODO OSCURO: BOTONES OSCURITOS Y ELEGANTES
+   ========================================= */
+
+/* 1. Botones del menú principal (Más oscuros) */
+body.dark-mode .nav-acciones button {
+  background-color: #1a1a1a;
+  color: #ff9ff3; /* Letras rosadas suaves */
+  border: 1px solid #333;
+}
+
+/* 2. Botón de FINALIZAR VENTA (Verde petróleo/oscuro) */
+body.dark-mode .btn-finalizar {
+  background-color: #1e8449 !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #145a32 !important;
+}
+
+/* 3. Botón de Vaciar Carrito (Gris oscuro) */
+body.dark-mode .reiniciar-btn {
+  background-color: #424949 !important;
+  color: #e0e0e0 !important;
+}
+
+/* 4. Botones de Excel y PDF (Tonos apagados) */
+body.dark-mode .btn-excel-mini {
+  background-color: #145a32 !important; /* Verde oscuro */
+  color: #d5f5e3 !important;
+}
+body.dark-mode .btn-pdf-mini {
+  background-color: #7b241c !important; /* Rojo vino oscuro */
+  color: #fadbd8 !important;
+}
+
+/* 5. Botón de Limpiar Vista del Historial */
+body.dark-mode .borrar-btn {
+  background-color: #2c3e50 !important; /* Azul medianoche */
+  color: #e0e0e0 !important;
+}
+
+/* 6. Botones de las Tallas y Descuentos de la ropa */
+body.dark-mode .boton-talla {
+  background-color: #2c2c2c;
+  color: #fff;
+  border: 1px solid #555;
+}
+body.dark-mode .boton-talla:disabled {
+  background-color: #1a1a1a;
+  color: #555;
+}
+body.dark-mode .descuento-btn {
+  background-color: #333;
+  color: #ff9ff3;
+  border: 1px solid #555;
+}
+
+/* 7. Botón "X" de eliminar una prenda del carrito */
+body.dark-mode #productos button {
+  background-color: #7b241c !important; /* Rojo oscuro mate */
+}
