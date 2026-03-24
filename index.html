@@ -10,13 +10,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
   <style>
-    /* ✅ ESTILOS DE NAVEGACIÓN TIPO APP */
+    /* NAVEGACIÓN TIPO APP */
     .nav-acciones {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     
     .nav-acciones button {
@@ -31,7 +34,26 @@
       cursor: pointer;
     }
 
-    /* ✅ TOTAL PEGAJOSO (STICKY) */
+    /* NUEVO: ESTILOS DE LA BARRA DE BÚSQUEDA */
+    .buscador-container {
+      margin-bottom: 15px;
+    }
+    #buscador-prendas {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border: 2px solid var(--borde);
+      border-radius: 10px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    #buscador-prendas:focus {
+      border-color: var(--principal);
+    }
+
+    /* TOTAL PEGAJOSO (STICKY) */
     #total {
       background: #27ae60;
       color: white;
@@ -40,14 +62,14 @@
       font-size: 1.6rem;
       text-align: center;
       font-weight: bold;
-      margin: 20px 0;
+      margin: 15px 0;
       position: sticky; 
       top: 10px;
       z-index: 100;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
-    /* ✅ LISTA DE CARRITO */
+    /* LISTA DE CARRITO */
     #productos li {
       background: white;
       margin-bottom: 8px;
@@ -70,14 +92,14 @@
       margin-top: 10px;
     }
 
-    /* ✅ BOTONES DE EXPORTACIÓN RÁPIDA */
+    /* BOTONES DE EXPORTACIÓN RÁPIDA */
     .botones-exportar-mini {
       display: flex;
       gap: 10px;
       margin-top: 10px;
     }
-    .btn-excel-mini { background: #217346 !important; color: white !important; flex: 1; }
-    .btn-pdf-mini { background: #e74c3c !important; color: white !important; flex: 1; }
+    .btn-excel-mini { background: #217346 !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold;}
+    .btn-pdf-mini { background: #e74c3c !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold;}
 
     header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
   </style>
@@ -85,12 +107,10 @@
 <body>
 
 <script>
-  // ✅ Verificación inmediata de seguridad
+  // Verificación de seguridad
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
-  if (!usuario) {
-    window.location.href = "login.html";
-  }
+  if (!usuario) window.location.href = "login.html";
 </script>
 
 <header>
@@ -106,6 +126,10 @@
   <button onclick="cerrarSesion()" style="background: #ff7675; color: white;">🔒 Salir</button>
 </div>
 
+<div class="buscador-container">
+  <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda (Ej. Jean, Polo...)" onkeyup="filtrarPrendas()">
+</div>
+
 <section id="lista-prendas" class="productos">
   <p>Cargando catálogo...</p>
 </section>
@@ -119,7 +143,7 @@
 
 <div class="acciones" style="display: flex; flex-direction: column;">
   <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
-  <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Vaciar Carrito</button>
+  <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="padding: 15px; border-radius: 10px; border: none; margin-top: 5px;">🔄 Vaciar Carrito</button>
 </div>
 
 <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
@@ -131,14 +155,14 @@
     <button class="btn-excel-mini" onclick="descargarExcelDiario()">📊 Excel Hoy</button>
     <button class="btn-pdf-mini" onclick="descargarPDFDiario()">📕 PDF Hoy</button>
   </div>
-  <button class="borrar-btn" onclick="borrarHistorial()" style="margin-top:10px; width:100%;">🗑 Limpiar Vista</button>
+  <button class="borrar-btn" onclick="borrarHistorial()" style="margin-top:10px; width:100%; padding: 12px; border-radius: 10px; border: none;">🗑 Limpiar Vista</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // ✅ Configuración de Firebase
+  // Configuración de Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
     authDomain: "frutisha-store.firebaseapp.com",
@@ -148,13 +172,24 @@
     appId: "1:15388676345:web:72c8e22a2aece1d4151228"
   };
   firebase.initializeApp(firebaseConfig);
+
+  // NUEVO: ACTIVAR MODO OFFLINE (Soporte sin conexión)
+  firebase.firestore().enablePersistence()
+    .catch(function(err) {
+      if (err.code == 'failed-precondition') {
+        console.warn("Múltiples pestañas abiertas, modo offline desactivado.");
+      } else if (err.code == 'unimplemented') {
+        console.warn("Este navegador no soporta el modo offline.");
+      }
+    });
+
   const db = firebase.firestore();
 </script>
 
 <script src="app.js"></script>
 
 <script>
-  // ✅ Lógica de Interfaz de Usuario
+  // Lógica de Interfaz de Usuario
   document.getElementById("user-display").innerText = usuario || "Usuario";
 
   if (rol === "admin") {
@@ -168,12 +203,13 @@
     }
   }
 
-  // ==========================================
-  // EXPORTAR EXCEL RÁPIDO (Cierre del día)
-  // ==========================================
+  // Exportar Excel Diario
   function descargarExcelDiario() {
     const lista = document.getElementById("ventasDia").getElementsByTagName("li");
-    if (lista.length === 0) return alert("⚠️ No hay ventas hoy para exportar.");
+    if (lista.length === 0) {
+      Toastify({ text: "⚠️ No hay ventas hoy", backgroundColor: "#ff9f43", duration: 3000 }).showToast();
+      return;
+    }
 
     const fechaHoy = new Date().toLocaleDateString("es-PE");
     const datos = Array.from(lista).map((li, index) => {
@@ -186,12 +222,13 @@
     XLSX.writeFile(libro, `Cierre_Frutisha_${fechaHoy}.xlsx`);
   }
 
-  // ==========================================
-  // EXPORTAR PDF RÁPIDO (Cierre del día)
-  // ==========================================
+  // Exportar PDF Diario
   function descargarPDFDiario() {
     const lista = document.getElementById("ventasDia").getElementsByTagName("li");
-    if (lista.length === 0) return alert("⚠️ No hay ventas hoy para exportar.");
+    if (lista.length === 0) {
+      Toastify({ text: "⚠️ No hay ventas hoy", backgroundColor: "#ff9f43", duration: 3000 }).showToast();
+      return;
+    }
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
