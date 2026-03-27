@@ -21,30 +21,21 @@ async function cargarPrendas() {
     const snapshot = await db.collection("inventario").get();
     prendas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     generarVistaPrendas();
-  } catch (error) {
-    console.error(error);
-    notificar("❌ Error cargando el inventario.", "error");
-  }
+  } catch (error) { notificar("❌ Error cargando el inventario.", "error"); }
 }
 
 function generarVistaPrendas() {
   const contenedor = document.getElementById("lista-prendas");
   if(!contenedor) return;
   contenedor.innerHTML = "";
-
-  if (prendas.length === 0) {
-    contenedor.innerHTML = "<p>⚠️ No hay productos en el inventario.</p>";
-    return;
-  }
+  if (prendas.length === 0) return contenedor.innerHTML = "<p>⚠️ No hay productos.</p>";
 
   prendas.forEach(prenda => {
     const div = document.createElement("div");
     div.className = "producto-card";
-
     const titulo = document.createElement("h3");
     titulo.innerText = `${prenda.nombre} (Stock: ${prenda.stock ?? 0})`;
     div.appendChild(titulo);
-
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
 
@@ -59,11 +50,9 @@ function generarVistaPrendas() {
     });
 
     div.appendChild(tallasDiv);
-
     const descDiv = document.createElement("div");
     descDiv.className = "descuentos";
     div.appendChild(descDiv);
-
     contenedor.appendChild(div);
   });
   filtrarPrendas();
@@ -159,7 +148,7 @@ function cargarCarrito() {
 
 function reiniciarCarrito() {
   if (productosSeleccionados.length === 0) return notificar("El carrito ya está vacío", "advertencia");
-  if (!confirm("¿Vaciar carrito? No se devolverá el stock a Firebase automáticamente.")) return;
+  if (!confirm("¿Vaciar carrito? No se devolverá el stock automáticamente.")) return;
   total = 0; productosSeleccionados = []; localStorage.removeItem("carrito"); actualizarInterfaz(); notificar("🔄 Carrito vaciado", "exito");
 }
 
@@ -181,131 +170,164 @@ async function finalizarVenta() {
   finally { btn.innerText = "💰 FINALIZAR VENTA"; btn.disabled = false; }
 }
 
-
 // ==========================================
-// 2. MAGIA DE LA NAVEGACIÓN SPA Y CARGA DE DATOS
+// 2. MAGIA DE LA NAVEGACIÓN SPA
 // ==========================================
-
-// Re-escribimos la función navegar del index para que cargue los datos al instante
 window.navegarSPA = function(idDestino) {
-  // 1. Ocultar todas las pantallas y mostrar la elegida
   document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('pantalla-activa'));
   document.getElementById(idDestino).classList.add('pantalla-activa');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // 2. Disparar la carga de datos según la pantalla
   if (idDestino === 'vista-historial') cargarHistorialSPA();
   if (idDestino === 'vista-ventas') cargarReporteVentasSPA();
   if (idDestino === 'vista-tallas') cargarReporteTallasSPA();
   if (idDestino === 'vista-inventario') cargarInventarioSPA();
 };
 
-// --- A. PANTALLA HISTORIAL ---
 async function cargarHistorialSPA() {
   const ul = document.getElementById("ventasDia");
   ul.innerHTML = "<li style='text-align:center;'>⏳ Buscando ventas...</li>";
   try {
     const snap = await db.collection("ventas").orderBy("fechaServidor", "desc").limit(30).get();
-    if(snap.empty) { ul.innerHTML = "<li style='text-align:center;'>No hay ventas aún.</li>"; return; }
-    
+    if(snap.empty) return ul.innerHTML = "<li style='text-align:center;'>No hay ventas aún.</li>";
     ul.innerHTML = snap.docs.map(doc => {
       const v = doc.data();
-      const resumen = v.productos.map(p => p.texto || p.nombre).join(" | ");
-      return `
-        <li>
+      return `<li>
           <div style="font-size: 12px; color: #888; margin-bottom: 4px;">📅 ${v.fechaTexto} - 🕒 ${v.hora}</div>
-          <div style="font-weight: bold;">${resumen}</div>
+          <div style="font-weight: bold;">${v.productos.map(p => p.texto || p.nombre).join(" | ")}</div>
           <div style="color: #27ae60; font-weight: bold; text-align: right; margin-top: 5px;">Total: ${formatearSoles(v.total)}</div>
         </li>`;
     }).join('');
   } catch (e) { ul.innerHTML = "<li>Error cargando historial</li>"; }
 }
 
-// --- B. PANTALLA VENTAS ---
 async function cargarReporteVentasSPA() {
   const div = document.getElementById("kpis-ventas");
-  div.innerHTML = "<p>⏳ Calculando ingresos...</p>";
   try {
     const snap = await db.collection("ventas").get();
-    let totalHistorico = 0;
-    let ventasPorDia = {};
-    
+    let totalHistorico = 0; let ventasPorDia = {};
     snap.forEach(doc => {
-      let v = doc.data();
-      totalHistorico += v.total;
+      let v = doc.data(); totalHistorico += v.total;
       let fecha = v.fechaTexto || "Sin fecha";
       ventasPorDia[fecha] = (ventasPorDia[fecha] || 0) + v.total;
     });
-
     let html = `<div style="background: #27ae60; color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
-                  <h3 style="margin:0;">Ventas Históricas</h3>
-                  <h1 style="margin:5px 0 0 0; font-size: 2.5rem;">${formatearSoles(totalHistorico)}</h1>
-                </div>`;
-    
-    html += `<h3>💰 Resumen por Día</h3><ul style="list-style:none; padding:0;">`;
+                  <h3 style="margin:0;">Ventas Históricas</h3><h1 style="margin:5px 0 0 0; font-size: 2.5rem;">${formatearSoles(totalHistorico)}</h1>
+                </div><h3>💰 Resumen por Día</h3><ul style="list-style:none; padding:0;">`;
     for (let fecha in ventasPorDia) {
-      html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between;">
-                <strong>📅 ${fecha}</strong> 
-                <span style="color:#d63384; font-weight:bold;">${formatearSoles(ventasPorDia[fecha])}</span>
-               </li>`;
+      html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; color: #333;">
+                <strong>📅 ${fecha}</strong> <span style="color:#d63384; font-weight:bold;">${formatearSoles(ventasPorDia[fecha])}</span></li>`;
     }
-    html += `</ul>`;
-    div.innerHTML = html;
+    div.innerHTML = html + `</ul>`;
   } catch (e) { div.innerHTML = "<p>Error cargando ventas.</p>"; }
 }
 
-// --- C. PANTALLA TALLAS ---
 async function cargarReporteTallasSPA() {
   const div = document.getElementById("kpis-tallas");
-  div.innerHTML = "<p>⏳ Analizando tallas...</p>";
   try {
     const snap = await db.collection("ventas").get();
     let conteoTallas = {};
-    
-    snap.forEach(doc => {
-      let prods = doc.data().productos || [];
-      prods.forEach(p => {
-        let talla = p.talla || "Única";
-        conteoTallas[talla] = (conteoTallas[talla] || 0) + 1;
-      });
-    });
-
+    snap.forEach(doc => doc.data().productos.forEach(p => conteoTallas[p.talla || "Única"] = (conteoTallas[p.talla || "Única"] || 0) + 1));
     let html = `<ul style="list-style:none; padding:0;">`;
     for (let t in conteoTallas) {
-      html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between;">
-                <strong>Talla ${t}</strong> 
-                <span style="background: #3498db; color: white; padding: 5px 10px; border-radius: 20px;">Vendidos: ${conteoTallas[t]}</span>
-               </li>`;
+      html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid #3498db; display: flex; justify-content: space-between; color: #333;">
+                <strong>Talla ${t}</strong> <span style="background: #3498db; color: white; padding: 5px 10px; border-radius: 20px;">Vendidos: ${conteoTallas[t]}</span></li>`;
     }
-    html += `</ul>`;
-    div.innerHTML = Object.keys(conteoTallas).length > 0 ? html : "<p>Aún no hay datos de tallas.</p>";
+    div.innerHTML = Object.keys(conteoTallas).length > 0 ? html + `</ul>` : "<p>Aún no hay datos.</p>";
   } catch (e) { div.innerHTML = "<p>Error cargando tallas.</p>"; }
 }
 
-// --- D. PANTALLA INVENTARIO ---
+// ==========================================
+// 3. LÓGICA DE ADMINISTRACIÓN DE INVENTARIO
+// ==========================================
 async function cargarInventarioSPA() {
   const div = document.getElementById("admin-inventario");
-  if (prendas.length === 0) await cargarPrendas();
-  
-  let html = `<p style="font-size:14px; color:#666;">Vista rápida de tu almacén</p><ul style="list-style:none; padding:0;">`;
-  prendas.forEach(p => {
-    let stockColor = p.stock > 5 ? '#27ae60' : (p.stock > 0 ? '#f39c12' : '#e74c3c');
-    html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid ${stockColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between;">
-              <strong>${p.nombre}</strong> 
-              <span style="color: ${stockColor}; font-weight: bold;">Stock: ${p.stock || 0}</span>
-             </li>`;
-  });
-  html += `</ul>`;
-  div.innerHTML = html;
+  div.innerHTML = "<p>⏳ Cargando almacén...</p>";
+  try {
+    const snapshot = await db.collection("inventario").get();
+    prendas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if(prendas.length === 0) return div.innerHTML = "<p>No hay prendas registradas.</p>";
+
+    let html = `<ul style="list-style:none; padding:0;">`;
+    prendas.forEach(p => {
+      let stockColor = p.stock > 5 ? '#27ae60' : (p.stock > 0 ? '#f39c12' : '#e74c3c');
+      html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid ${stockColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.05); color: #333;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <strong>${p.nombre}</strong> 
+                    <span style="color: ${stockColor}; font-weight: bold;">Stock Total: ${p.stock || 0}</span>
+                </div>
+                <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
+                  Tallas: ${p.tallas ? p.tallas.map(t => `T${t.talla}(${t.stockTalla})`).join(', ') : 'Ninguna'}
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <button onclick="eliminarPrendaAdmin('${p.id}')" style="background: #e74c3c; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">🗑️ Borrar</button>
+                    <button onclick="abrirEdicionStock('${p.id}')" style="background: #3498db; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">✏️ Agregar Stock</button>
+                </div>
+               </li>`;
+    });
+    div.innerHTML = html + `</ul>`;
+  } catch (e) { div.innerHTML = "<p>Error cargando inventario.</p>"; }
 }
 
-// ==========================================
-// 3. INICIALIZAR SISTEMA
-// ==========================================
+// CREAR PRENDA
+async function guardarNuevaPrenda() {
+  const nombre = document.getElementById("nuevo-nombre").value.trim();
+  const precio = Number(document.getElementById("nuevo-precio").value);
+  const tallasInput = document.getElementById("nuevas-tallas").value.trim();
+
+  if (!nombre || !precio) return notificar("⚠️ Llena el nombre y precio", "advertencia");
+
+  let tallasArray = [];
+  if (tallasInput) {
+    tallasArray = tallasInput.split(',').map(t => ({ talla: t.trim(), stockTalla: 0, precio: precio }));
+  }
+
+  try {
+    await db.collection("inventario").add({ nombre, precio, stock: 0, tallas: tallasArray });
+    document.getElementById("nuevo-nombre").value = "";
+    document.getElementById("nuevo-precio").value = "";
+    document.getElementById("nuevas-tallas").value = "";
+    notificar("✅ Prenda creada con éxito");
+    cargarInventarioSPA(); // Recarga la lista
+    cargarPrendas(); // Actualiza la tienda principal
+  } catch (error) { notificar("❌ Error guardando prenda", "error"); }
+}
+
+// ELIMINAR PRENDA
+async function eliminarPrendaAdmin(id) {
+  if(!confirm("¿Seguro que deseas eliminar esta prenda por completo?")) return;
+  try {
+    await db.collection("inventario").doc(id).delete();
+    notificar("🗑️ Prenda eliminada");
+    cargarInventarioSPA();
+    cargarPrendas();
+  } catch (error) { notificar("❌ Error eliminando", "error"); }
+}
+
+// EDITAR STOCK RÁPIDO
+async function abrirEdicionStock(id) {
+  const prenda = prendas.find(p => p.id === id);
+  if (!prenda) return;
+  
+  const tallaEdit = prompt(`Agregar stock a ${prenda.nombre}.\n¿A qué talla le vas a sumar stock? (Ej: M)`);
+  if (!tallaEdit) return;
+
+  const cantidad = parseInt(prompt(`¿Cuántas unidades nuevas de talla ${tallaEdit} llegaron? (Ej: 5)`));
+  if (!cantidad || isNaN(cantidad)) return notificar("⚠️ Cantidad inválida", "advertencia");
+
+  try {
+    await ajustarStock(id, tallaEdit, cantidad);
+    notificar("✅ Stock actualizado");
+    cargarInventarioSPA();
+    cargarPrendas();
+  } catch (error) {
+    notificar("❌ Error: " + error.message, "error");
+  }
+}
+
 window.onload = async () => {
   if(window.location.href.includes("login.html")) return;
   cargarCarrito();
   await cargarPrendas();
   actualizarInterfaz();
 };
-      
