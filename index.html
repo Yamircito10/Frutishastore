@@ -47,11 +47,11 @@
     .btn-tema { background: none; border: none; font-size: 1.8rem; cursor: pointer; padding: 5px; transition: transform 0.2s; }
     .btn-tema:active { transform: scale(0.9); }
 
-    /* INVENTARIO INPUTS */
+    /* INPUTS GLOBALES (INVENTARIO Y MODALES) */
     .form-inventario input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 14px; }
     body.dark-mode .form-inventario input { background: #2c2c2c; color: white; border-color: #444; }
 
-    /* MODAL TÁCTIL (TECLADO) */
+    /* MODALES EMERGENTES */
     .modal-oculto { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
     .modal-activo { display: flex; animation: aparecer 0.2s ease-out; }
     .modal-contenido { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
@@ -93,40 +93,19 @@
 </div>
 
 <div id="vista-tienda" class="pantalla pantalla-activa">
-  <div class="buscador-container">
-    <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda (Ej. Jean, Polo...)" onkeyup="filtrarPrendas()">
-  </div>
+  <div class="buscador-container"><input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda (Ej. Jean, Polo...)" onkeyup="filtrarPrendas()"></div>
   <section id="lista-prendas" class="productos"><p>Cargando catálogo...</p></section>
   <div id="total">Total: S/ 0.00</div>
-  <div id="lista">
-    <p><strong>🛒 Carrito de compras:</strong></p>
-    <ul id="productos"></ul>
-  </div>
+  <div id="lista"><p><strong>🛒 Carrito de compras:</strong></p><ul id="productos"></ul></div>
   <div class="acciones" style="display: flex; flex-direction: column;">
     <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
     <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="background: #95a5a6; color: white;">🔄 Vaciar Carrito</button>
   </div>
 </div>
 
-<div id="vista-ventas" class="pantalla">
-  <h2>📈 Reporte General de Ventas</h2>
-  <div id="kpis-ventas"></div>
-</div>
-
-<div id="vista-historial" class="pantalla">
-  <h2>📋 Historial de Ventas</h2>
-  <ul id="ventasDia"></ul>
-  <div class="acciones botones-exportar-mini">
-    <button class="btn-excel-mini" onclick="descargarExcelDiario()">📊 Excel Historial</button>
-    <button class="btn-pdf-mini" onclick="descargarPDFDiario()">📕 PDF Historial</button>
-  </div>
-</div>
-
-<div id="vista-tallas" class="pantalla">
-  <h2>📊 Reporte de Tallas Más Vendidas</h2>
-  <div id="kpis-tallas"></div>
-</div>
-
+<div id="vista-ventas" class="pantalla"><h2>📈 Reporte General de Ventas</h2><div id="kpis-ventas"></div></div>
+<div id="vista-historial" class="pantalla"><h2>📋 Historial de Ventas</h2><ul id="ventasDia"></ul><div class="acciones botones-exportar-mini"><button class="btn-excel-mini" onclick="descargarExcelDiario()">📊 Excel Historial</button><button class="btn-pdf-mini" onclick="descargarPDFDiario()">📕 PDF Historial</button></div></div>
+<div id="vista-tallas" class="pantalla"><h2>📊 Reporte de Tallas Más Vendidas</h2><div id="kpis-tallas"></div></div>
 <div id="vista-inventario" class="pantalla">
   <h2>📦 Gestión de Inventario</h2>
   <div class="form-inventario producto-card" style="padding: 15px; margin-bottom: 20px;">
@@ -143,32 +122,34 @@
 <div id="modal-stock" class="modal-oculto">
   <div class="modal-contenido">
     <h3 id="modal-stock-titulo" style="margin-top:0; color:var(--principal);">Agregar Stock</h3>
-    
     <div id="modal-paso-tallas">
       <p style="color:#888; font-size:14px; margin-bottom:15px;">Toca la talla que vas a recargar:</p>
       <div id="modal-tallas-botones" class="botones-grid"></div>
       <button onclick="cerrarModalStock()" style="margin-top:10px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold;">❌ Cancelar</button>
     </div>
-
     <div id="modal-paso-teclado" style="display:none;">
       <p style="margin:0 0 10px 0;">Sumar a Talla: <strong id="talla-seleccionada-txt" style="color:var(--principal); font-size:1.3rem;"></strong></p>
       <div class="pantalla-teclado" id="pantalla-cantidad">0</div>
-      
       <div class="teclado-numerico">
-        <button onclick="teclear(1)">1</button>
-        <button onclick="teclear(2)">2</button>
-        <button onclick="teclear(3)">3</button>
-        <button onclick="teclear(4)">4</button>
-        <button onclick="teclear(5)">5</button>
-        <button onclick="teclear(6)">6</button>
-        <button onclick="teclear(7)">7</button>
-        <button onclick="teclear(8)">8</button>
-        <button onclick="teclear(9)">9</button>
-        <button onclick="teclear('C')" style="background:#e74c3c; color:white;">C</button>
-        <button onclick="teclear(0)">0</button>
-        <button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="background:#27ae60; color:white;">✔</button>
+        <button onclick="teclear(1)">1</button><button onclick="teclear(2)">2</button><button onclick="teclear(3)">3</button>
+        <button onclick="teclear(4)">4</button><button onclick="teclear(5)">5</button><button onclick="teclear(6)">6</button>
+        <button onclick="teclear(7)">7</button><button onclick="teclear(8)">8</button><button onclick="teclear(9)">9</button>
+        <button onclick="teclear('C')" style="background:#e74c3c; color:white;">C</button><button onclick="teclear(0)">0</button><button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="background:#27ae60; color:white;">✔</button>
       </div>
       <button onclick="cerrarModalStock()" style="margin-top:15px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold;">Volver a Tallas</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-editar" class="modal-oculto">
+  <div class="modal-contenido form-inventario">
+    <h3 style="margin-top:0; color:var(--principal);">✏️ Editar Información</h3>
+    <p style="color:#888; font-size:13px; margin-bottom:15px;">Modifica los datos de la prenda:</p>
+    <input type="text" id="edit-nombre" placeholder="Nombre de la Prenda">
+    <input type="number" id="edit-precio" placeholder="Precio Base (S/)">
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+      <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
+      <button onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #27ae60; color: white; font-weight: bold; cursor: pointer;">💾 Guardar</button>
     </div>
   </div>
 </div>
