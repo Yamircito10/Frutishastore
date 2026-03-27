@@ -1,136 +1,94 @@
 /* =========================================
-   🎨 FRUTISHA STORE - TEMÁTICA BOUTIQUE ROSA
+   🎨 FRUTISHA STORE - TEMÁTICA BOUTIQUE ROSA (CSS COMPLETO)
    ========================================= */
 
-/* Importar la fuente premium de Google */
+/* 1. FUENTE PREMIUM */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-/* --- 1. PALETA DE COLORES (Variables Mágicas) --- */
+/* 2. VARIABLES DE COLORES (Modo Claro) */
 :root {
-  --principal: #d81b60;       /* Rosa Frambuesa Fuerte (Para destacar) */
-  --rosa: #fd79a8;            /* Rosa Pastel Vibrante */
-  --fondo: #fff7fa;           /* Blanco Perla con un toque de rosa */
-  --tarjetas: #ffffff;        /* Blanco puro para que resalte la ropa */
-  --texto: #2d3436;           /* Gris carbón oscuro (Mejor que el negro puro) */
-  --borde: #f8a5c2;           /* Rosa suave para las líneas */
-  --exito: #2ecc71;           /* Verde para el botón de venta */
+  --principal: #d81b60;       
+  --rosa: #fd79a8;            
+  --fondo: #fff7fa;           
+  --tarjetas: #ffffff;        
+  --texto: #2d3436;           
+  --borde: #f8a5c2;           
+  --exito: #2ecc71;           
 }
 
-/* --- 2. EL MODO OSCURO (Dark Mode Elegante) --- */
+/* 3. VARIABLES DE COLORES (Modo Oscuro) */
 body.dark-mode {
-  --principal: #ff9ff3;       /* Rosa brillante para que se lea de noche */
-  --rosa: #f368e0;            /* Fucsia neón */
-  --fondo: #1c1a22;           /* Gris muy oscuro con tinte mora */
-  --tarjetas: #2b2735;        /* Gris morado oscuro para las cajas */
-  --texto: #f5f6fa;           /* Letras casi blancas */
-  --borde: #4a4055;           /* Líneas divisorias oscuras */
+  --principal: #ff9ff3;       
+  --rosa: #f368e0;            
+  --fondo: #1c1a22;           
+  --tarjetas: #2b2735;        
+  --texto: #f5f6fa;           
+  --borde: #4a4055;           
 }
 
-/* --- 3. ESTILOS BASE (Todo el cuerpo) --- */
-body {
-  font-family: 'Poppins', sans-serif; /* Aquí aplicamos la letra nueva */
-  background-color: var(--fondo);
-  color: var(--texto);
-  margin: 0;
-  padding: 15px;
-  transition: background-color 0.3s, color 0.3s;
-}
+/* 4. ESTILOS BASE */
+body { font-family: 'Poppins', sans-serif; background-color: var(--fondo); color: var(--texto); margin: 0; padding: 15px; transition: background-color 0.3s, color 0.3s; }
+h1, h2, h3 { color: var(--principal); margin-top: 0; }
+header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
 
-h1, h2, h3 {
-  color: var(--principal);
-  margin-top: 0;
-}
+/* 5. CABECERA */
+.header-container { display: flex; justify-content: space-between; align-items: center; background: var(--tarjetas); padding: 15px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(216, 27, 96, 0.1); margin-bottom: 20px; border-bottom: 3px solid var(--rosa); }
+.header-container h1 { margin: 0; font-size: 1.6rem; }
+.btn-tema { background: none; border: none; font-size: 1.8rem; cursor: pointer; padding: 5px; transition: transform 0.2s; }
+.btn-tema:active { transform: scale(0.9); }
 
-/* --- 4. LA CABECERA (Tu Logo y Nombre) --- */
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--tarjetas);
-  padding: 15px 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(216, 27, 96, 0.1);
-  margin-bottom: 20px;
-  border-bottom: 3px solid var(--rosa);
-}
+/* 6. NAVEGACIÓN Y VISTAS (SPA) */
+.nav-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+.nav-acciones button { padding: 12px; font-size: 14px; font-weight: bold; border-radius: 10px; border: none; background: var(--tarjetas); color: var(--principal); box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s;}
+.nav-acciones button:active { background-color: var(--rosa); color: white; }
+.pantalla { display: none; animation: aparecer 0.3s ease-in; }
+.pantalla-activa { display: block; }
+@keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.header-container h1 {
-  margin: 0;
-  font-size: 1.6rem;
-}
+/* 7. TARJETAS Y BUSCADOR */
+.producto-card, .pantalla > div, .pantalla > ul { background: var(--tarjetas); padding: 18px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.04); margin-bottom: 15px; border: 1px solid var(--borde); transition: transform 0.2s; }
+.buscador-container { margin-bottom: 15px; }
+#buscador-prendas { width: 100%; padding: 14px; font-size: 16px; border: 2px solid var(--borde); border-radius: 10px; box-sizing: border-box; background: var(--tarjetas); color: var(--texto); outline: none; transition: border-color 0.3s; font-family: 'Poppins', sans-serif;}
+#buscador-prendas:focus { border-color: var(--principal); }
+#total { background: var(--exito); color: white; padding: 18px; border-radius: 12px; font-size: 1.6rem; text-align: center; font-weight: bold; margin: 15px 0; position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
-/* --- 5. TARJETAS DE ROPA Y PANELES --- */
-.producto-card, .pantalla > div, .pantalla > ul {
-  background: var(--tarjetas);
-  padding: 18px;
-  border-radius: 15px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.04);
-  margin-bottom: 15px;
-  border: 1px solid var(--borde);
-  transition: transform 0.2s;
-}
+/* 8. BOTONES DE TALLAS Y DESCUENTOS */
+.tallas { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.boton-talla { background-color: var(--fondo); color: var(--principal); border: 2px solid var(--borde); padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; transition: all 0.2s; }
+.boton-talla:hover { border-color: var(--principal); transform: translateY(-2px); }
+.boton-talla:disabled { background-color: transparent; color: #ccc; border-color: #eee; text-decoration: line-through; cursor: not-allowed; transform: none; }
+.descuentos { display: flex; gap: 8px; flex-wrap: wrap; }
+.descuento-btn { background-color: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: 'Poppins', sans-serif; }
+.descuento-btn:active { background-color: var(--rosa); color: white; border-color: var(--rosa); }
 
-/* --- 6. BOTONES DE TALLAS --- */
-.tallas {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-.boton-talla {
-  background-color: var(--fondo);
-  color: var(--principal);
-  border: 2px solid var(--borde);
-  padding: 10px 15px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  font-family: 'Poppins', sans-serif;
-  transition: all 0.2s;
-}
-.boton-talla:hover {
-  border-color: var(--principal);
-  transform: translateY(-2px);
-}
-.boton-talla:disabled {
-  background-color: transparent;
-  color: #ccc;
-  border-color: #eee;
-  text-decoration: line-through;
-  cursor: not-allowed;
-  transform: none;
-}
-body.dark-mode .boton-talla:disabled {
-  color: #555;
-  border-color: #444;
-}
+/* 9. CARRITO Y BOTONES DE ACCIÓN */
+#productos { padding: 0; list-style: none; }
+#productos li { background: var(--tarjetas); margin-bottom: 8px; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--rosa); box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 15px; color: var(--texto); }
+.btn-finalizar { background: var(--exito) !important; color: white !important; padding: 18px !important; font-size: 1.2rem !important; width: 100%; margin-top: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+.reiniciar-btn { padding: 15px; border-radius: 10px; border: none; margin-top: 5px; font-weight: bold; cursor: pointer; background: #95a5a6; color: white; }
+.botones-exportar-mini { display: flex; gap: 10px; margin-top: 10px; }
+.btn-excel-mini { background: #217346 !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
+.btn-pdf-mini { background: #e74c3c !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
 
-/* --- 7. BOTONES DE DESCUENTOS --- */
-.descuentos {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.descuento-btn {
-  background-color: var(--tarjetas);
-  color: var(--texto);
-  border: 1px solid var(--borde);
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-family: 'Poppins', sans-serif;
-}
-.descuento-btn:active {
-  background-color: var(--rosa);
-  color: white;
-  border-color: var(--rosa);
-}
+/* 10. FORMULARIOS INVENTARIO */
+.form-inventario input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--tarjetas); color: var(--texto); box-sizing: border-box; font-size: 14px; font-family: 'Poppins', sans-serif;}
 
-/* --- 8. ESPECÍFICOS DEL MODO OSCURO (Ajustes finos) --- */
+/* 11. MODALES EMERGENTES Y TECLADO TÁCTIL */
+.modal-oculto { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+.modal-activo { display: flex; animation: aparecer 0.2s ease-out; }
+.modal-contenido { background: var(--tarjetas); padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--borde); }
+.botones-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; }
+.botones-grid button { padding: 15px 20px; font-size: 1.2rem; border-radius: 10px; border: 2px solid var(--borde); background: var(--fondo); font-weight: bold; cursor: pointer; color: var(--principal); }
+.pantalla-teclado { font-size: 2.5rem; font-weight: bold; padding: 10px; border: 2px solid var(--principal); border-radius: 10px; margin-bottom: 15px; color: var(--principal); letter-spacing: 2px; }
+.teclado-numerico { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.teclado-numerico button { padding: 15px; font-size: 1.8rem; font-weight: bold; border-radius: 10px; border: none; background: var(--fondo); color: var(--texto); cursor: pointer; transition: background 0.1s; }
+.teclado-numerico button:active { transform: scale(0.95); }
+
+/* 12. AJUSTES FINOS MODO OSCURO */
 body.dark-mode .nav-acciones button { background-color: var(--tarjetas); color: var(--principal); border: 1px solid var(--borde); }
+body.dark-mode .boton-talla:disabled { color: #555; border-color: #444; }
 body.dark-mode .btn-finalizar { background: linear-gradient(135deg, #1e8449, #27ae60) !important; color: white !important; border: none; }
 body.dark-mode .reiniciar-btn { background-color: #424949 !important; color: white !important; }
-body.dark-mode .btn-excel-mini { background-color: #145a32 !important; color: white !important; }
-body.dark-mode .btn-pdf-mini { background-color: #7b241c !important; color: white !important; }
-body.dark-mode #productos li { background-color: var(--tarjetas); border-left: 5px solid var(--rosa); color: var(--texto); }
+body.dark-mode .teclado-numerico button { background: #333; color: white; }
+body.dark-mode .pantalla-teclado { border-color: #ff9ff3; color: #ff9ff3; }
+body.dark-mode .botones-grid button { background: #2c2c2c; border-color: #444; color: #ff9ff3; }
