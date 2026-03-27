@@ -80,7 +80,6 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   });
 }
 
-// FUNCION CORREGIDA PARA TALLAS CON LETRAS Y NUMEROS
 async function ajustarStock(prendaId, tallaNumero, delta) {
   return db.runTransaction(async (tx) => {
     const ref = db.collection("inventario").doc(prendaId);
@@ -88,10 +87,7 @@ async function ajustarStock(prendaId, tallaNumero, delta) {
     if (!snap.exists) throw new Error("Prenda no encontrada");
     const data = snap.data();
     const tallas = Array.isArray(data.tallas) ? [...data.tallas] : [];
-    
-    // Comparación segura como Texto
     const idx = tallas.findIndex(x => String(x.talla).trim().toUpperCase() === String(tallaNumero).trim().toUpperCase());
-    
     if (idx === -1) throw new Error("Talla no encontrada en base de datos");
     const actual = Number(tallas[idx].stockTalla || 0) + delta;
     if (actual < 0) throw new Error("Sin stock suficiente");
@@ -258,14 +254,15 @@ async function cargarInventarioSPA() {
       html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid ${stockColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.05); color: #333;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                     <strong>${p.nombre}</strong> 
-                    <span style="color: ${stockColor}; font-weight: bold;">Stock Total: ${p.stock || 0}</span>
+                    <span style="color: ${stockColor}; font-weight: bold;">Stock: ${p.stock || 0}</span>
                 </div>
                 <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
-                  Tallas: ${p.tallas ? p.tallas.map(t => `T${t.talla}(${t.stockTalla})`).join(', ') : 'Ninguna'}
+                  Precio Base: S/${p.precio} | Tallas: ${p.tallas ? p.tallas.map(t => `T${t.talla}(${t.stockTalla})`).join(', ') : 'Ninguna'}
                 </div>
                 <div style="display: flex; gap: 5px;">
-                    <button onclick="eliminarPrendaAdmin('${p.id}')" style="background: #e74c3c; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">🗑️ Borrar</button>
-                    <button onclick="abrirEdicionStock('${p.id}')" style="background: #3498db; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">✏️ Stock</button>
+                    <button onclick="eliminarPrendaAdmin('${p.id}')" style="background: #e74c3c; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">🗑️</button>
+                    <button onclick="abrirEdicionInfo('${p.id}')" style="background: #f39c12; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">✏️ Info</button>
+                    <button onclick="abrirEdicionStock('${p.id}')" style="background: #3498db; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">📦 Stock</button>
                 </div>
                </li>`;
     });
@@ -301,7 +298,51 @@ async function eliminarPrendaAdmin(id) {
 }
 
 // ==========================================
-// 4. LÓGICA DEL TECLADO TÁCTIL (MODAL)
+// 4A. MODAL PARA EDITAR NOMBRE Y PRECIO
+// ==========================================
+let prendaEditandoInfoId = null;
+
+function abrirEdicionInfo(id) {
+  const prenda = prendas.find(p => p.id === id);
+  if(!prenda) return;
+  
+  prendaEditandoInfoId = id;
+  document.getElementById("edit-nombre").value = prenda.nombre;
+  document.getElementById("edit-precio").value = prenda.precio;
+  
+  document.getElementById("modal-editar").classList.add("modal-activo");
+}
+
+function cerrarModalEditar() {
+  document.getElementById("modal-editar").classList.remove("modal-activo");
+  prendaEditandoInfoId = null;
+}
+
+async function guardarEdicionInfo() {
+  const nuevoNombre = document.getElementById("edit-nombre").value.trim();
+  const nuevoPrecio = Number(document.getElementById("edit-precio").value);
+
+  if(!nuevoNombre || !nuevoPrecio) return notificar("⚠️ Llena ambos campos", "advertencia");
+
+  try {
+    await db.collection("inventario").doc(prendaEditandoInfoId).update({
+      nombre: nuevoNombre,
+      precio: nuevoPrecio
+    });
+    
+    // (Opcional: Si quieres actualizar también el precio interno de cada talla, habría que hacer un ciclo aquí, pero por ahora actualizamos la base general).
+    
+    notificar("✅ Información actualizada", "exito");
+    cerrarModalEditar();
+    cargarInventarioSPA();
+    cargarPrendas();
+  } catch(error) {
+    notificar("❌ Error al actualizar", "error");
+  }
+}
+
+// ==========================================
+// 4B. MODAL TECLADO TÁCTIL (AGREGAR STOCK)
 // ==========================================
 let prendaEditandoId = null;
 let tallaEditando = null;
@@ -386,4 +427,4 @@ window.onload = async () => {
   await cargarPrendas();
   actualizarInterfaz();
 };
-    
+      
