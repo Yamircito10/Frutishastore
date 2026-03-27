@@ -46,21 +46,18 @@ header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
 @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* 7. TARJETAS, BUSCADOR Y MOSAICO 3x3 */
-/* Estilos generales para los contenedores de otras pantallas */
 .pantalla > div, .pantalla > ul { background: var(--tarjetas); padding: 18px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.04); margin-bottom: 15px; border: 1px solid var(--borde); transition: transform 0.2s; }
 
-/* --- MAGIA DEL MOSAICO 3x3 PARA EL CATÁLOGO --- */
 #lista-prendas {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 columnas iguales */
-  gap: 10px; /* Espacio entre las prendas */
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 10px; 
   padding: 10px 0;
   background: transparent;
   border: none;
   box-shadow: none;
 }
 
-/* Tarjetita individual compacta */
 .producto-card {
   background: var(--tarjetas);
   padding: 10px;
@@ -70,7 +67,7 @@ header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   text-align: center;
 }
 
@@ -87,14 +84,36 @@ header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
 #buscador-prendas:focus { border-color: var(--principal); }
 #total { background: var(--exito); color: white; padding: 18px; border-radius: 12px; font-size: 1.6rem; text-align: center; font-weight: bold; margin: 15px 0; position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
-/* 8. BOTONES DE TALLAS Y DESCUENTOS */
+/* 8. BOTONES DE TALLAS Y DESCUENTOS CORREGIDOS */
 .tallas { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 5px; justify-content: center; }
 .boton-talla { background-color: var(--fondo); color: var(--principal); border: 2px solid var(--borde); padding: 5px 8px; font-size: 0.7rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; transition: all 0.2s; }
 .boton-talla:hover { border-color: var(--principal); transform: translateY(-2px); }
 .boton-talla:disabled { background-color: transparent; color: #ccc; border-color: #eee; text-decoration: line-through; cursor: not-allowed; transform: none; }
 
-/* Ocultamos los botones de descuento grandes en la vista de mosaico */
-.producto-card .descuentos { display: none !important; }
+/* AQUÍ REVIVIMOS LOS BOTONES EN VERSIÓN MINIATURA */
+.producto-card .descuentos { 
+  display: flex; 
+  gap: 4px; 
+  flex-wrap: wrap; 
+  justify-content: center; 
+  margin-top: 5px;
+}
+.descuento-btn {
+  background-color: var(--fondo);
+  color: var(--principal);
+  border: 1px solid var(--borde);
+  padding: 4px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: bold;
+}
+.descuento-btn:active {
+  background-color: var(--rosa);
+  color: white;
+  border-color: var(--rosa);
+}
 
 /* 9. CARRITO Y BOTONES DE ACCIÓN */
 #productos { padding: 0; list-style: none; }
@@ -127,3 +146,4 @@ body.dark-mode .reiniciar-btn { background-color: #424949 !important; color: whi
 body.dark-mode .teclado-numerico button { background: #333; color: white; }
 body.dark-mode .pantalla-teclado { border-color: #ff9ff3; color: #ff9ff3; }
 body.dark-mode .botones-grid button { background: #2c2c2c; border-color: #444; color: #ff9ff3; }
+body.dark-mode .descuento-btn { background-color: #333; color: #ff9ff3; border-color: #555; }
