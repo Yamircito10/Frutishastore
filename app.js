@@ -152,16 +152,12 @@ function reiniciarCarrito() {
   total = 0; productosSeleccionados = []; localStorage.removeItem("carrito"); actualizarInterfaz(); notificar("🔄 Carrito vaciado", "exito");
 }
 
-// ----------------------------------------------------
-// AQUI ESTÁ LA MAGIA DE WHATSAPP EN FINALIZAR VENTA
-// ----------------------------------------------------
 async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return notificar("⚠️ Agrega productos", "advertencia");
   const btn = document.querySelector(".btn-finalizar");
   btn.innerText = "⏳ Procesando..."; btn.disabled = true;
   
   try {
-    // 1. Guardar la venta en Firebase
     await db.collection("ventas").add({
       fechaServidor: firebase.firestore.FieldValue.serverTimestamp(),
       fechaTexto: new Date().toLocaleDateString("es-PE"),
@@ -170,7 +166,6 @@ async function finalizarVenta() {
       total: Number(total)
     });
 
-    // 2. Preparar el mensaje de WhatsApp
     let textoWa = `*🛍️ FRUTISHA STORE*\n`;
     textoWa += `¡Gracias por tu compra!\n\n`;
     textoWa += `*Detalle de tu pedido:*\n`;
@@ -180,24 +175,17 @@ async function finalizarVenta() {
     textoWa += `\n*Total Pagado: ${formatearSoles(total)}*\n`;
     textoWa += `\n¡Vuelve pronto! ✨`;
 
-    // 3. Preguntar al usuario si quiere enviar el recibo
     if(confirm("✅ Venta registrada correctamente.\n\n¿Deseas enviar el recibo al cliente por WhatsApp?")) {
       const urlWa = `https://wa.me/?text=${encodeURIComponent(textoWa)}`;
       window.open(urlWa, '_blank');
     }
 
-    // 4. Limpiar el carrito y la pantalla
-    total = 0; 
-    productosSeleccionados = []; 
-    guardarCarrito(); 
-    actualizarInterfaz();
+    total = 0; productosSeleccionados = []; guardarCarrito(); actualizarInterfaz();
     notificar("✅ ¡Venta finalizada exitosamente!", "exito");
-    
   } catch (err) { 
     notificar("❌ Error guardando la venta", "error"); 
   } finally { 
-    btn.innerText = "💰 FINALIZAR VENTA"; 
-    btn.disabled = false; 
+    btn.innerText = "💰 FINALIZAR VENTA"; btn.disabled = false; 
   }
 }
 
@@ -448,4 +436,10 @@ async function confirmarStockTeclado() {
   }
 }
 
-// INICIO AU
+// INICIO AUTOMÁTICO
+window.onload = async () => {
+  if(window.location.href.includes("login.html")) return;
+  cargarCarrito();
+  await cargarPrendas();
+  actualizarInterfaz();
+};
