@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Frutisha Store - Perú</title>
+  <title>Frutisha Store - PWA</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#d63384">
@@ -14,21 +14,24 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
   <style>
     /* NAVEGACIÓN APP */
     .nav-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
-    .nav-acciones button { padding: 12px; font-size: 14px; font-weight: bold; border-radius: 10px; border: none; background: white; color: var(--principal); box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
+    .nav-acciones button { padding: 12px; font-size: 14px; font-weight: bold; border-radius: 10px; border: none; background: white; color: var(--principal); box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s;}
+    .nav-acciones button:active { background-color: var(--rosa); color: white; }
 
-    /* BUSCADOR */
+    /* ESTILOS DE LA SPA (MAGIA DE PANTALLAS) */
+    .pantalla { display: none; animation: aparecer 0.3s ease-in; }
+    .pantalla-activa { display: block; }
+    @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* BUSCADOR Y TOTAL */
     .buscador-container { margin-bottom: 15px; }
     #buscador-prendas { width: 100%; padding: 14px; font-size: 16px; border: 2px solid var(--borde); border-radius: 10px; box-sizing: border-box; box-shadow: 0 2px 4px rgba(0,0,0,0.05); outline: none; transition: border-color 0.3s; }
     #buscador-prendas:focus { border-color: var(--principal); }
-
-    /* TOTAL PEGAJOSO */
     #total { background: #27ae60; color: white; padding: 18px; border-radius: 12px; font-size: 1.6rem; text-align: center; font-weight: bold; margin: 15px 0; position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
     /* LISTA PRODUCTOS */
@@ -36,29 +39,14 @@
     .btn-finalizar { background: #2ecc71 !important; color: white !important; padding: 18px !important; font-size: 1.2rem !important; width: 100%; margin-top: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
     .reiniciar-btn { padding: 15px; border-radius: 10px; border: none; margin-top: 5px; font-weight: bold; cursor: pointer; }
 
-    /* EXPORTACIÓN */
+    /* EXPORTACIÓN Y CABECERA */
     .botones-exportar-mini { display: flex; gap: 10px; margin-top: 10px; }
     .btn-excel-mini { background: #217346 !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
     .btn-pdf-mini { background: #e74c3c !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
     header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
-
-    /* NUEVO: CABECERA FLEXIBLE PARA EL BOTÓN DE LUZ */
-    .header-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .btn-tema {
-      background: none;
-      border: none;
-      font-size: 1.8rem;
-      cursor: pointer;
-      padding: 5px;
-      transition: transform 0.2s;
-    }
-    .btn-tema:active {
-      transform: scale(0.9);
-    }
+    .header-container { display: flex; justify-content: space-between; align-items: center; }
+    .btn-tema { background: none; border: none; font-size: 1.8rem; cursor: pointer; padding: 5px; transition: transform 0.2s; }
+    .btn-tema:active { transform: scale(0.9); }
   </style>
 </head>
 <body>
@@ -78,49 +66,71 @@
 </header>
 
 <div class="acciones nav-acciones">
-  <button onclick="location.href='ventas.html'">📈 Reporte Ventas</button>
-  <button onclick="location.href='historial.html'">📚 Historial</button>
-  <button onclick="location.href='reporte-tallas.html'">📊 Tallas</button>
-  <button id="btn-inventario" style="display:none;" onclick="location.href='inventario.html'">📦 Inventario</button>
+  <button onclick="navegarSPA('vista-tienda')">🛒 Tienda</button>
+  <button onclick="navegarSPA('vista-ventas')">📈 Ventas</button>
+  <button onclick="navegarSPA('vista-historial')">📚 Historial</button>
+  <button onclick="navegarSPA('vista-tallas')">📊 Tallas</button>
+  <button id="btn-inventario" style="display:none;" onclick="navegarSPA('vista-inventario')">📦 Inventario</button>
   <button onclick="cerrarSesion()" style="background: #ff7675; color: white;">🔒 Salir</button>
 </div>
 
-<div class="buscador-container">
-  <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda (Ej. Jean, Polo...)" onkeyup="filtrarPrendas()">
+<div id="vista-tienda" class="pantalla pantalla-activa">
+  <div class="buscador-container">
+    <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda (Ej. Jean, Polo...)" onkeyup="filtrarPrendas()">
+  </div>
+
+  <section id="lista-prendas" class="productos">
+    <p>Cargando catálogo...</p>
+  </section>
+
+  <div id="total">Total: S/ 0.00</div>
+
+  <div id="lista">
+    <p><strong>🛒 Carrito de compras:</strong></p>
+    <ul id="productos"></ul>
+  </div>
+
+  <div class="acciones" style="display: flex; flex-direction: column;">
+    <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
+    <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="background: #95a5a6; color: white;">🔄 Vaciar Carrito</button>
+  </div>
 </div>
 
-<section id="lista-prendas" class="productos">
-  <p>Cargando catálogo...</p>
-</section>
-
-<div id="total">Total: S/ 0.00</div>
-
-<div id="lista">
-  <p><strong>🛒 Carrito de compras:</strong></p>
-  <ul id="productos"></ul>
+<div id="vista-ventas" class="pantalla">
+  <h2>📈 Reporte General de Ventas</h2>
+  <div id="kpis-ventas">
+    <p>Estamos migrando tus reportes aquí...</p>
+  </div>
 </div>
 
-<div class="acciones" style="display: flex; flex-direction: column;">
-  <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
-  <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="background: #95a5a6; color: white;">🔄 Vaciar Carrito</button>
-</div>
-
-<hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
-
-<div id="historial">
-  <h2>📋 Últimas Ventas del Día</h2>
+<div id="vista-historial" class="pantalla">
+  <h2>📋 Historial de Ventas</h2>
   <ul id="ventasDia"></ul>
   <div class="acciones botones-exportar-mini">
-    <button class="btn-excel-mini" onclick="descargarExcelDiario()">📊 Excel Hoy</button>
-    <button class="btn-pdf-mini" onclick="descargarPDFDiario()">📕 PDF Hoy</button>
+    <button class="btn-excel-mini" onclick="descargarExcelDiario()">📊 Excel Historial</button>
+    <button class="btn-pdf-mini" onclick="descargarPDFDiario()">📕 PDF Historial</button>
   </div>
-  <button class="borrar-btn" onclick="borrarHistorial()" style="margin-top:10px; width:100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer;">🗑 Limpiar Vista</button>
+</div>
+
+<div id="vista-tallas" class="pantalla">
+  <h2>📊 Reporte de Tallas Más Vendidas</h2>
+  <div id="kpis-tallas">
+    <p>Estamos migrando tus gráficos de tallas aquí...</p>
+  </div>
+</div>
+
+<div id="vista-inventario" class="pantalla">
+  <h2>📦 Gestión de Inventario</h2>
+  <div id="admin-inventario">
+    <p>Estamos migrando la gestión de almacén aquí...</p>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 <script>
+  // Configuración de Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
     authDomain: "frutisha-store.firebaseapp.com",
@@ -130,7 +140,6 @@
     appId: "1:15388676345:web:72c8e22a2aece1d4151228"
   };
   firebase.initializeApp(firebaseConfig);
-
   firebase.firestore().enablePersistence().catch(err => console.warn("Offline config:", err.code));
   const db = firebase.firestore();
 </script>
@@ -138,6 +147,7 @@
 <script src="app.js"></script>
 
 <script>
+  // LÓGICA DE INTERFAZ BÁSICA Y SPA
   document.getElementById("user-display").innerText = usuario || "Usuario";
   if (rol === "admin") document.getElementById("btn-inventario").style.display = "inline-block";
 
@@ -148,9 +158,23 @@
     }
   }
 
-  // ==========================================
-  // LÓGICA DEL MODO OSCURO
-  // ==========================================
+  // EL CEREBRO DE LA NAVEGACIÓN SPA
+  function navegarSPA(idDestino) {
+    // Ocultar todas las pantallas
+    const pantallas = document.querySelectorAll('.pantalla');
+    pantallas.forEach(p => p.classList.remove('pantalla-activa'));
+    
+    // Mostrar la solicitada
+    document.getElementById(idDestino).classList.add('pantalla-activa');
+    
+    // Desplazar hacia arriba para que se sienta como una app real
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Aquí avisaremos a app.js que cargue los datos de la pantalla nueva
+    // si es necesario (lo configuraremos en el siguiente paso)
+  }
+
+  // TEMA OSCURO
   function cargarTema() {
     const temaGuardado = localStorage.getItem("temaFrutisha");
     const btnTema = document.getElementById("btn-tema");
@@ -162,56 +186,25 @@
       if(btnTema) btnTema.innerText = "🌙";
     }
   }
-
   function toggleTema() {
     document.body.classList.toggle("dark-mode");
     const btnTema = document.getElementById("btn-tema");
-    
     if (document.body.classList.contains("dark-mode")) {
       localStorage.setItem("temaFrutisha", "oscuro");
       if(btnTema) btnTema.innerText = "☀️";
-      Toastify({ text: "🌙 Modo Nocturno Activado", backgroundColor: "#333", duration: 1500, gravity: "bottom", position: "center" }).showToast();
+      Toastify({ text: "🌙 Modo Nocturno", backgroundColor: "#333", duration: 1500, gravity: "bottom" }).showToast();
     } else {
       localStorage.setItem("temaFrutisha", "claro");
       if(btnTema) btnTema.innerText = "🌙";
-      Toastify({ text: "☀️ Modo Claro Activado", backgroundColor: "#f39c12", duration: 1500, gravity: "bottom", position: "center" }).showToast();
+      Toastify({ text: "☀️ Modo Claro", backgroundColor: "#f39c12", duration: 1500, gravity: "bottom" }).showToast();
     }
   }
-
-  // Ejecutar al cargar la página
   document.addEventListener("DOMContentLoaded", cargarTema);
 
-
-  // Exportaciones Rápidas
-  function descargarExcelDiario() {
-    const lista = document.getElementById("ventasDia").getElementsByTagName("li");
-    if (lista.length === 0) return Toastify({ text: "⚠️ No hay ventas hoy", backgroundColor: "#ff9f43" }).showToast();
-    const fechaHoy = new Date().toLocaleDateString("es-PE");
-    const datos = Array.from(lista).map((li, index) => ({ "N°": index + 1, "Detalle": li.innerText.trim() }));
-    const hoja = XLSX.utils.json_to_sheet(datos);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "Resumen_Hoy");
-    XLSX.writeFile(libro, `Cierre_Frutisha_${fechaHoy}.xlsx`);
-  }
-
-  function descargarPDFDiario() {
-    const lista = document.getElementById("ventasDia").getElementsByTagName("li");
-    if (lista.length === 0) return Toastify({ text: "⚠️ No hay ventas hoy", backgroundColor: "#ff9f43" }).showToast();
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const fechaHoy = new Date().toLocaleDateString("es-PE");
-    doc.setFontSize(16); doc.setTextColor(214, 51, 132); doc.text("Frutisha Store - Cierre Rápido", 14, 20);
-    doc.setFontSize(10); doc.setTextColor(100); doc.text(`Fecha: ${fechaHoy}`, 14, 28);
-    const filas = Array.from(lista).map((li, i) => [ (i+1).toString(), li.innerText.trim() ]);
-    doc.autoTable({ startY: 35, head: [["#", "Resumen de la Venta"]], body: filas, theme: 'striped', headStyles: { fillColor: [214, 51, 132] }, styles: { fontSize: 8 }});
-    doc.save(`Cierre_Frutisha_${fechaHoy}.pdf`);
-  }
-
+  // SERVICE WORKER
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('✅ PWA lista', reg))
-        .catch(err => console.log('❌ Error PWA', err));
+      navigator.serviceWorker.register('/sw.js').catch(err => console.log('❌ Error PWA', err));
     });
   }
 </script>
