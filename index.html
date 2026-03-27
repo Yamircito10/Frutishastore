@@ -50,6 +50,21 @@
     /* INVENTARIO INPUTS */
     .form-inventario input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 14px; }
     body.dark-mode .form-inventario input { background: #2c2c2c; color: white; border-color: #444; }
+
+    /* MODAL TÁCTIL (TECLADO) */
+    .modal-oculto { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-activo { display: flex; animation: aparecer 0.2s ease-out; }
+    .modal-contenido { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    body.dark-mode .modal-contenido { background: #1e1e1e; color: white; border: 1px solid #333; }
+    .botones-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; }
+    .botones-grid button { padding: 15px 20px; font-size: 1.2rem; border-radius: 10px; border: 2px solid var(--borde); background: #f5f6fa; font-weight: bold; cursor: pointer; color: var(--principal); }
+    body.dark-mode .botones-grid button { background: #2c2c2c; border-color: #444; color: #ff9ff3; }
+    .pantalla-teclado { font-size: 2.5rem; font-weight: bold; padding: 10px; border: 2px solid var(--principal); border-radius: 10px; margin-bottom: 15px; color: var(--principal); letter-spacing: 2px; }
+    body.dark-mode .pantalla-teclado { border-color: #ff9ff3; color: #ff9ff3; }
+    .teclado-numerico { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .teclado-numerico button { padding: 15px; font-size: 1.8rem; font-weight: bold; border-radius: 10px; border: none; background: #ecf0f1; cursor: pointer; transition: background 0.1s; }
+    .teclado-numerico button:active { transform: scale(0.95); }
+    body.dark-mode .teclado-numerico button { background: #333; color: white; }
   </style>
 </head>
 <body>
@@ -114,7 +129,6 @@
 
 <div id="vista-inventario" class="pantalla">
   <h2>📦 Gestión de Inventario</h2>
-  
   <div class="form-inventario producto-card" style="padding: 15px; margin-bottom: 20px;">
     <h3 style="margin-top: 0; color: var(--principal);">➕ Agregar Nueva Prenda</h3>
     <input type="text" id="nuevo-nombre" placeholder="Nombre (Ej. Polo Básico)">
@@ -123,8 +137,40 @@
     <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
     <button onclick="guardarNuevaPrenda()" style="background: #27ae60; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;">💾 Guardar Prenda</button>
   </div>
-
   <div id="admin-inventario"><p>Cargando almacén...</p></div>
+</div>
+
+<div id="modal-stock" class="modal-oculto">
+  <div class="modal-contenido">
+    <h3 id="modal-stock-titulo" style="margin-top:0; color:var(--principal);">Agregar Stock</h3>
+    
+    <div id="modal-paso-tallas">
+      <p style="color:#888; font-size:14px; margin-bottom:15px;">Toca la talla que vas a recargar:</p>
+      <div id="modal-tallas-botones" class="botones-grid"></div>
+      <button onclick="cerrarModalStock()" style="margin-top:10px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold;">❌ Cancelar</button>
+    </div>
+
+    <div id="modal-paso-teclado" style="display:none;">
+      <p style="margin:0 0 10px 0;">Sumar a Talla: <strong id="talla-seleccionada-txt" style="color:var(--principal); font-size:1.3rem;"></strong></p>
+      <div class="pantalla-teclado" id="pantalla-cantidad">0</div>
+      
+      <div class="teclado-numerico">
+        <button onclick="teclear(1)">1</button>
+        <button onclick="teclear(2)">2</button>
+        <button onclick="teclear(3)">3</button>
+        <button onclick="teclear(4)">4</button>
+        <button onclick="teclear(5)">5</button>
+        <button onclick="teclear(6)">6</button>
+        <button onclick="teclear(7)">7</button>
+        <button onclick="teclear(8)">8</button>
+        <button onclick="teclear(9)">9</button>
+        <button onclick="teclear('C')" style="background:#e74c3c; color:white;">C</button>
+        <button onclick="teclear(0)">0</button>
+        <button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="background:#27ae60; color:white;">✔</button>
+      </div>
+      <button onclick="cerrarModalStock()" style="margin-top:15px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold;">Volver a Tallas</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
