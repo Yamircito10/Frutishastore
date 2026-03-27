@@ -130,7 +130,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // Configuración de Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
     authDomain: "frutisha-store.firebaseapp.com",
@@ -147,7 +146,6 @@
 <script src="app.js"></script>
 
 <script>
-  // LÓGICA DE INTERFAZ BÁSICA Y SPA
   document.getElementById("user-display").innerText = usuario || "Usuario";
   if (rol === "admin") document.getElementById("btn-inventario").style.display = "inline-block";
 
@@ -156,22 +154,6 @@
       localStorage.clear();
       window.location.href = "login.html";
     }
-  }
-
-  // EL CEREBRO DE LA NAVEGACIÓN SPA
-  function navegarSPA(idDestino) {
-    // Ocultar todas las pantallas
-    const pantallas = document.querySelectorAll('.pantalla');
-    pantallas.forEach(p => p.classList.remove('pantalla-activa'));
-    
-    // Mostrar la solicitada
-    document.getElementById(idDestino).classList.add('pantalla-activa');
-    
-    // Desplazar hacia arriba para que se sienta como una app real
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Aquí avisaremos a app.js que cargue los datos de la pantalla nueva
-    // si es necesario (lo configuraremos en el siguiente paso)
   }
 
   // TEMA OSCURO
@@ -201,7 +183,6 @@
   }
   document.addEventListener("DOMContentLoaded", cargarTema);
 
-  // SERVICE WORKER
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('❌ Error PWA', err));
@@ -210,4 +191,5 @@
 </script>
 
 </body>
-</html>
+      </html>
+      
