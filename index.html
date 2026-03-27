@@ -8,7 +8,6 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#d63384">
   <link rel="apple-touch-icon" href="icono-192.png">
-
   <link rel="stylesheet" href="styles.css" />
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -23,7 +22,7 @@
     .nav-acciones button { padding: 12px; font-size: 14px; font-weight: bold; border-radius: 10px; border: none; background: white; color: var(--principal); box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s;}
     .nav-acciones button:active { background-color: var(--rosa); color: white; }
 
-    /* ESTILOS DE LA SPA (MAGIA DE PANTALLAS) */
+    /* ESTILOS SPA */
     .pantalla { display: none; animation: aparecer 0.3s ease-in; }
     .pantalla-activa { display: block; }
     @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -47,6 +46,10 @@
     .header-container { display: flex; justify-content: space-between; align-items: center; }
     .btn-tema { background: none; border: none; font-size: 1.8rem; cursor: pointer; padding: 5px; transition: transform 0.2s; }
     .btn-tema:active { transform: scale(0.9); }
+
+    /* INVENTARIO INPUTS */
+    .form-inventario input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 14px; }
+    body.dark-mode .form-inventario input { background: #2c2c2c; color: white; border-color: #444; }
   </style>
 </head>
 <body>
@@ -78,18 +81,12 @@
   <div class="buscador-container">
     <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda (Ej. Jean, Polo...)" onkeyup="filtrarPrendas()">
   </div>
-
-  <section id="lista-prendas" class="productos">
-    <p>Cargando catálogo...</p>
-  </section>
-
+  <section id="lista-prendas" class="productos"><p>Cargando catálogo...</p></section>
   <div id="total">Total: S/ 0.00</div>
-
   <div id="lista">
     <p><strong>🛒 Carrito de compras:</strong></p>
     <ul id="productos"></ul>
   </div>
-
   <div class="acciones" style="display: flex; flex-direction: column;">
     <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
     <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="background: #95a5a6; color: white;">🔄 Vaciar Carrito</button>
@@ -98,9 +95,7 @@
 
 <div id="vista-ventas" class="pantalla">
   <h2>📈 Reporte General de Ventas</h2>
-  <div id="kpis-ventas">
-    <p>Estamos migrando tus reportes aquí...</p>
-  </div>
+  <div id="kpis-ventas"></div>
 </div>
 
 <div id="vista-historial" class="pantalla">
@@ -114,16 +109,22 @@
 
 <div id="vista-tallas" class="pantalla">
   <h2>📊 Reporte de Tallas Más Vendidas</h2>
-  <div id="kpis-tallas">
-    <p>Estamos migrando tus gráficos de tallas aquí...</p>
-  </div>
+  <div id="kpis-tallas"></div>
 </div>
 
 <div id="vista-inventario" class="pantalla">
   <h2>📦 Gestión de Inventario</h2>
-  <div id="admin-inventario">
-    <p>Estamos migrando la gestión de almacén aquí...</p>
+  
+  <div class="form-inventario producto-card" style="padding: 15px; margin-bottom: 20px;">
+    <h3 style="margin-top: 0; color: var(--principal);">➕ Agregar Nueva Prenda</h3>
+    <input type="text" id="nuevo-nombre" placeholder="Nombre (Ej. Polo Básico)">
+    <input type="number" id="nuevo-precio" placeholder="Precio Base (S/)">
+    <p style="font-size: 13px; margin: 0 0 5px 0; color: #666;">Tallas Iniciales (Ej: S, M, L):</p>
+    <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
+    <button onclick="guardarNuevaPrenda()" style="background: #27ae60; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;">💾 Guardar Prenda</button>
   </div>
+
+  <div id="admin-inventario"><p>Cargando almacén...</p></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -156,7 +157,6 @@
     }
   }
 
-  // TEMA OSCURO
   function cargarTema() {
     const temaGuardado = localStorage.getItem("temaFrutisha");
     const btnTema = document.getElementById("btn-tema");
@@ -189,7 +189,5 @@
     });
   }
 </script>
-
 </body>
-      </html>
-      
+</html>
