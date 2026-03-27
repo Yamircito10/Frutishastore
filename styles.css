@@ -1,267 +1,136 @@
-/* 🎨 Frutisha Store - Estilos Optimizados */
+/* =========================================
+   🎨 FRUTISHA STORE - TEMÁTICA BOUTIQUE ROSA
+   ========================================= */
+
+/* Importar la fuente premium de Google */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* --- 1. PALETA DE COLORES (Variables Mágicas) --- */
 :root {
-  --rosa: #ff69b4;
-  --rosa-oscuro: #e055a5;
-  --texto: #444;
-  --borde: #ffe4ec;
-  --fondo: #fff0f5;
-  --principal: #d63384;
-  --blanco: #ffffff;
-  --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  --principal: #d81b60;       /* Rosa Frambuesa Fuerte (Para destacar) */
+  --rosa: #fd79a8;            /* Rosa Pastel Vibrante */
+  --fondo: #fff7fa;           /* Blanco Perla con un toque de rosa */
+  --tarjetas: #ffffff;        /* Blanco puro para que resalte la ropa */
+  --texto: #2d3436;           /* Gris carbón oscuro (Mejor que el negro puro) */
+  --borde: #f8a5c2;           /* Rosa suave para las líneas */
+  --exito: #2ecc71;           /* Verde para el botón de venta */
 }
 
-* {
-  box-sizing: border-box; /* Para que el padding no rompa el ancho */
+/* --- 2. EL MODO OSCURO (Dark Mode Elegante) --- */
+body.dark-mode {
+  --principal: #ff9ff3;       /* Rosa brillante para que se lea de noche */
+  --rosa: #f368e0;            /* Fucsia neón */
+  --fondo: #1c1a22;           /* Gris muy oscuro con tinte mora */
+  --tarjetas: #2b2735;        /* Gris morado oscuro para las cajas */
+  --texto: #f5f6fa;           /* Letras casi blancas */
+  --borde: #4a4055;           /* Líneas divisorias oscuras */
 }
 
+/* --- 3. ESTILOS BASE (Todo el cuerpo) --- */
 body {
-  margin: 0;
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background: var(--fondo);
+  font-family: 'Poppins', sans-serif; /* Aquí aplicamos la letra nueva */
+  background-color: var(--fondo);
   color: var(--texto);
-  padding: 10px; /* Menos padding lateral para ganar espacio */
-  text-align: center;
+  margin: 0;
+  padding: 15px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-h1, h2 {
+h1, h2, h3 {
   color: var(--principal);
-  margin-bottom: 15px;
+  margin-top: 0;
 }
 
-/* 🔘 Botones de Acción (Navegación) */
-.acciones button {
-  padding: 12px 15px;
-  margin: 5px;
-  background-color: var(--rosa);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-}
-
-.acciones button:active {
-  transform: scale(0.95); /* Efecto de presionar */
-}
-
-/* 🛍 Contenedor de Productos */
-.productos {
-  display: grid;
-  /* MEJORA: Se adapta solo. Mínimo 100px por columna */
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
-  gap: 10px;
-  margin-top: 15px;
-  justify-content: center;
-}
-
-.producto-card {
-  background: var(--blanco);
-  border: 1.5px solid var(--borde);
-  border-radius: 15px;
-  padding: 12px 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-shadow: var(--shadow);
-}
-
-.producto-card h3 {
-  font-size: 13px;
-  margin: 0 0 8px 0;
-  color: var(--principal);
-  line-height: 1.2;
-}
-
-/* 🔠 Tallas y Descuentos */
-.tallas, .descuentos {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 5px;
-}
-
-.boton-talla, .descuento-btn {
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 12px;
-  padding: 8px;
-  cursor: pointer;
-  min-width: 35px;
-}
-
-.boton-talla {
-  background-color: #f0f7ff;
-  color: #2980b9;
-  border: 1px solid #d4e1f5;
-}
-
-/* MEJORA: Talla sin stock */
-.boton-talla:disabled {
-  background-color: #eee;
-  color: #aaa;
-  cursor: not-allowed;
-  border: 1px solid #ddd;
-}
-
-.descuento-btn {
-  background-color: #ffd700;
-  color: #856404;
-  margin-top: 5px;
-}
-
-/* 🛒 Carrito y Totales */
-#total {
-  transition: all 0.3s ease;
-}
-
-#productos li {
-  background-color: var(--blanco);
-  border: 1px solid var(--borde);
-  border-radius: 10px;
-  padding: 10px;
-  margin: 8px 0;
+/* --- 4. LA CABECERA (Tu Logo y Nombre) --- */
+.header-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: var(--tarjetas);
+  padding: 15px 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(216, 27, 96, 0.1);
+  margin-bottom: 20px;
+  border-bottom: 3px solid var(--rosa);
 }
 
-#productos button {
-  background: #ff7675;
-  border: none;
-  color: white;
-  border-radius: 50%;
-  width: 25px;
-  height: 25px;
+.header-container h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+/* --- 5. TARJETAS DE ROPA Y PANELES --- */
+.producto-card, .pantalla > div, .pantalla > ul {
+  background: var(--tarjetas);
+  padding: 18px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.04);
+  margin-bottom: 15px;
+  border: 1px solid var(--borde);
+  transition: transform 0.2s;
+}
+
+/* --- 6. BOTONES DE TALLAS --- */
+.tallas {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.boton-talla {
+  background-color: var(--fondo);
+  color: var(--principal);
+  border: 2px solid var(--borde);
+  padding: 10px 15px;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
 }
-
-/* 📱 Ajustes específicos para pantallas pequeñas */
-@media screen and (max-width: 400px) {
-  .productos {
-    grid-template-columns: repeat(2, 1fr); /* 2 columnas en pantallas muy pequeñas */
-  }
+.boton-talla:hover {
+  border-color: var(--principal);
+  transform: translateY(-2px);
 }
-/* =========================================
-   🌙 MODO OSCURO (DARK MODE)
-   ========================================= */
-body.dark-mode {
-  background-color: #121212;
-  color: #e0e0e0;
-}
-
-/* Cambiar el color de las tarjetas y cajas blancas al apagar la luz */
-body.dark-mode .producto-card,
-body.dark-mode #productos li,
-body.dark-mode .card,
-body.dark-mode .filtros,
-body.dark-mode .kpi,
-body.dark-mode .historial-card,
-body.dark-mode .venta-card,
-body.dark-mode .login-container {
-  background-color: #1e1e1e;
-  border-color: #333;
-  color: #e0e0e0;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-}
-
-/* Textos que antes eran negros o grises oscuros */
-body.dark-mode h1, 
-body.dark-mode h2, 
-body.dark-mode h3, 
-body.dark-mode p, 
-body.dark-mode span,
-body.dark-mode .muted {
-  color: #f5f6fa;
-}
-
-/* Tablas en modo oscuro */
-body.dark-mode table {
-  color: #e0e0e0;
-}
-body.dark-mode th {
-  background-color: #2c2c2c;
-  color: #d63384; /* Mantenemos el rosado de Frutisha */
-  border-bottom: 1px solid #444;
-}
-body.dark-mode td {
-  border-bottom: 1px solid #333;
-}
-
-/* Botones de navegación (para que no desentonen) */
-body.dark-mode .nav-acciones button {
-  background-color: #2c2c2c;
-  color: #ff9ff3; /* Un rosado más claro para que brille en la oscuridad */
-  border: 1px solid #444;
-}
-
-/* El buscador en modo oscuro */
-body.dark-mode #buscador-prendas {
-  background-color: #1e1e1e;
-  color: #fff;
-  border-color: #444;
-}
-/* =========================================
-   🌙 MODO OSCURO: BOTONES OSCURITOS Y ELEGANTES
-   ========================================= */
-
-/* 1. Botones del menú principal (Más oscuros) */
-body.dark-mode .nav-acciones button {
-  background-color: #1a1a1a;
-  color: #ff9ff3; /* Letras rosadas suaves */
-  border: 1px solid #333;
-}
-
-/* 2. Botón de FINALIZAR VENTA (Verde petróleo/oscuro) */
-body.dark-mode .btn-finalizar {
-  background-color: #1e8449 !important;
-  color: #e0e0e0 !important;
-  border: 1px solid #145a32 !important;
-}
-
-/* 3. Botón de Vaciar Carrito (Gris oscuro) */
-body.dark-mode .reiniciar-btn {
-  background-color: #424949 !important;
-  color: #e0e0e0 !important;
-}
-
-/* 4. Botones de Excel y PDF (Tonos apagados) */
-body.dark-mode .btn-excel-mini {
-  background-color: #145a32 !important; /* Verde oscuro */
-  color: #d5f5e3 !important;
-}
-body.dark-mode .btn-pdf-mini {
-  background-color: #7b241c !important; /* Rojo vino oscuro */
-  color: #fadbd8 !important;
-}
-
-/* 5. Botón de Limpiar Vista del Historial */
-body.dark-mode .borrar-btn {
-  background-color: #2c3e50 !important; /* Azul medianoche */
-  color: #e0e0e0 !important;
-}
-
-/* 6. Botones de las Tallas y Descuentos de la ropa */
-body.dark-mode .boton-talla {
-  background-color: #2c2c2c;
-  color: #fff;
-  border: 1px solid #555;
+.boton-talla:disabled {
+  background-color: transparent;
+  color: #ccc;
+  border-color: #eee;
+  text-decoration: line-through;
+  cursor: not-allowed;
+  transform: none;
 }
 body.dark-mode .boton-talla:disabled {
-  background-color: #1a1a1a;
   color: #555;
-}
-body.dark-mode .descuento-btn {
-  background-color: #333;
-  color: #ff9ff3;
-  border: 1px solid #555;
+  border-color: #444;
 }
 
-/* 7. Botón "X" de eliminar una prenda del carrito */
-body.dark-mode #productos button {
-  background-color: #7b241c !important; /* Rojo oscuro mate */
+/* --- 7. BOTONES DE DESCUENTOS --- */
+.descuentos {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
+.descuento-btn {
+  background-color: var(--tarjetas);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-family: 'Poppins', sans-serif;
+}
+.descuento-btn:active {
+  background-color: var(--rosa);
+  color: white;
+  border-color: var(--rosa);
+}
+
+/* --- 8. ESPECÍFICOS DEL MODO OSCURO (Ajustes finos) --- */
+body.dark-mode .nav-acciones button { background-color: var(--tarjetas); color: var(--principal); border: 1px solid var(--borde); }
+body.dark-mode .btn-finalizar { background: linear-gradient(135deg, #1e8449, #27ae60) !important; color: white !important; border: none; }
+body.dark-mode .reiniciar-btn { background-color: #424949 !important; color: white !important; }
+body.dark-mode .btn-excel-mini { background-color: #145a32 !important; color: white !important; }
+body.dark-mode .btn-pdf-mini { background-color: #7b241c !important; color: white !important; }
+body.dark-mode #productos li { background-color: var(--tarjetas); border-left: 5px solid var(--rosa); color: var(--texto); }
