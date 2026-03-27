@@ -436,6 +436,38 @@ async function confirmarStockTeclado() {
   }
 }
 
+// ==========================================
+// 5. MAGIA PWA (BOTÓN INSTALAR APP)
+// ==========================================
+let eventoInstalacion;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Evitar que Chrome muestre el cartelito de forma automática y fea
+  e.preventDefault();
+  // Guardamos el evento para usarlo cuando el usuario toque nuestro botón
+  eventoInstalacion = e;
+  
+  // Como sabemos que sí se puede instalar, hacemos aparecer el botón azul
+  const btnInstalar = document.getElementById("btn-instalar");
+  if(btnInstalar) btnInstalar.style.display = "inline-block";
+});
+
+async function instalarApp() {
+  if (!eventoInstalacion) return;
+  // Mostrar la ventana oficial de Google/Apple para instalar
+  eventoInstalacion.prompt();
+  
+  // Esperar a ver si el usuario dijo que sí o que no
+  const { outcome } = await eventoInstalacion.userChoice;
+  if (outcome === 'accepted') {
+    notificar("✅ ¡App instalada con éxito!");
+    // Ocultar el botón porque ya está instalada
+    document.getElementById("btn-instalar").style.display = "none";
+  }
+  // Limpiar el evento
+  eventoInstalacion = null;
+}
+
 // INICIO AUTOMÁTICO
 window.onload = async () => {
   if(window.location.href.includes("login.html")) return;
