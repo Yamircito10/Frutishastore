@@ -6,8 +6,9 @@
   <title>Frutisha Store - PWA</title>
   
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#d63384">
+  <meta name="theme-color" content="#d81b60">
   <link rel="apple-touch-icon" href="icono-192.png">
+  
   <link rel="stylesheet" href="styles.css" />
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -15,57 +16,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-
-  <style>
-    /* NAVEGACIÓN APP */
-    .nav-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
-    .nav-acciones button { padding: 12px; font-size: 14px; font-weight: bold; border-radius: 10px; border: none; background: white; color: var(--principal); box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s;}
-    .nav-acciones button:active { background-color: var(--rosa); color: white; }
-
-    /* ESTILOS SPA */
-    .pantalla { display: none; animation: aparecer 0.3s ease-in; }
-    .pantalla-activa { display: block; }
-    @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* BUSCADOR Y TOTAL */
-    .buscador-container { margin-bottom: 15px; }
-    #buscador-prendas { width: 100%; padding: 14px; font-size: 16px; border: 2px solid var(--borde); border-radius: 10px; box-sizing: border-box; box-shadow: 0 2px 4px rgba(0,0,0,0.05); outline: none; transition: border-color 0.3s; }
-    #buscador-prendas:focus { border-color: var(--principal); }
-    #total { background: #27ae60; color: white; padding: 18px; border-radius: 12px; font-size: 1.6rem; text-align: center; font-weight: bold; margin: 15px 0; position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-
-    /* LISTA PRODUCTOS */
-    #productos li { background: white; margin-bottom: 8px; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--rosa); box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 15px; }
-    .btn-finalizar { background: #2ecc71 !important; color: white !important; padding: 18px !important; font-size: 1.2rem !important; width: 100%; margin-top: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-    .reiniciar-btn { padding: 15px; border-radius: 10px; border: none; margin-top: 5px; font-weight: bold; cursor: pointer; }
-
-    /* EXPORTACIÓN Y CABECERA */
-    .botones-exportar-mini { display: flex; gap: 10px; margin-top: 10px; }
-    .btn-excel-mini { background: #217346 !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
-    .btn-pdf-mini { background: #e74c3c !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
-    header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
-    .header-container { display: flex; justify-content: space-between; align-items: center; }
-    .btn-tema { background: none; border: none; font-size: 1.8rem; cursor: pointer; padding: 5px; transition: transform 0.2s; }
-    .btn-tema:active { transform: scale(0.9); }
-
-    /* INPUTS GLOBALES (INVENTARIO Y MODALES) */
-    .form-inventario input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 14px; }
-    body.dark-mode .form-inventario input { background: #2c2c2c; color: white; border-color: #444; }
-
-    /* MODALES EMERGENTES */
-    .modal-oculto { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-activo { display: flex; animation: aparecer 0.2s ease-out; }
-    .modal-contenido { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-    body.dark-mode .modal-contenido { background: #1e1e1e; color: white; border: 1px solid #333; }
-    .botones-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; }
-    .botones-grid button { padding: 15px 20px; font-size: 1.2rem; border-radius: 10px; border: 2px solid var(--borde); background: #f5f6fa; font-weight: bold; cursor: pointer; color: var(--principal); }
-    body.dark-mode .botones-grid button { background: #2c2c2c; border-color: #444; color: #ff9ff3; }
-    .pantalla-teclado { font-size: 2.5rem; font-weight: bold; padding: 10px; border: 2px solid var(--principal); border-radius: 10px; margin-bottom: 15px; color: var(--principal); letter-spacing: 2px; }
-    body.dark-mode .pantalla-teclado { border-color: #ff9ff3; color: #ff9ff3; }
-    .teclado-numerico { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .teclado-numerico button { padding: 15px; font-size: 1.8rem; font-weight: bold; border-radius: 10px; border: none; background: #ecf0f1; cursor: pointer; transition: background 0.1s; }
-    .teclado-numerico button:active { transform: scale(0.95); }
-    body.dark-mode .teclado-numerico button { background: #333; color: white; }
-  </style>
 </head>
 <body>
 
@@ -99,7 +49,7 @@
   <div id="lista"><p><strong>🛒 Carrito de compras:</strong></p><ul id="productos"></ul></div>
   <div class="acciones" style="display: flex; flex-direction: column;">
     <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
-    <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="background: #95a5a6; color: white;">🔄 Vaciar Carrito</button>
+    <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Vaciar Carrito</button>
   </div>
 </div>
 
@@ -108,22 +58,22 @@
 <div id="vista-tallas" class="pantalla"><h2>📊 Reporte de Tallas Más Vendidas</h2><div id="kpis-tallas"></div></div>
 <div id="vista-inventario" class="pantalla">
   <h2>📦 Gestión de Inventario</h2>
-  <div class="form-inventario producto-card" style="padding: 15px; margin-bottom: 20px;">
+  <div class="form-inventario producto-card">
     <h3 style="margin-top: 0; color: var(--principal);">➕ Agregar Nueva Prenda</h3>
     <input type="text" id="nuevo-nombre" placeholder="Nombre (Ej. Polo Básico)">
     <input type="number" id="nuevo-precio" placeholder="Precio Base (S/)">
     <p style="font-size: 13px; margin: 0 0 5px 0; color: #666;">Tallas Iniciales (Ej: S, M, L):</p>
     <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
-    <button onclick="guardarNuevaPrenda()" style="background: #27ae60; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;">💾 Guardar Prenda</button>
+    <button onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;">💾 Guardar Prenda</button>
   </div>
   <div id="admin-inventario"><p>Cargando almacén...</p></div>
 </div>
 
 <div id="modal-stock" class="modal-oculto">
   <div class="modal-contenido">
-    <h3 id="modal-stock-titulo" style="margin-top:0; color:var(--principal);">Agregar Stock</h3>
+    <h3 id="modal-stock-titulo">Agregar Stock</h3>
     <div id="modal-paso-tallas">
-      <p style="color:#888; font-size:14px; margin-bottom:15px;">Toca la talla que vas a recargar:</p>
+      <p style="color:var(--texto); font-size:14px; margin-bottom:15px;">Toca la talla que vas a recargar:</p>
       <div id="modal-tallas-botones" class="botones-grid"></div>
       <button onclick="cerrarModalStock()" style="margin-top:10px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold;">❌ Cancelar</button>
     </div>
@@ -134,7 +84,7 @@
         <button onclick="teclear(1)">1</button><button onclick="teclear(2)">2</button><button onclick="teclear(3)">3</button>
         <button onclick="teclear(4)">4</button><button onclick="teclear(5)">5</button><button onclick="teclear(6)">6</button>
         <button onclick="teclear(7)">7</button><button onclick="teclear(8)">8</button><button onclick="teclear(9)">9</button>
-        <button onclick="teclear('C')" style="background:#e74c3c; color:white;">C</button><button onclick="teclear(0)">0</button><button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="background:#27ae60; color:white;">✔</button>
+        <button onclick="teclear('C')" style="background:#e74c3c; color:white;">C</button><button onclick="teclear(0)">0</button><button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="background:var(--exito); color:white;">✔</button>
       </div>
       <button onclick="cerrarModalStock()" style="margin-top:15px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold;">Volver a Tallas</button>
     </div>
@@ -143,13 +93,13 @@
 
 <div id="modal-editar" class="modal-oculto">
   <div class="modal-contenido form-inventario">
-    <h3 style="margin-top:0; color:var(--principal);">✏️ Editar Información</h3>
-    <p style="color:#888; font-size:13px; margin-bottom:15px;">Modifica los datos de la prenda:</p>
+    <h3>✏️ Editar Información</h3>
+    <p style="color:var(--texto); font-size:13px; margin-bottom:15px;">Modifica los datos de la prenda:</p>
     <input type="text" id="edit-nombre" placeholder="Nombre de la Prenda">
     <input type="number" id="edit-precio" placeholder="Precio Base (S/)">
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
-      <button onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #27ae60; color: white; font-weight: bold; cursor: pointer;">💾 Guardar</button>
+      <button onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer;">💾 Guardar</button>
     </div>
   </div>
 </div>
