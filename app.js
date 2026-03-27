@@ -80,6 +80,7 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   });
 }
 
+// FUNCION CORREGIDA PARA TALLAS CON LETRAS Y NUMEROS
 async function ajustarStock(prendaId, tallaNumero, delta) {
   return db.runTransaction(async (tx) => {
     const ref = db.collection("inventario").doc(prendaId);
@@ -87,10 +88,13 @@ async function ajustarStock(prendaId, tallaNumero, delta) {
     if (!snap.exists) throw new Error("Prenda no encontrada");
     const data = snap.data();
     const tallas = Array.isArray(data.tallas) ? [...data.tallas] : [];
-    const idx = tallas.findIndex(x => Number(x.talla) === Number(tallaNumero));
-    if (idx === -1) throw new Error("Talla no encontrada");
+    
+    // Comparación segura como Texto
+    const idx = tallas.findIndex(x => String(x.talla).trim().toUpperCase() === String(tallaNumero).trim().toUpperCase());
+    
+    if (idx === -1) throw new Error("Talla no encontrada en base de datos");
     const actual = Number(tallas[idx].stockTalla || 0) + delta;
-    if (actual < 0) throw new Error("Sin stock");
+    if (actual < 0) throw new Error("Sin stock suficiente");
     tallas[idx].stockTalla = actual;
     const nuevoTotal = tallas.reduce((acc, x) => acc + Number(x.stockTalla || 0), 0);
     tx.update(ref, { tallas, stock: nuevoTotal });
@@ -103,7 +107,7 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
     const res = await ajustarStock(prenda.id, tallaSel.talla, -1);
     const idx = prendas.findIndex(p => p.id === prenda.id);
     if (idx !== -1) { prendas[idx].tallas = res.tallas; prendas[idx].stock = res.nuevoTotal; }
-    productosSeleccionados.push({ id: prenda.id, nombre: prenda.nombre, talla: Number(tallaSel.talla), precio: Number(precioFinal), texto: `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}` });
+    productosSeleccionados.push({ id: prenda.id, nombre: prenda.nombre, talla: tallaSel.talla, precio: Number(precioFinal), texto: `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}` });
     total += Number(precioFinal);
     guardarCarrito(); generarVistaPrendas(); actualizarInterfaz();
     notificar(`🛒 ${prenda.nombre} T${tallaSel.talla} agregado`, "exito");
@@ -261,7 +265,7 @@ async function cargarInventarioSPA() {
                 </div>
                 <div style="display: flex; gap: 5px;">
                     <button onclick="eliminarPrendaAdmin('${p.id}')" style="background: #e74c3c; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">🗑️ Borrar</button>
-                    <button onclick="abrirEdicionStock('${p.id}')" style="background: #3498db; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">✏️ Agregar Stock</button>
+                    <button onclick="abrirEdicionStock('${p.id}')" style="background: #3498db; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">✏️ Stock</button>
                 </div>
                </li>`;
     });
@@ -269,18 +273,13 @@ async function cargarInventarioSPA() {
   } catch (e) { div.innerHTML = "<p>Error cargando inventario.</p>"; }
 }
 
-// CREAR PRENDA
 async function guardarNuevaPrenda() {
   const nombre = document.getElementById("nuevo-nombre").value.trim();
   const precio = Number(document.getElementById("nuevo-precio").value);
   const tallasInput = document.getElementById("nuevas-tallas").value.trim();
-
   if (!nombre || !precio) return notificar("⚠️ Llena el nombre y precio", "advertencia");
-
   let tallasArray = [];
-  if (tallasInput) {
-    tallasArray = tallasInput.split(',').map(t => ({ talla: t.trim(), stockTalla: 0, precio: precio }));
-  }
+  if (tallasInput) tallasArray = tallasInput.split(',').map(t => ({ talla: t.trim(), stockTalla: 0, precio: precio }));
 
   try {
     await db.collection("inventario").add({ nombre, precio, stock: 0, tallas: tallasArray });
@@ -288,46 +287,103 @@ async function guardarNuevaPrenda() {
     document.getElementById("nuevo-precio").value = "";
     document.getElementById("nuevas-tallas").value = "";
     notificar("✅ Prenda creada con éxito");
-    cargarInventarioSPA(); // Recarga la lista
-    cargarPrendas(); // Actualiza la tienda principal
+    cargarInventarioSPA(); cargarPrendas();
   } catch (error) { notificar("❌ Error guardando prenda", "error"); }
 }
 
-// ELIMINAR PRENDA
 async function eliminarPrendaAdmin(id) {
   if(!confirm("¿Seguro que deseas eliminar esta prenda por completo?")) return;
   try {
     await db.collection("inventario").doc(id).delete();
     notificar("🗑️ Prenda eliminada");
-    cargarInventarioSPA();
-    cargarPrendas();
+    cargarInventarioSPA(); cargarPrendas();
   } catch (error) { notificar("❌ Error eliminando", "error"); }
 }
 
-// EDITAR STOCK RÁPIDO
-async function abrirEdicionStock(id) {
+// ==========================================
+// 4. LÓGICA DEL TECLADO TÁCTIL (MODAL)
+// ==========================================
+let prendaEditandoId = null;
+let tallaEditando = null;
+let cantidadTeclado = "0";
+
+function abrirEdicionStock(id) {
+  prendaEditandoId = id;
   const prenda = prendas.find(p => p.id === id);
   if (!prenda) return;
   
-  const tallaEdit = prompt(`Agregar stock a ${prenda.nombre}.\n¿A qué talla le vas a sumar stock? (Ej: M)`);
-  if (!tallaEdit) return;
+  document.getElementById("modal-stock-titulo").innerText = `${prenda.nombre}`;
+  document.getElementById("modal-paso-tallas").style.display = "block";
+  document.getElementById("modal-paso-teclado").style.display = "none";
+  
+  const contenedorTallas = document.getElementById("modal-tallas-botones");
+  contenedorTallas.innerHTML = "";
+  
+  if(prenda.tallas && prenda.tallas.length > 0) {
+      prenda.tallas.forEach(t => {
+        const btn = document.createElement("button");
+        btn.innerText = `T${t.talla}`;
+        btn.onclick = () => seleccionarTallaTeclado(t.talla);
+        contenedorTallas.appendChild(btn);
+      });
+  } else {
+      contenedorTallas.innerHTML = "<p>No hay tallas.</p>";
+  }
+  
+  document.getElementById("modal-stock").classList.add("modal-activo");
+}
 
-  const cantidad = parseInt(prompt(`¿Cuántas unidades nuevas de talla ${tallaEdit} llegaron? (Ej: 5)`));
-  if (!cantidad || isNaN(cantidad)) return notificar("⚠️ Cantidad inválida", "advertencia");
+function seleccionarTallaTeclado(talla) {
+  tallaEditando = talla;
+  cantidadTeclado = "0";
+  document.getElementById("pantalla-cantidad").innerText = cantidadTeclado;
+  document.getElementById("talla-seleccionada-txt").innerText = `${talla}`;
+  document.getElementById("modal-paso-tallas").style.display = "none";
+  document.getElementById("modal-paso-teclado").style.display = "block";
+}
+
+function teclear(valor) {
+  if (valor === 'C') {
+    cantidadTeclado = "0";
+  } else {
+    if (cantidadTeclado === "0") cantidadTeclado = String(valor);
+    else cantidadTeclado += String(valor);
+  }
+  if(cantidadTeclado.length > 4) cantidadTeclado = cantidadTeclado.slice(0, 4);
+  document.getElementById("pantalla-cantidad").innerText = cantidadTeclado;
+}
+
+function cerrarModalStock() {
+  document.getElementById("modal-stock").classList.remove("modal-activo");
+  prendaEditandoId = null;
+  tallaEditando = null;
+}
+
+async function confirmarStockTeclado() {
+  const cantidad = parseInt(cantidadTeclado);
+  if (isNaN(cantidad) || cantidad <= 0) return notificar("⚠️ Ingresa una cantidad mayor a 0", "advertencia");
+  
+  const btnConfirmar = document.getElementById("btn-confirmar-teclado");
+  btnConfirmar.innerText = "⏳"; btnConfirmar.disabled = true;
 
   try {
-    await ajustarStock(id, tallaEdit, cantidad);
-    notificar("✅ Stock actualizado");
-    cargarInventarioSPA();
-    cargarPrendas();
+    await ajustarStock(prendaEditandoId, tallaEditando, cantidad);
+    notificar(`✅ ${cantidad} agregados a la T${tallaEditando}`);
+    cerrarModalStock();
+    cargarInventarioSPA(); 
+    cargarPrendas();       
   } catch (error) {
     notificar("❌ Error: " + error.message, "error");
+  } finally {
+    btnConfirmar.innerText = "✔"; btnConfirmar.disabled = false;
   }
 }
 
+// INICIO AUTOMÁTICO
 window.onload = async () => {
   if(window.location.href.includes("login.html")) return;
   cargarCarrito();
   await cargarPrendas();
   actualizarInterfaz();
 };
+    
