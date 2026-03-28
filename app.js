@@ -453,4 +453,58 @@ function teclear(valor) {
 }
 
 function cerrarModalStock() {
-  document.getElementById("modal-stock").classList.remov
+  document.getElementById("modal-stock").classList.remove("modal-activo");
+  prendaEditandoId = null;
+  tallaEditando = null;
+}
+
+async function confirmarStockTeclado() {
+  const cantidad = parseInt(cantidadTeclado);
+  if (isNaN(cantidad) || cantidad <= 0) return notificar("⚠️ Ingresa una cantidad mayor a 0", "advertencia");
+  
+  const btnConfirmar = document.getElementById("btn-confirmar-teclado");
+  btnConfirmar.innerText = "⏳"; btnConfirmar.disabled = true;
+
+  try {
+    await ajustarStock(prendaEditandoId, tallaEditando, cantidad);
+    notificar(`✅ ${cantidad} agregados a la T${tallaEditando}`);
+    cerrarModalStock();
+    cargarInventarioSPA(); 
+    cargarPrendas();       
+  } catch (error) {
+    notificar("❌ Error: " + error.message, "error");
+  } finally {
+    btnConfirmar.innerText = "✔"; btnConfirmar.disabled = false;
+  }
+}
+
+// ==========================================
+// 5. MAGIA PWA (BOTÓN INSTALAR APP)
+// ==========================================
+let eventoInstalacion;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  eventoInstalacion = e;
+  const btnInstalar = document.getElementById("btn-instalar");
+  if(btnInstalar) btnInstalar.style.display = "inline-block";
+});
+
+async function instalarApp() {
+  if (!eventoInstalacion) return;
+  eventoInstalacion.prompt();
+  const { outcome } = await eventoInstalacion.userChoice;
+  if (outcome === 'accepted') {
+    notificar("✅ ¡App instalada con éxito!");
+    document.getElementById("btn-instalar").style.display = "none";
+  }
+  eventoInstalacion = null;
+}
+
+// INICIO AUTOMÁTICO
+window.onload = async () => {
+  if(window.location.href.includes("login.html")) return;
+  cargarCarrito();
+  await cargarPrendas();
+  actualizarInterfaz();
+};
