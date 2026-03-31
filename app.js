@@ -13,7 +13,6 @@ function notificar(mensaje, tipo = "exito") {
   Toastify({ text: mensaje, duration: 2500, gravity: "bottom", position: "center", style: { background: colorFondo, borderRadius: "10px", fontWeight: "bold", fontSize: "15px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)" } }).showToast();
 }
 
-// 🧮 NUEVA FUNCIÓN MÁGICA: Cuenta todo desde cero para no equivocarse nunca
 function recalcularTotal() {
   total = productosSeleccionados.reduce((suma, prod) => suma + Number(prod.precio), 0);
 }
@@ -173,7 +172,70 @@ function reiniciarCarrito() {
   notificar("🔄 Carrito vaciado", "exito");
 }
 
-// --- AQUÍ ESTÁ LA NUEVA MAGIA DE WHATSAPP ---
+// ==========================================
+// 🎨 NUEVA FUNCIÓN: GENERAR RECIBO PDF
+// ==========================================
+function generarPDFRecibo(productos, totalVenta) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ format: 'a5' }); // Tamaño perfecto para celulares
+  
+  const fechaActual = new Date().toLocaleDateString("es-PE");
+  const horaActual = new Date().toLocaleTimeString("es-PE");
+
+  // Encabezado Frambuesa (Estilo Boutique Rosa)
+  doc.setFillColor(216, 27, 96); 
+  doc.rect(0, 0, 210, 25, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text("FRUTISHA STORE", 14, 17);
+
+  // Datos del recibo
+  doc.setTextColor(45, 52, 54);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Recibo de Compra Digital", 14, 35);
+  doc.text(`Fecha: ${fechaActual}`, 14, 42);
+  doc.text(`Hora: ${horaActual}`, 14, 49);
+
+  // Preparar datos para la tabla
+  const datosTabla = productos.map(p => [
+    `${p.nombre} (Talla: ${p.talla})`, 
+    formatearSoles(p.precio)
+  ]);
+
+  // Dibujar tabla colorida
+  doc.autoTable({
+    startY: 55,
+    head: [['Descripción de la Prenda', 'Importe']],
+    body: datosTabla,
+    theme: 'grid',
+    headStyles: { fillColor: [253, 121, 168], textColor: [255,255,255], fontStyle: 'bold' }, // Rosa Pastel vibrante
+    styles: { fontSize: 10, cellPadding: 5 },
+    columnStyles: { 1: { halign: 'right' } }
+  });
+
+  // Total Final
+  let finalY = doc.lastAutoTable.finalY || 55;
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(216, 27, 96); // Rosa Frambuesa
+  doc.text(`Total Pagado: ${formatearSoles(totalVenta)}`, 14, finalY + 15);
+  
+  // Mensaje de despedida
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(100, 100, 100);
+  doc.text("¡Gracias por tu preferencia! Vuelve pronto.", 14, finalY + 30);
+
+  // Descargar el archivo
+  doc.save(`Recibo_Frutisha_${fechaActual.replace(/\//g, '-')}.pdf`);
+}
+
+// ==========================================
+// 🚀 BOTÓN FINALIZAR ACTUALIZADO
+// ==========================================
 async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return notificar("⚠️ Agrega productos", "advertencia");
   const btn = document.querySelector(".btn-finalizar");
@@ -188,42 +250,32 @@ async function finalizarVenta() {
       total: Number(total)
     });
 
-    let textoWa = `*🛍️ FRUTISHA STORE*\n`;
-    textoWa += `¡Gracias por tu compra!\n\n`;
-    textoWa += `*Detalle de tu pedido:*\n`;
-    productosSeleccionados.forEach(p => {
-      textoWa += `▪️ ${p.nombre} (Talla ${p.talla}) -> ${formatearSoles(p.precio)}\n`;
-    });
-    textoWa += `\n*Total Pagado: ${formatearSoles(total)}*\n`;
-    textoWa += `\n¡Vuelve pronto! ✨`;
+    if(confirm("✅ Venta registrada.\n\n¿Generar recibo en PDF y enviarlo por WhatsApp?")) {
+      
+      // 1. GENERAMOS Y DESCARGAMOS EL PDF DE INMEDIATO
+      generarPDFRecibo(productosSeleccionados, total);
+      notificar("📄 Descargando PDF del recibo...", "exito");
 
-    if(confirm("✅ Venta registrada correctamente.\n\n¿Deseas enviar el recibo al cliente por WhatsApp?")) {
+      // 2. PREPARAMOS EL WHATSAPP CON UN TEXTO CORTO
+      let textoWa = `¡Hola! 🛍️✨ Gracias por tu compra en *FRUTISHA STORE*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes!`;
       
-      // Pedimos el número al vendedor
-      let numeroCliente = prompt("📱 Ingresa el número de celular del cliente (Ej: 987654321):\n\n(Si lo dejas en blanco, podrás elegir el contacto directo en tu WhatsApp)");
+      let numeroCliente = prompt("📱 Ingresa el número de celular del cliente (Ej: 987654321):\n\n(Si lo dejas en blanco, podrás elegir el contacto en tu WhatsApp)");
       
-      if (numeroCliente && numeroCliente.trim() !== "") {
-        // Limpiamos por si puso espacios
-        numeroCliente = numeroCliente.replace(/\D/g, '');
-        // Si puso los 9 dígitos de Perú, le agregamos el código 51 automático
-        if (numeroCliente.length === 9) {
-          numeroCliente = "51" + numeroCliente;
+      setTimeout(() => { // Pequeña pausa para asegurar que el PDF bajó
+        if (numeroCliente && numeroCliente.trim() !== "") {
+          numeroCliente = numeroCliente.replace(/\D/g, '');
+          if (numeroCliente.length === 9) numeroCliente = "51" + numeroCliente;
+          window.open(`https://wa.me/${numeroCliente}?text=${encodeURIComponent(textoWa)}`, '_blank');
+        } else {
+          window.open(`https://wa.me/?text=${encodeURIComponent(textoWa)}`, '_blank');
         }
-        // Abrimos el chat directo con el número
-        const urlWa = `https://wa.me/${numeroCliente}?text=${encodeURIComponent(textoWa)}`;
-        window.open(urlWa, '_blank');
-      } else {
-        // Si no puso número, abre WhatsApp normal para elegir el contacto manual
-        const urlWa = `https://wa.me/?text=${encodeURIComponent(textoWa)}`;
-        window.open(urlWa, '_blank');
-      }
+      }, 1500);
     }
 
     productosSeleccionados = []; 
     recalcularTotal(); 
     guardarCarrito(); 
     actualizarInterfaz();
-    notificar("✅ ¡Venta finalizada exitosamente!", "exito");
   } catch (err) { 
     notificar("❌ Error guardando la venta", "error"); 
   } finally { 
