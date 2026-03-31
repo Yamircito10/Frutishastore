@@ -437,10 +437,18 @@ async function guardarEdicionInfo() {
 
   if(!nuevoNombre || !nuevoPrecio) return notificar("⚠️ Llena ambos campos", "advertencia");
 
+  // AQUÍ ESTÁ LA MAGIA QUE ARREGLA EL PROBLEMA:
+  const prenda = prendas.find(p => p.id === prendaEditandoInfoId);
+  let tallasActualizadas = [];
+  if (prenda && prenda.tallas) {
+     tallasActualizadas = prenda.tallas.map(t => ({...t, precio: nuevoPrecio}));
+  }
+
   try {
     await db.collection("inventario").doc(prendaEditandoInfoId).update({
       nombre: nuevoNombre,
-      precio: nuevoPrecio
+      precio: nuevoPrecio,
+      tallas: tallasActualizadas // Se guardan las tallas con su nuevo precio
     });
     notificar("✅ Información actualizada", "exito");
     cerrarModalEditar();
