@@ -49,6 +49,14 @@
   <div id="total">Total: S/ 0.00</div>
   <div id="lista"><p><strong>🛒 Carrito de compras:</strong></p><ul id="productos"></ul></div>
   <div class="acciones" style="display: flex; flex-direction: column;">
+    <div id="caja-metodo-pago" style="margin-bottom: 12px; background: var(--tarjetas); padding: 10px; border-radius: 10px; border: 1px solid var(--borde);">
+    <label style="font-weight: bold; font-size: 14px; color: var(--principal);">💳 Método de Pago:</label>
+    <select id="metodo-pago" style="width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 2px solid var(--borde); background: var(--fondo); font-family: 'Poppins', sans-serif; font-size: 15px; outline: none; color: var(--texto); cursor: pointer;">
+        <option value="Efectivo">💵 Efectivo</option>
+        <option value="Yape/Plin">📱 Yape / Plin</option>
+        <option value="Tarjeta">💳 Tarjeta</option>
+    </select>
+</div>
     <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
     <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Vaciar Carrito</button>
   </div>
