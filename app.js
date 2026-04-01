@@ -173,16 +173,15 @@ function reiniciarCarrito() {
 }
 
 // ==========================================
-// 🎨 NUEVA FUNCIÓN: GENERAR RECIBO PDF
+// 🎨 GENERAR RECIBO PDF Y FINALIZAR VENTA
 // ==========================================
 function generarPDFRecibo(productos, totalVenta) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ format: 'a5' }); // Tamaño perfecto para celulares
+  const doc = new jsPDF({ format: 'a5' }); 
   
   const fechaActual = new Date().toLocaleDateString("es-PE");
   const horaActual = new Date().toLocaleTimeString("es-PE");
 
-  // Encabezado Frambuesa (Estilo Boutique Rosa)
   doc.setFillColor(216, 27, 96); 
   doc.rect(0, 0, 210, 25, 'F');
   
@@ -191,7 +190,6 @@ function generarPDFRecibo(productos, totalVenta) {
   doc.setFont("helvetica", "bold");
   doc.text("FRUTISHA STORE", 14, 17);
 
-  // Datos del recibo
   doc.setTextColor(45, 52, 54);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -199,43 +197,35 @@ function generarPDFRecibo(productos, totalVenta) {
   doc.text(`Fecha: ${fechaActual}`, 14, 42);
   doc.text(`Hora: ${horaActual}`, 14, 49);
 
-  // Preparar datos para la tabla
   const datosTabla = productos.map(p => [
     `${p.nombre} (Talla: ${p.talla})`, 
     formatearSoles(p.precio)
   ]);
 
-  // Dibujar tabla colorida
   doc.autoTable({
     startY: 55,
     head: [['Descripción de la Prenda', 'Importe']],
     body: datosTabla,
     theme: 'grid',
-    headStyles: { fillColor: [253, 121, 168], textColor: [255,255,255], fontStyle: 'bold' }, // Rosa Pastel vibrante
+    headStyles: { fillColor: [253, 121, 168], textColor: [255,255,255], fontStyle: 'bold' },
     styles: { fontSize: 10, cellPadding: 5 },
     columnStyles: { 1: { halign: 'right' } }
   });
 
-  // Total Final
   let finalY = doc.lastAutoTable.finalY || 55;
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(216, 27, 96); // Rosa Frambuesa
+  doc.setTextColor(216, 27, 96); 
   doc.text(`Total Pagado: ${formatearSoles(totalVenta)}`, 14, finalY + 15);
   
-  // Mensaje de despedida
   doc.setFontSize(10);
   doc.setFont("helvetica", "italic");
   doc.setTextColor(100, 100, 100);
   doc.text("¡Gracias por tu preferencia! Vuelve pronto.", 14, finalY + 30);
 
-  // Descargar el archivo
   doc.save(`Recibo_Frutisha_${fechaActual.replace(/\//g, '-')}.pdf`);
 }
 
-// ==========================================
-// 🚀 BOTÓN FINALIZAR ACTUALIZADO
-// ==========================================
 async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return notificar("⚠️ Agrega productos", "advertencia");
   const btn = document.querySelector(".btn-finalizar");
@@ -251,17 +241,13 @@ async function finalizarVenta() {
     });
 
     if(confirm("✅ Venta registrada.\n\n¿Generar recibo en PDF y enviarlo por WhatsApp?")) {
-      
-      // 1. GENERAMOS Y DESCARGAMOS EL PDF DE INMEDIATO
       generarPDFRecibo(productosSeleccionados, total);
       notificar("📄 Descargando PDF del recibo...", "exito");
 
-      // 2. PREPARAMOS EL WHATSAPP CON UN TEXTO CORTO
       let textoWa = `¡Hola! 🛍️✨ Gracias por tu compra en *FRUTISHA STORE*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes!`;
-      
       let numeroCliente = prompt("📱 Ingresa el número de celular del cliente (Ej: 987654321):\n\n(Si lo dejas en blanco, podrás elegir el contacto en tu WhatsApp)");
       
-      setTimeout(() => { // Pequeña pausa para asegurar que el PDF bajó
+      setTimeout(() => { 
         if (numeroCliente && numeroCliente.trim() !== "") {
           numeroCliente = numeroCliente.replace(/\D/g, '');
           if (numeroCliente.length === 9) numeroCliente = "51" + numeroCliente;
@@ -418,11 +404,9 @@ let prendaEditandoInfoId = null;
 function abrirEdicionInfo(id) {
   const prenda = prendas.find(p => p.id === id);
   if(!prenda) return;
-  
   prendaEditandoInfoId = id;
   document.getElementById("edit-nombre").value = prenda.nombre;
   document.getElementById("edit-precio").value = prenda.precio;
-  
   document.getElementById("modal-editar").classList.add("modal-activo");
 }
 
@@ -437,7 +421,6 @@ async function guardarEdicionInfo() {
 
   if(!nuevoNombre || !nuevoPrecio) return notificar("⚠️ Llena ambos campos", "advertencia");
 
-  // AQUÍ ESTÁ LA MAGIA QUE ARREGLA EL PROBLEMA:
   const prenda = prendas.find(p => p.id === prendaEditandoInfoId);
   let tallasActualizadas = [];
   if (prenda && prenda.tallas) {
@@ -448,7 +431,7 @@ async function guardarEdicionInfo() {
     await db.collection("inventario").doc(prendaEditandoInfoId).update({
       nombre: nuevoNombre,
       precio: nuevoPrecio,
-      tallas: tallasActualizadas // Se guardan las tallas con su nuevo precio
+      tallas: tallasActualizadas
     });
     notificar("✅ Información actualizada", "exito");
     cerrarModalEditar();
