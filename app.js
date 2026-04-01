@@ -185,6 +185,9 @@ function reiniciarCarrito() {
 // ==========================================
 // 🎨 GENERAR RECIBO PDF Y FINALIZAR VENTA
 // ==========================================
+// ==========================================
+// 🎨 GENERAR RECIBO PDF (LUDAVA + TIKTOK)
+// ==========================================
 function generarPDFRecibo(productos, totalVenta, metodoPago) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ format: 'a5' }); 
@@ -192,23 +195,41 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
   const fechaActual = new Date().toLocaleDateString("es-PE");
   const horaActual = new Date().toLocaleTimeString("es-PE");
 
+  // 1. Cabecera Rosa
   doc.setFillColor(216, 27, 96); 
   doc.rect(0, 0, 210, 25, 'F');
   
+  // 2. NUEVO NOMBRE: LUDAVA
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
+  doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text("FRUTISHA STORE", 14, 17);
+  doc.text("LUDAVA", 14, 17);
 
+  // 3. TIKTOK EN LA CABECERA
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text("TikTok: @ludava36", 100, 17); // Se ubica a la derecha en la franja rosa
+
+  // 4. Datos de la compra
   doc.setTextColor(45, 52, 54);
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
   doc.text("Recibo de Compra Digital", 14, 35);
   doc.text(`Fecha: ${fechaActual}`, 14, 42);
   doc.text(`Hora: ${horaActual}`, 14, 49);
   doc.setFont("helvetica", "bold");
-  doc.text(`Pago vía: ${metodoPago}`, 14, 56);
+  doc.text(`Pago vía: ${metodoPago}`, 14, 56); 
 
+  // =========================================================================
+  // 📷 ESPACIO PARA TU CÓDIGO QR (Instrucciones)
+  // Cuando entres a una página como "base64-image.de" y conviertas tu foto del QR,
+  // te darán un texto larguísimo. Quítale las dos barras (//) a las líneas de
+  // abajo y pega tu texto donde dice "PEGAR_AQUI_TU_TEXTO_BASE64":
+  //
+  // let miCodigoQR = "PEGAR_AQUI_TU_TEXTO_BASE64";
+  // doc.addImage(miCodigoQR, 'PNG', 100, 28, 30, 30); // (x, y, ancho, alto)
+  // =========================================================================
+
+  // 5. Tabla de productos
   const datosTabla = productos.map(p => [
     `${p.nombre} (Talla: ${p.talla})`, 
     formatearSoles(p.precio)
@@ -224,6 +245,7 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
     columnStyles: { 1: { halign: 'right' } }
   });
 
+  // 6. Total y Despedida
   let finalY = doc.lastAutoTable.finalY || 62;
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -233,9 +255,13 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
   doc.setFontSize(10);
   doc.setFont("helvetica", "italic");
   doc.setTextColor(100, 100, 100);
-  doc.text("¡Gracias por tu preferencia! Vuelve pronto.", 14, finalY + 30);
+  doc.text("¡Gracias por tu compra! Etiquétanos en tu video de", 14, finalY + 28);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(216, 27, 96); 
+  doc.text("TikTok @ludava36", 14, finalY + 34);
 
-  doc.save(`Recibo_Frutisha_${fechaActual.replace(/\//g, '-')}.pdf`);
+  // 7. Cambiamos el nombre del archivo al descargar
+  doc.save(`Recibo_Ludava_${fechaActual.replace(/\//g, '-')}.pdf`);
 }
 
 async function finalizarVenta() {
