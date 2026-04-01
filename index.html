@@ -139,6 +139,18 @@
   </div>
 </div>
 
+<div id="modal-whatsapp" class="modal-oculto">
+  <div class="modal-contenido form-inventario">
+    <h3 style="color: #25D366;">📱 Enviar por WhatsApp</h3>
+    <p style="color:var(--texto); font-size:13px; margin-bottom:15px;">El PDF se ha descargado. Ingresa el celular del cliente para enviarlo:</p>
+    <input type="number" id="wa-numero" placeholder="Ej: 987654321" style="font-size: 1.2rem; text-align: center; letter-spacing: 2px; padding: 15px; border: 2px solid #25D366; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none;">
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+      <button onclick="cerrarModalWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">Solo Guardar</button>
+      <button onclick="enviarWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #25D366; color: white; font-weight: bold; cursor: pointer;">Enviar 🚀</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
