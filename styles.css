@@ -48,81 +48,30 @@ header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
 /* 7. TARJETAS, BUSCADOR Y MOSAICO 3x3 */
 .pantalla > div, .pantalla > ul { background: var(--tarjetas); padding: 18px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.04); margin-bottom: 15px; border: 1px solid var(--borde); transition: transform 0.2s; }
 
-#lista-prendas {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); 
-  gap: 10px; 
-  padding: 10px 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.producto-card {
-  background: var(--tarjetas);
-  padding: 10px;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.03);
-  border: 1px solid var(--borde);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  text-align: center;
-}
-
-.producto-card h3 {
-  font-size: 0.8rem;
-  margin: 0 0 8px 0;
-  line-height: 1.2;
-  min-height: 2.4rem;
-  overflow: hidden;
-}
+#lista-prendas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px 0; background: transparent; border: none; box-shadow: none; }
+.producto-card { background: var(--tarjetas); padding: 10px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); border: 1px solid var(--borde); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; }
+.producto-card h3 { font-size: 0.8rem; margin: 0 0 8px 0; line-height: 1.2; min-height: 2.4rem; overflow: hidden; }
 
 .buscador-container { margin-bottom: 15px; }
 #buscador-prendas { width: 100%; padding: 14px; font-size: 16px; border: 2px solid var(--borde); border-radius: 10px; box-sizing: border-box; background: var(--tarjetas); color: var(--texto); outline: none; transition: border-color 0.3s; font-family: 'Poppins', sans-serif;}
 #buscador-prendas:focus { border-color: var(--principal); }
 #total { background: var(--exito); color: white; padding: 18px; border-radius: 12px; font-size: 1.6rem; text-align: center; font-weight: bold; margin: 15px 0; position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
-/* 8. BOTONES DE TALLAS Y DESCUENTOS CORREGIDOS */
+/* 8. BOTONES DE TALLAS Y DESCUENTOS */
 .tallas { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 5px; justify-content: center; }
 .boton-talla { background-color: var(--fondo); color: var(--principal); border: 2px solid var(--borde); padding: 5px 8px; font-size: 0.7rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; transition: all 0.2s; }
 .boton-talla:hover { border-color: var(--principal); transform: translateY(-2px); }
 .boton-talla:disabled { background-color: transparent; color: #ccc; border-color: #eee; text-decoration: line-through; cursor: not-allowed; transform: none; }
 
-/* AQUÍ REVIVIMOS LOS BOTONES EN VERSIÓN MINIATURA */
-.producto-card .descuentos { 
-  display: flex; 
-  gap: 4px; 
-  flex-wrap: wrap; 
-  justify-content: center; 
-  margin-top: 5px;
-}
-.descuento-btn {
-  background-color: var(--fondo);
-  color: var(--principal);
-  border: 1px solid var(--borde);
-  padding: 4px 6px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.65rem;
-  font-family: 'Poppins', sans-serif;
-  font-weight: bold;
-}
-.descuento-btn:active {
-  background-color: var(--rosa);
-  color: white;
-  border-color: var(--rosa);
-}
+.producto-card .descuentos { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-top: 5px; }
+.descuento-btn { background-color: var(--fondo); color: var(--principal); border: 1px solid var(--borde); padding: 4px 6px; border-radius: 5px; cursor: pointer; font-size: 0.65rem; font-family: 'Poppins', sans-serif; font-weight: bold; }
+.descuento-btn:active { background-color: var(--rosa); color: white; border-color: var(--rosa); }
 
 /* 9. CARRITO Y BOTONES DE ACCIÓN */
 #productos { padding: 0; list-style: none; }
 #productos li { background: var(--tarjetas); margin-bottom: 8px; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--rosa); box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 15px; color: var(--texto); }
 .btn-finalizar { background: var(--exito) !important; color: white !important; padding: 18px !important; font-size: 1.2rem !important; width: 100%; margin-top: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
 .reiniciar-btn { padding: 15px; border-radius: 10px; border: none; margin-top: 5px; font-weight: bold; cursor: pointer; background: #95a5a6; color: white; }
-.botones-exportar-mini { display: flex; gap: 10px; margin-top: 10px; }
-.btn-excel-mini { background: #217346 !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
-.btn-pdf-mini { background: #e74c3c !important; color: white !important; flex: 1; border-radius: 8px; border: none; padding: 10px; font-weight: bold; cursor: pointer;}
 
 /* 10. FORMULARIOS INVENTARIO */
 .form-inventario input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--tarjetas); color: var(--texto); box-sizing: border-box; font-size: 14px; font-family: 'Poppins', sans-serif;}
