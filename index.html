@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>✨LUDAVA</title>
+  <title>✨ LUDAVA</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#d81b60">
@@ -11,9 +11,6 @@
   
   <link rel="stylesheet" href="styles.css" />
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </head>
@@ -62,9 +59,21 @@
   </div>
 </div>
 
-<div id="vista-ventas" class="pantalla"><h2>📈 Reporte General de Ventas</h2><div id="kpis-ventas"></div></div>
-<div id="vista-historial" class="pantalla"><h2>📋 Historial de Ventas</h2><ul id="ventasDia"></ul><div class="acciones botones-exportar-mini"><button class="btn-excel-mini" onclick="descargarExcelDiario()">📊 Excel Historial</button><button class="btn-pdf-mini" onclick="descargarPDFDiario()">📕 PDF Historial</button></div></div>
+<div id="vista-ventas" class="pantalla">
+  <h2>📈 Reporte General de Ventas</h2>
+  
+  <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📄 Bajar PDF</button>
+      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📗 Bajar Excel</button>
+      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🗑️ Reiniciar Datos</button>
+  </div>
+
+  <div id="kpis-ventas"></div>
+</div>
+
+<div id="vista-historial" class="pantalla"><h2>📋 Historial de Ventas</h2><ul id="ventasDia"></ul></div>
 <div id="vista-tallas" class="pantalla"><h2>📊 Reporte de Tallas Más Vendidas</h2><div id="kpis-tallas"></div></div>
+
 <div id="vista-inventario" class="pantalla">
   <h2>📦 Gestión de Inventario</h2>
   <div class="form-inventario producto-card">
@@ -73,6 +82,7 @@
     <input type="number" id="nuevo-precio" placeholder="Precio Base (S/)">
     <p style="font-size: 13px; margin: 0 0 5px 0; color: #666;">Tallas Iniciales (Ej: S, M, L):</p>
     <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
+    <input type="text" id="nueva-imagen" placeholder="Enlace de la foto (Opcional)" class="form-inventario">
     <button onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;">💾 Guardar Prenda</button>
   </div>
   <div id="admin-inventario"><p>Cargando almacén...</p></div>
@@ -106,6 +116,7 @@
     <p style="color:var(--texto); font-size:13px; margin-bottom:15px;">Modifica los datos de la prenda:</p>
     <input type="text" id="edit-nombre" placeholder="Nombre de la Prenda">
     <input type="number" id="edit-precio" placeholder="Precio Base (S/)">
+    <input type="text" id="edit-imagen" placeholder="Enlace de la foto (Opcional)" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); box-sizing: border-box;">
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
       <button onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer;">💾 Guardar</button>
@@ -130,14 +141,15 @@
   const db = firebase.firestore();
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
 <script src="app.js"></script>
   
-  <script>
+<script>
   document.getElementById("user-display").innerText = usuario || "Usuario";
-  if (rol === "admin") document.getElementById("btn-inventario").style.display = "inline-block";
+  if (rol === "admin" && document.getElementById("btn-inventario")) document.getElementById("btn-inventario").style.display = "inline-block";
 
   function cerrarSesion() {
     if(confirm("¿Seguro que quieres cerrar sesión?")) {
