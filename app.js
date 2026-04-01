@@ -27,6 +27,58 @@ async function cargarPrendas() {
     generarVistaPrendas();
   } catch (error) { notificar("❌ Error cargando el inventario.", "error"); }
 }
+async function cargarReporteVentasSPA() {
+  const div = document.getElementById("kpis-ventas");
+  try {
+    const snap = await db.collection("ventas").get();
+    let totalHistorico = 0; 
+    let ventasPorDia = {};
+    let resumenPagos = { "Efectivo": 0, "Yape/Plin": 0, "Tarjeta": 0 }; 
+
+    snap.forEach(doc => {
+      let v = doc.data(); 
+      totalHistorico += v.total;
+      
+      let fecha = v.fechaTexto || "Sin fecha";
+      ventasPorDia[fecha] = (ventasPorDia[fecha] || 0) + v.total;
+      
+      let metodo = v.metodoPago || "Efectivo";
+      if(resumenPagos[metodo] !== undefined) {
+         resumenPagos[metodo] += v.total;
+      }
+    });
+
+    let html = `<div style="background: #27ae60; color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+                  <h3 style="margin:0;">Ventas Históricas</h3><h1 style="margin:5px 0 0 0; font-size: 2.5rem;">${formatearSoles(totalHistorico)}</h1>
+                </div>`;
+                
+    html += `<h3 style="color: var(--principal);">🏦 Cuadre de Caja</h3>
+             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center;">
+                <div style="background: var(--tarjetas); padding: 15px; border-radius: 10px; border-top: 4px solid #f1c40f; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-size: 20px; margin-bottom: 5px;">💵</div>
+                    <div style="font-size: 11px; font-weight: bold; color: #888;">EFECTIVO</div>
+                    <div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Efectivo"])}</div>
+                </div>
+                <div style="background: var(--tarjetas); padding: 15px; border-radius: 10px; border-top: 4px solid #9b59b6; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-size: 20px; margin-bottom: 5px;">📱</div>
+                    <div style="font-size: 11px; font-weight: bold; color: #888;">YAPE/PLIN</div>
+                    <div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Yape/Plin"])}</div>
+                </div>
+                <div style="background: var(--tarjetas); padding: 15px; border-radius: 10px; border-top: 4px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-size: 20px; margin-bottom: 5px;">💳</div>
+                    <div style="font-size: 11px; font-weight: bold; color: #888;">TARJETA</div>
+                    <div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Tarjeta"])}</div>
+                </div>
+             </div>`;
+
+    html += `<h3 style="color: var(--principal);">💰 Resumen por Día</h3><ul style="list-style:none; padding:0;">`;
+    for (let fecha in ventasPorDia) {
+      html += `<li style="background: var(--tarjetas); padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; color: var(--texto); box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <strong>📅 ${fecha}</strong> <span style="color: var(--principal); font-weight:bold;">${formatearSoles(ventasPorDia[fecha])}</span></li>`;
+    }
+    div.innerHTML = html + `</ul>`;
+  } catch (e) { div.innerHTML = "<p>Error cargando ventas.</p>"; }
+}
 
 function generarVistaPrendas() {
   const contenedor = document.getElementById("lista-prendas");
