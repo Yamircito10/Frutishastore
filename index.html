@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>✨ LUDAVA</title>
+  <title>✨ LUDAVA - Sistema de Ventas</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#d81b60">
@@ -53,7 +53,7 @@
         <option value="Yape/Plin">📱 Yape / Plin</option>
         <option value="Tarjeta">💳 Tarjeta</option>
     </select>
-</div>
+    </div>
     <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
     <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Vaciar Carrito</button>
   </div>
@@ -61,18 +61,33 @@
 
 <div id="vista-ventas" class="pantalla">
   <h2>📈 Reporte General de Ventas</h2>
-  
   <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
       <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📄 Bajar PDF</button>
       <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📗 Bajar Excel</button>
       <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🗑️ Reiniciar Datos</button>
   </div>
-
   <div id="kpis-ventas"></div>
 </div>
 
-<div id="vista-historial" class="pantalla"><h2>📋 Historial de Ventas</h2><ul id="ventasDia"></ul></div>
-<div id="vista-tallas" class="pantalla"><h2>📊 Reporte de Tallas Más Vendidas</h2><div id="kpis-tallas"></div></div>
+<div id="vista-historial" class="pantalla">
+  <h2>📋 Historial de Ventas</h2>
+  <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📄 Bajar PDF</button>
+      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📗 Bajar Excel</button>
+      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🗑️ Reiniciar Datos</button>
+  </div>
+  <ul id="ventasDia"></ul>
+</div>
+
+<div id="vista-tallas" class="pantalla">
+  <h2>📊 Reporte de Tallas Más Vendidas</h2>
+  <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📄 Bajar PDF</button>
+      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📗 Bajar Excel</button>
+      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🗑️ Reiniciar Datos</button>
+  </div>
+  <div id="kpis-tallas"></div>
+</div>
 
 <div id="vista-inventario" class="pantalla">
   <h2>📦 Gestión de Inventario</h2>
