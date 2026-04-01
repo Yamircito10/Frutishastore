@@ -48,15 +48,14 @@ function generarVistaPrendas() {
       const btn = document.createElement("button");
       btn.className = "boton-talla";
       
-      // --- MAGIA DE STOCK BAJO ---
       const stock = t.stockTalla ?? 0;
+      
+      // Siempre mantenemos el texto corto para no deformar los cuadraditos
+      btn.innerText = `T${t.talla}`; 
+      
+      // --- MAGIA DE STOCK BAJO (SOLO COLOR) ---
       if (stock > 0 && stock <= 3) {
-        // Si quedan 3 o menos, le ponemos el texto de alerta y el color naranja
-        btn.innerText = `T${t.talla} (¡Quedan ${stock}!)`;
         btn.classList.add("stock-bajo");
-      } else {
-        // Si hay buen stock, se ve normal
-        btn.innerText = `T${t.talla}`;
       }
       
       btn.disabled = stock <= 0;
