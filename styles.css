@@ -99,11 +99,14 @@ body.dark-mode .descuento-btn { background-color: #333; color: #ff9ff3; border-c
 
 /* 13. ALERTAS DE STOCK BAJO */
 .stock-bajo { 
-  border-color: #f39c12 !important; 
-  color: #d35400 !important; 
-  background-color: #fdf2e9 !important;
+  background-color: #e74c3c !important; /* Fondo rojo vibrante */
+  color: white !important; /* Letras blancas para contrastar */
+  border-color: #c0392b !important; /* Borde rojo un poco más oscuro */
 }
+
+/* En modo oscuro lo mantenemos naranjita brillante para que no lastime la vista */
 body.dark-mode .stock-bajo {
   background-color: #4a3b2c !important;
   color: #f1c40f !important;
+  border-color: #f1c40f !important;
 }
