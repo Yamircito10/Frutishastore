@@ -270,19 +270,114 @@ async function finalizarVenta() {
 }
 
 // ==========================================
-// 2. MAGIA DE LA NAVEGACIÓN SPA
+// 🎨 GENERAR RECIBO PDF (AHORA CON MÉTODO DE PAGO)
 // ==========================================
-window.navegarSPA = function(idDestino) {
-  document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('pantalla-activa'));
-  document.getElementById(idDestino).classList.add('pantalla-activa');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function generarPDFRecibo(productos, totalVenta, metodoPago) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ format: 'a5' }); 
+  
+  const fechaActual = new Date().toLocaleDateString("es-PE");
+  const horaActual = new Date().toLocaleTimeString("es-PE");
 
-  if (idDestino === 'vista-historial') cargarHistorialSPA();
-  if (idDestino === 'vista-ventas') cargarReporteVentasSPA();
-  if (idDestino === 'vista-tallas') cargarReporteTallasSPA();
-  if (idDestino === 'vista-inventario') cargarInventarioSPA();
-};
+  doc.setFillColor(216, 27, 96); 
+  doc.rect(0, 0, 210, 25, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text("FRUTISHA STORE", 14, 17);
 
+  doc.setTextColor(45, 52, 54);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Recibo de Compra Digital", 14, 35);
+  doc.text(`Fecha: ${fechaActual}`, 14, 42);
+  doc.text(`Hora: ${horaActual}`, 14, 49);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Pago vía: ${metodoPago}`, 14, 56); // ¡Aquí sale si fue Yape, Efectivo, etc.!
+
+  const datosTabla = productos.map(p => [
+    `${p.nombre} (Talla: ${p.talla})`, 
+    formatearSoles(p.precio)
+  ]);
+
+  doc.autoTable({
+    startY: 62,
+    head: [['Descripción de la Prenda', 'Importe']],
+    body: datosTabla,
+    theme: 'grid',
+    headStyles: { fillColor: [253, 121, 168], textColor: [255,255,255], fontStyle: 'bold' },
+    styles: { fontSize: 10, cellPadding: 5 },
+    columnStyles: { 1: { halign: 'right' } }
+  });
+
+  let finalY = doc.lastAutoTable.finalY || 62;
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(216, 27, 96); 
+  doc.text(`Total Pagado: ${formatearSoles(totalVenta)}`, 14, finalY + 15);
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(100, 100, 100);
+  doc.text("¡Gracias por tu preferencia! Vuelve pronto.", 14, finalY + 30);
+
+  doc.save(`Recibo_Frutisha_${fechaActual.replace(/\//g, '-')}.pdf`);
+}
+
+// ==========================================
+// 🚀 BOTÓN FINALIZAR (AHORA GUARDA EL MÉTODO DE PAGO)
+// ==========================================
+async function finalizarVenta() {
+  if (productosSeleccionados.length === 0) return notificar("⚠️ Agrega productos", "advertencia");
+  const btn = document.querySelector(".btn-finalizar");
+  const metodoPagoSelect = document.getElementById("metodo-pago");
+  const metodoPago = metodoPagoSelect ? metodoPagoSelect.value : "Efectivo"; // Capturamos el pago
+  
+  btn.innerText = "⏳ Procesando..."; btn.disabled = true;
+  
+  try {
+    await db.collection("ventas").add({
+      fechaServidor: firebase.firestore.FieldValue.serverTimestamp(),
+      fechaTexto: new Date().toLocaleDateString("es-PE"),
+      hora: new Date().toLocaleTimeString("es-PE"),
+      productos: productosSeleccionados,
+      total: Number(total),
+      metodoPago: metodoPago // Lo guardamos en la base de datos
+    });
+
+    if(confirm(`✅ Venta por ${metodoPago} registrada.\n\n¿Generar recibo en PDF y enviarlo por WhatsApp?`)) {
+      generarPDFRecibo(productosSeleccionados, total, metodoPago);
+      notificar("📄 Descargando PDF del recibo...", "exito");
+
+      let textoWa = `¡Hola! 🛍️✨ Gracias por tu compra en *FRUTISHA STORE*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes!`;
+      let numeroCliente = prompt("📱 Ingresa el número de celular del cliente (Ej: 987654321):\n\n(Si lo dejas en blanco, podrás elegir el contacto en tu WhatsApp)");
+      
+      setTimeout(() => { 
+        if (numeroCliente && numeroCliente.trim() !== "") {
+          numeroCliente = numeroCliente.replace(/\D/g, '');
+          if (numeroCliente.length === 9) numeroCliente = "51" + numeroCliente;
+          window.open(`https://wa.me/${numeroCliente}?text=${encodeURIComponent(textoWa)}`, '_blank');
+        } else {
+          window.open(`https://wa.me/?text=${encodeURIComponent(textoWa)}`, '_blank');
+        }
+      }, 1500);
+    }
+
+    productosSeleccionados = []; 
+    recalcularTotal(); 
+    guardarCarrito(); 
+    actualizarInterfaz();
+  } catch (err) { 
+    notificar("❌ Error guardando la venta", "error"); 
+  } finally { 
+    btn.innerText = "💰 FINALIZAR VENTA"; btn.disabled = false; 
+  }
+}
+
+// ==========================================
+// 📊 HISTORIAL Y REPORTES ACTUALIZADOS
+// ==========================================
 async function cargarHistorialSPA() {
   const ul = document.getElementById("ventasDia");
   ul.innerHTML = "<li style='text-align:center;'>⏳ Buscando ventas...</li>";
@@ -291,8 +386,11 @@ async function cargarHistorialSPA() {
     if(snap.empty) return ul.innerHTML = "<li style='text-align:center;'>No hay ventas aún.</li>";
     ul.innerHTML = snap.docs.map(doc => {
       const v = doc.data();
+      const metodo = v.metodoPago || "Efectivo"; // Por si hay ventas antiguas sin método
+      let iconoPago = metodo === "Efectivo" ? "💵" : (metodo === "Tarjeta" ? "💳" : "📱");
+      
       return `<li>
-          <div style="font-size: 12px; color: #888; margin-bottom: 4px;">📅 ${v.fechaTexto} - 🕒 ${v.hora}</div>
+          <div style="font-size: 12px; color: #888; margin-bottom: 4px;">📅 ${v.fechaTexto} - 🕒 ${v.hora} | ${iconoPago} ${metodo}</div>
           <div style="font-weight: bold;">${v.productos.map(p => p.texto || p.nombre).join(" | ")}</div>
           <div style="color: #27ae60; font-weight: bold; text-align: right; margin-top: 5px;">Total: ${formatearSoles(v.total)}</div>
         </li>`;
@@ -304,17 +402,52 @@ async function cargarReporteVentasSPA() {
   const div = document.getElementById("kpis-ventas");
   try {
     const snap = await db.collection("ventas").get();
-    let totalHistorico = 0; let ventasPorDia = {};
+    let totalHistorico = 0; 
+    let ventasPorDia = {};
+    let resumenPagos = { "Efectivo": 0, "Yape/Plin": 0, "Tarjeta": 0 }; // Nuestra nueva caja registradora
+
     snap.forEach(doc => {
-      let v = doc.data(); totalHistorico += v.total;
+      let v = doc.data(); 
+      totalHistorico += v.total;
+      
       let fecha = v.fechaTexto || "Sin fecha";
       ventasPorDia[fecha] = (ventasPorDia[fecha] || 0) + v.total;
+      
+      let metodo = v.metodoPago || "Efectivo";
+      if(resumenPagos[metodo] !== undefined) {
+         resumenPagos[metodo] += v.total;
+      }
     });
+
+    // 1. Cabecera Total
     let html = `<div style="background: #27ae60; color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
                   <h3 style="margin:0;">Ventas Históricas</h3><h1 style="margin:5px 0 0 0; font-size: 2.5rem;">${formatearSoles(totalHistorico)}</h1>
-                </div><h3>💰 Resumen por Día</h3><ul style="list-style:none; padding:0;">`;
+                </div>`;
+                
+    // 2. Cajas de Métodos de Pago
+    html += `<h3>🏦 Cuadre de Caja (Total)</h3>
+             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center;">
+                <div style="background: white; padding: 15px; border-radius: 10px; border-top: 4px solid #f1c40f; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-size: 20px; margin-bottom: 5px;">💵</div>
+                    <div style="font-size: 11px; font-weight: bold; color: #888;">EFECTIVO</div>
+                    <div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Efectivo"])}</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 10px; border-top: 4px solid #9b59b6; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-size: 20px; margin-bottom: 5px;">📱</div>
+                    <div style="font-size: 11px; font-weight: bold; color: #888;">YAPE/PLIN</div>
+                    <div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Yape/Plin"])}</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 10px; border-top: 4px solid #3498db; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-size: 20px; margin-bottom: 5px;">💳</div>
+                    <div style="font-size: 11px; font-weight: bold; color: #888;">TARJETA</div>
+                    <div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Tarjeta"])}</div>
+                </div>
+             </div>`;
+
+    // 3. Ventas por Día
+    html += `<h3>💰 Resumen por Día</h3><ul style="list-style:none; padding:0;">`;
     for (let fecha in ventasPorDia) {
-      html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; color: #333;">
+      html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <strong>📅 ${fecha}</strong> <span style="color:#d63384; font-weight:bold;">${formatearSoles(ventasPorDia[fecha])}</span></li>`;
     }
     div.innerHTML = html + `</ul>`;
