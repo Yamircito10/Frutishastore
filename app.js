@@ -1,5 +1,5 @@
 // ==========================================
-//  FRUTISHA STORE - CEREBRO SPA (app.js)
+//  LUDAVA STORE - CEREBRO SPA (app.js)
 // ==========================================
 
 let total = 0;
@@ -37,9 +37,18 @@ function generarVistaPrendas() {
   prendas.forEach(prenda => {
     const div = document.createElement("div");
     div.className = "producto-card";
+    
+    // FOTO DEL PRODUCTO
+    const img = document.createElement("img");
+    img.className = "img-producto";
+    img.src = prenda.imagen || "https://via.placeholder.com/150x140?text=Sin+Foto"; 
+    img.alt = prenda.nombre;
+    div.appendChild(img);
+
     const titulo = document.createElement("h3");
     titulo.innerText = `${prenda.nombre} (Total: ${prenda.stock ?? 0})`;
     div.appendChild(titulo);
+    
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
 
@@ -49,11 +58,9 @@ function generarVistaPrendas() {
       btn.className = "boton-talla";
       
       const stock = t.stockTalla ?? 0;
-      
-      // Siempre mantenemos el texto corto para no deformar los cuadraditos
       btn.innerText = `T${t.talla}`; 
       
-      // --- MAGIA DE STOCK BAJO (SOLO COLOR) ---
+      // MAGIA DE STOCK BAJO (Alerta de color)
       if (stock > 0 && stock <= 3) {
         btn.classList.add("stock-bajo");
       }
@@ -183,9 +190,6 @@ function reiniciarCarrito() {
 }
 
 // ==========================================
-// 🎨 GENERAR RECIBO PDF Y FINALIZAR VENTA
-// ==========================================
-// ==========================================
 // 🎨 GENERAR RECIBO PDF (LUDAVA + TIKTOK)
 // ==========================================
 function generarPDFRecibo(productos, totalVenta, metodoPago) {
@@ -195,22 +199,18 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
   const fechaActual = new Date().toLocaleDateString("es-PE");
   const horaActual = new Date().toLocaleTimeString("es-PE");
 
-  // 1. Cabecera Rosa
   doc.setFillColor(216, 27, 96); 
   doc.rect(0, 0, 210, 25, 'F');
   
-  // 2. NUEVO NOMBRE: LUDAVA
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
   doc.text("LUDAVA", 14, 17);
 
-  // 3. TIKTOK EN LA CABECERA
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text("TikTok: @ludava36", 100, 17); // Se ubica a la derecha en la franja rosa
+  doc.text("TikTok: @ludava36", 100, 17);
 
-  // 4. Datos de la compra
   doc.setTextColor(45, 52, 54);
   doc.setFontSize(10);
   doc.text("Recibo de Compra Digital", 14, 35);
@@ -219,17 +219,9 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
   doc.setFont("helvetica", "bold");
   doc.text(`Pago vía: ${metodoPago}`, 14, 56); 
 
-  // =========================================================================
-  // 📷 ESPACIO PARA TU CÓDIGO QR (Instrucciones)
-  // Cuando entres a una página como "base64-image.de" y conviertas tu foto del QR,
-  // te darán un texto larguísimo. Quítale las dos barras (//) a las líneas de
-  // abajo y pega tu texto donde dice "PEGAR_AQUI_TU_TEXTO_BASE64":
-  //
   // let miCodigoQR = "PEGAR_AQUI_TU_TEXTO_BASE64";
-  // doc.addImage(miCodigoQR, 'PNG', 100, 28, 30, 30); // (x, y, ancho, alto)
-  // =========================================================================
+  // doc.addImage(miCodigoQR, 'PNG', 100, 28, 30, 30); 
 
-  // 5. Tabla de productos
   const datosTabla = productos.map(p => [
     `${p.nombre} (Talla: ${p.talla})`, 
     formatearSoles(p.precio)
@@ -245,7 +237,6 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
     columnStyles: { 1: { halign: 'right' } }
   });
 
-  // 6. Total y Despedida
   let finalY = doc.lastAutoTable.finalY || 62;
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -260,7 +251,6 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
   doc.setTextColor(216, 27, 96); 
   doc.text("TikTok @ludava36", 14, finalY + 34);
 
-  // 7. Cambiamos el nombre del archivo al descargar
   doc.save(`Recibo_Ludava_${fechaActual.replace(/\//g, '-')}.pdf`);
 }
 
@@ -286,7 +276,7 @@ async function finalizarVenta() {
       generarPDFRecibo(productosSeleccionados, total, metodoPago);
       notificar("📄 Descargando PDF del recibo...", "exito");
 
-      let textoWa = `¡Hola! 🛍️✨ Gracias por tu compra en *FRUTISHA STORE*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes!`;
+      let textoWa = `¡Hola! 🛍️✨ Gracias por tu compra en *LUDAVA*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes! Síguenos en TikTok @ludava36`;
       let numeroCliente = prompt("📱 Ingresa el número de celular del cliente (Ej: 987654321):\n\n(Si lo dejas en blanco, podrás elegir el contacto en tu WhatsApp)");
       
       setTimeout(() => { 
@@ -453,15 +443,18 @@ async function guardarNuevaPrenda() {
   const nombre = document.getElementById("nuevo-nombre").value.trim();
   const precio = Number(document.getElementById("nuevo-precio").value);
   const tallasInput = document.getElementById("nuevas-tallas").value.trim();
+  const imagen = document.getElementById("nueva-imagen") ? document.getElementById("nueva-imagen").value.trim() : "";
+  
   if (!nombre || !precio) return notificar("⚠️ Llena el nombre y precio", "advertencia");
   let tallasArray = [];
   if (tallasInput) tallasArray = tallasInput.split(',').map(t => ({ talla: t.trim(), stockTalla: 0, precio: precio }));
 
   try {
-    await db.collection("inventario").add({ nombre, precio, stock: 0, tallas: tallasArray });
+    await db.collection("inventario").add({ nombre, precio, stock: 0, tallas: tallasArray, imagen: imagen });
     document.getElementById("nuevo-nombre").value = "";
     document.getElementById("nuevo-precio").value = "";
     document.getElementById("nuevas-tallas").value = "";
+    if(document.getElementById("nueva-imagen")) document.getElementById("nueva-imagen").value = "";
     notificar("✅ Prenda creada con éxito");
     cargarInventarioSPA(); cargarPrendas();
   } catch (error) { notificar("❌ Error guardando prenda", "error"); }
@@ -487,6 +480,9 @@ function abrirEdicionInfo(id) {
   prendaEditandoInfoId = id;
   document.getElementById("edit-nombre").value = prenda.nombre;
   document.getElementById("edit-precio").value = prenda.precio;
+  if(document.getElementById("edit-imagen")) {
+      document.getElementById("edit-imagen").value = prenda.imagen || "";
+  }
   document.getElementById("modal-editar").classList.add("modal-activo");
 }
 
@@ -498,6 +494,7 @@ function cerrarModalEditar() {
 async function guardarEdicionInfo() {
   const nuevoNombre = document.getElementById("edit-nombre").value.trim();
   const nuevoPrecio = Number(document.getElementById("edit-precio").value);
+  const nuevaImagen = document.getElementById("edit-imagen") ? document.getElementById("edit-imagen").value.trim() : "";
 
   if(!nuevoNombre || !nuevoPrecio) return notificar("⚠️ Llena ambos campos", "advertencia");
 
@@ -511,7 +508,8 @@ async function guardarEdicionInfo() {
     await db.collection("inventario").doc(prendaEditandoInfoId).update({
       nombre: nuevoNombre,
       precio: nuevoPrecio,
-      tallas: tallasActualizadas
+      tallas: tallasActualizadas,
+      imagen: nuevaImagen
     });
     notificar("✅ Información actualizada", "exito");
     cerrarModalEditar();
@@ -631,6 +629,7 @@ window.onload = async () => {
   await cargarPrendas();
   actualizarInterfaz();
 };
+
 // ==========================================
 // 📥 EXPORTAR Y REINICIAR (NUEVOS BOTONES)
 // ==========================================
