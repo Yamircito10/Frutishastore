@@ -631,3 +631,122 @@ window.onload = async () => {
   await cargarPrendas();
   actualizarInterfaz();
 };
+// ==========================================
+// 📥 EXPORTAR Y REINICIAR (NUEVOS BOTONES)
+// ==========================================
+
+// 1. EL BOTÓN NUCLEAR (Borrar todo el historial)
+async function reiniciarTodoElHistorial() {
+  if(!confirm("⚠️ ¡ADVERTENCIA MÁXIMA! ⚠️\n\nEstás a punto de BORRAR TODAS LAS VENTAS de la base de datos.\n\nEsto dejará la caja en S/ 0.00 y vaciará el historial y las tallas.\n\n¿Estás 100% seguro de que deseas continuar?")) return;
+  
+  let btn = event.target;
+  let textoOriginal = btn.innerText;
+  btn.innerText = "⏳ Borrando..."; btn.disabled = true;
+
+  try {
+    const snapshot = await db.collection("ventas").get();
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => { batch.delete(doc.ref); });
+    await batch.commit();
+
+    notificar("✅ ¡Base de datos reiniciada con éxito!", "exito");
+    
+    // Recargar las 3 vistas mágicamente
+    cargarHistorialSPA();
+    cargarReporteVentasSPA();
+    cargarReporteTallasSPA();
+  } catch (error) {
+    notificar("❌ Error al reiniciar", "error");
+  } finally {
+    btn.innerText = textoOriginal; btn.disabled = false;
+  }
+}
+
+// 2. MAGIA DE EXCEL
+async function descargarReporteExcel() {
+  notificar("⏳ Generando Excel...", "advertencia");
+  try {
+    const snapshot = await db.collection("ventas").orderBy("fechaServidor", "desc").get();
+    if(snapshot.empty) return notificar("⚠️ No hay ventas para exportar");
+
+    let datosExcel = [];
+    snapshot.forEach(doc => {
+      let v = doc.data();
+      let descProductos = v.productos.map(p => `${p.nombre} (T${p.talla})`).join(" | ");
+      datosExcel.push({
+        "Fecha": v.fechaTexto || "-",
+        "Hora": v.hora || "-",
+        "Método de Pago": v.metodoPago || "Efectivo",
+        "Productos Vendidos": descProductos,
+        "Total (S/)": v.total
+      });
+    });
+
+    const hoja = XLSX.utils.json_to_sheet(datosExcel);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Ventas LUDAVA");
+    
+    let fechaHoy = new Date().toLocaleDateString("es-PE").replace(/\//g, '-');
+    XLSX.writeFile(libro, `Reporte_Ludava_${fechaHoy}.xlsx`);
+    notificar("✅ Excel descargado", "exito");
+  } catch (error) { notificar("❌ Error generando Excel", "error"); }
+}
+
+// 3. MAGIA DE PDF GENERAL
+async function descargarReportePDF() {
+  notificar("⏳ Generando PDF...", "advertencia");
+  try {
+    const snapshot = await db.collection("ventas").orderBy("fechaServidor", "desc").get();
+    if(snapshot.empty) return notificar("⚠️ No hay ventas para exportar");
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ format: 'a4' });
+    
+    doc.setFillColor(216, 27, 96); 
+    doc.rect(0, 0, 210, 25, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("LUDAVA - Reporte de Ventas", 14, 17);
+
+    let datosTabla = [];
+    let totalGeneral = 0;
+    let pagos = { "Efectivo": 0, "Yape/Plin": 0, "Tarjeta": 0 };
+
+    snapshot.forEach(doc => {
+      let v = doc.data();
+      totalGeneral += v.total;
+      let metodo = v.metodoPago || "Efectivo";
+      if(pagos[metodo] !== undefined) pagos[metodo] += v.total;
+
+      let descProductos = v.productos.map(p => `${p.nombre} (T${p.talla})`).join("\n");
+      datosTabla.push([ v.fechaTexto, v.hora, metodo, descProductos, `S/ ${v.total.toFixed(2)}` ]);
+    });
+
+    doc.autoTable({
+      startY: 35,
+      head: [['Fecha', 'Hora', 'Pago', 'Productos', 'Total']],
+      body: datosTabla,
+      theme: 'grid',
+      headStyles: { fillColor: [253, 121, 168] },
+      styles: { fontSize: 9, cellPadding: 3 },
+    });
+
+    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.setTextColor(45, 52, 54);
+    doc.setFontSize(12);
+    doc.text(`Resumen de Caja:`, 14, finalY);
+    doc.setFontSize(10);
+    doc.text(`💵 Efectivo: S/ ${pagos["Efectivo"].toFixed(2)}`, 14, finalY + 7);
+    doc.text(`📱 Yape/Plin: S/ ${pagos["Yape/Plin"].toFixed(2)}`, 14, finalY + 14);
+    doc.text(`💳 Tarjeta: S/ ${pagos["Tarjeta"].toFixed(2)}`, 14, finalY + 21);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(216, 27, 96); 
+    doc.text(`Total Generado: S/ ${totalGeneral.toFixed(2)}`, 130, finalY + 21);
+
+    let fechaHoy = new Date().toLocaleDateString("es-PE").replace(/\//g, '-');
+    doc.save(`Reporte_Ludava_${fechaHoy}.pdf`);
+    notificar("✅ PDF descargado", "exito");
+  } catch (error) { notificar("❌ Error generando PDF", "error"); }
+}
