@@ -38,7 +38,7 @@ function generarVistaPrendas() {
     const div = document.createElement("div");
     div.className = "producto-card";
     const titulo = document.createElement("h3");
-    titulo.innerText = `${prenda.nombre} (Stock: ${prenda.stock ?? 0})`;
+    titulo.innerText = `${prenda.nombre} (Total: ${prenda.stock ?? 0})`;
     div.appendChild(titulo);
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
@@ -47,8 +47,19 @@ function generarVistaPrendas() {
     tallas.forEach(t => {
       const btn = document.createElement("button");
       btn.className = "boton-talla";
-      btn.innerText = `T${t.talla}`;
-      btn.disabled = (t.stockTalla ?? 0) <= 0;
+      
+      // --- MAGIA DE STOCK BAJO ---
+      const stock = t.stockTalla ?? 0;
+      if (stock > 0 && stock <= 3) {
+        // Si quedan 3 o menos, le ponemos el texto de alerta y el color naranja
+        btn.innerText = `T${t.talla} (¡Quedan ${stock}!)`;
+        btn.classList.add("stock-bajo");
+      } else {
+        // Si hay buen stock, se ve normal
+        btn.innerText = `T${t.talla}`;
+      }
+      
+      btn.disabled = stock <= 0;
       btn.onclick = () => mostrarDescuentos(div, prenda, t);
       tallasDiv.appendChild(btn);
     });
