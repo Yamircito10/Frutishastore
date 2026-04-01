@@ -60,7 +60,7 @@ function generarVistaPrendas() {
       const stock = t.stockTalla ?? 0;
       btn.innerText = `T${t.talla}`; 
       
-      // MAGIA DE STOCK BAJO (Alerta de color)
+      // MAGIA DE STOCK BAJO
       if (stock > 0 && stock <= 3) {
         btn.classList.add("stock-bajo");
       }
@@ -254,6 +254,9 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
   doc.save(`Recibo_Ludava_${fechaActual.replace(/\//g, '-')}.pdf`);
 }
 
+// ==========================================
+// 🚀 FINALIZAR VENTA (MODAL WA)
+// ==========================================
 async function finalizarVenta() {
   if (productosSeleccionados.length === 0) return notificar("⚠️ Agrega productos", "advertencia");
   const btn = document.querySelector(".btn-finalizar");
@@ -272,23 +275,11 @@ async function finalizarVenta() {
       metodoPago: metodoPago 
     });
 
-    if(confirm(`✅ Venta por ${metodoPago} registrada.\n\n¿Generar recibo en PDF y enviarlo por WhatsApp?`)) {
-      generarPDFRecibo(productosSeleccionados, total, metodoPago);
-      notificar("📄 Descargando PDF del recibo...", "exito");
+    generarPDFRecibo(productosSeleccionados, total, metodoPago);
+    notificar("📄 Descargando PDF del recibo...", "exito");
 
-      let textoWa = `¡Hola! 🛍️✨ Gracias por tu compra en *LUDAVA*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes! Síguenos en TikTok @ludava36`;
-      let numeroCliente = prompt("📱 Ingresa el número de celular del cliente (Ej: 987654321):\n\n(Si lo dejas en blanco, podrás elegir el contacto en tu WhatsApp)");
-      
-      setTimeout(() => { 
-        if (numeroCliente && numeroCliente.trim() !== "") {
-          numeroCliente = numeroCliente.replace(/\D/g, '');
-          if (numeroCliente.length === 9) numeroCliente = "51" + numeroCliente;
-          window.open(`https://wa.me/${numeroCliente}?text=${encodeURIComponent(textoWa)}`, '_blank');
-        } else {
-          window.open(`https://wa.me/?text=${encodeURIComponent(textoWa)}`, '_blank');
-        }
-      }, 1500);
-    }
+    if(document.getElementById("wa-numero")) document.getElementById("wa-numero").value = ""; 
+    document.getElementById("modal-whatsapp").classList.add("modal-activo");
 
     productosSeleccionados = []; 
     recalcularTotal(); 
@@ -299,6 +290,24 @@ async function finalizarVenta() {
   } finally { 
     btn.innerText = "💰 FINALIZAR VENTA"; btn.disabled = false; 
   }
+}
+
+function cerrarModalWhatsApp() {
+  document.getElementById("modal-whatsapp").classList.remove("modal-activo");
+}
+
+function enviarWhatsApp() {
+  let numeroCliente = document.getElementById("wa-numero").value.trim();
+  let textoWa = `¡Hola! 🛍️✨ Gracias por tu compra en *LUDAVA*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes! Síguenos en TikTok @ludava36`;
+  
+  if (numeroCliente !== "") {
+    numeroCliente = numeroCliente.replace(/\D/g, '');
+    if (numeroCliente.length === 9) numeroCliente = "51" + numeroCliente;
+    window.open(`https://wa.me/${numeroCliente}?text=${encodeURIComponent(textoWa)}`, '_blank');
+  } else {
+    window.open(`https://wa.me/?text=${encodeURIComponent(textoWa)}`, '_blank');
+  }
+  cerrarModalWhatsApp();
 }
 
 // ==========================================
@@ -631,10 +640,8 @@ window.onload = async () => {
 };
 
 // ==========================================
-// 📥 EXPORTAR Y REINICIAR (NUEVOS BOTONES)
+// 📥 EXPORTAR Y REINICIAR
 // ==========================================
-
-// 1. EL BOTÓN NUCLEAR (Borrar todo el historial)
 async function reiniciarTodoElHistorial() {
   if(!confirm("⚠️ ¡ADVERTENCIA MÁXIMA! ⚠️\n\nEstás a punto de BORRAR TODAS LAS VENTAS de la base de datos.\n\nEsto dejará la caja en S/ 0.00 y vaciará el historial y las tallas.\n\n¿Estás 100% seguro de que deseas continuar?")) return;
   
@@ -650,7 +657,6 @@ async function reiniciarTodoElHistorial() {
 
     notificar("✅ ¡Base de datos reiniciada con éxito!", "exito");
     
-    // Recargar las 3 vistas mágicamente
     cargarHistorialSPA();
     cargarReporteVentasSPA();
     cargarReporteTallasSPA();
@@ -661,7 +667,6 @@ async function reiniciarTodoElHistorial() {
   }
 }
 
-// 2. MAGIA DE EXCEL
 async function descargarReporteExcel() {
   notificar("⏳ Generando Excel...", "advertencia");
   try {
@@ -691,7 +696,6 @@ async function descargarReporteExcel() {
   } catch (error) { notificar("❌ Error generando Excel", "error"); }
 }
 
-// 3. MAGIA DE PDF GENERAL
 async function descargarReportePDF() {
   notificar("⏳ Generando PDF...", "advertencia");
   try {
