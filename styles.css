@@ -96,3 +96,14 @@ body.dark-mode .teclado-numerico button { background: #333; color: white; }
 body.dark-mode .pantalla-teclado { border-color: #ff9ff3; color: #ff9ff3; }
 body.dark-mode .botones-grid button { background: #2c2c2c; border-color: #444; color: #ff9ff3; }
 body.dark-mode .descuento-btn { background-color: #333; color: #ff9ff3; border-color: #555; }
+
+/* 13. ALERTAS DE STOCK BAJO */
+.stock-bajo { 
+  border-color: #f39c12 !important; 
+  color: #d35400 !important; 
+  background-color: #fdf2e9 !important;
+}
+body.dark-mode .stock-bajo {
+  background-color: #4a3b2c !important;
+  color: #f1c40f !important;
+}
