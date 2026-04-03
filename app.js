@@ -219,8 +219,13 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
   doc.setFont("helvetica", "bold");
   doc.text(`Pago vía: ${metodoPago}`, 14, 56); 
 
-  // let miCodigoQR = "PEGAR_AQUI_TU_TEXTO_BASE64";
-  // doc.addImage(miCodigoQR, 'PNG', 100, 28, 30, 30); 
+  // =========================================================================
+  // 📷 ESPACIO PARA TU CÓDIGO QR
+  // Pega tu texto gigante Base64 entre las comillas en lugar de "PEGAR_AQUI..."
+  // =========================================================================
+  let miCodigoQR = "PEGAR_AQUI_TU_TEXTO_BASE64";
+  doc.addImage(miCodigoQR, 'PNG', 100, 25, 30, 30); 
+  // Si tu imagen es JPG y te da error, cambia 'PNG' por 'JPEG' en la línea de arriba.
 
   const datosTabla = productos.map(p => [
     `${p.nombre} (Talla: ${p.talla})`, 
