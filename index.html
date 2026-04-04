@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>✨ LUDAVA - Sistema de Ventas</title>
+  <title>✨ LUDAVA - Tienda Virtual</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#d81b60">
@@ -15,38 +15,25 @@
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
   <style>
-    /* ESPACIO PARA QUE EL MENÚ NO TAPE LA TIENDA */
     body { padding-bottom: 90px !important; }
-
-    /* FILTROS MÁGICOS DE CATEGORÍAS */
     .filtros-categorias { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
     .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; }
     .btn-cat.activa { background: var(--principal); color: white; border-color: var(--principal); }
-
-    /* NAVEGACIÓN INFERIOR (ESTILO APP NATIVA) */
     .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--tarjetas); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
     .nav-inferior::-webkit-scrollbar { display: none; }
     .nav-inferior button { background: transparent; color: var(--texto); border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; margin: 0; min-width: 70px; border-radius: 12px; transition: all 0.3s ease; box-shadow: none; font-family: 'Poppins', sans-serif; }
     .nav-inferior button .icono-nav { font-size: 22px; margin-bottom: 4px; transition: transform 0.2s ease; }
     .nav-inferior button:hover, .nav-inferior button:active { color: var(--principal); background-color: var(--fondo); }
     .nav-inferior button:hover .icono-nav, .nav-inferior button:active .icono-nav { transform: translateY(-3px); }
-    
-    /* SUBIR EL BOTÓN DE WHATSAPP */
     .whatsapp-flotante { bottom: 100px !important; }
   </style>
 </head>
 <body>
 
-<script>
-  const usuario = localStorage.getItem("usuarioActivo");
-  const rol = localStorage.getItem("rolActivo");
-  if (!usuario) window.location.href = "login.html";
-</script>
-
 <header class="header-container">
   <div>
     <h1>✨ LUDAVA</h1>
-    <p>Bienvenido, <strong><span id="user-display"></span></strong></p>
+    <p>Bienvenido, <strong><span id="user-display">Invitado</span></strong></p>
   </div>
   <button id="btn-tema" class="btn-tema" onclick="toggleTema()" title="Cambiar Tema">🌙</button>
 </header>
@@ -55,29 +42,30 @@
   <button onclick="navegarSPA('vista-tienda')">
     <span class="icono-nav">🏠</span><span>Tienda</span>
   </button>
-  <button onclick="navegarSPA('vista-ventas')">
+  
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-ventas')">
     <span class="icono-nav">📈</span><span>Ventas</span>
   </button>
-  <button onclick="navegarSPA('vista-clientes')">
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-clientes')">
     <span class="icono-nav">👥</span><span>Clientes</span>
   </button>
-  <button onclick="navegarSPA('vista-historial')">
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-historial')">
     <span class="icono-nav">📚</span><span>Historial</span>
   </button>
-  <button onclick="navegarSPA('vista-tallas')">
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-tallas')">
     <span class="icono-nav">📊</span><span>Tallas</span>
   </button>
-
-  <button id="btn-gastos" style="display:none;" onclick="navegarSPA('vista-gastos')">
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-gastos')">
     <span class="icono-nav">💸</span><span>Gastos</span>
   </button>
-  <button id="btn-inventario" style="display:none;" onclick="navegarSPA('vista-inventario')">
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-inventario')">
     <span class="icono-nav">📦</span><span>Almacén</span>
   </button>
-  <button id="btn-instalar" style="display:none; color:#3498db;" onclick="instalarApp()">
-    <span class="icono-nav">📲</span><span>Instalar App</span>
+
+  <button id="btn-login" onclick="window.location.href='login.html'">
+    <span class="icono-nav">🔒</span><span>Ingresar</span>
   </button>
-  <button onclick="cerrarSesion()" style="color:#e74c3c;">
+  <button id="btn-salir" class="admin-only" style="display:none; color:#e74c3c;" onclick="cerrarSesion()">
     <span class="icono-nav">🚪</span><span>Salir</span>
   </button>
 </nav>
@@ -95,15 +83,15 @@
   <div id="total">Total: S/ 0.00</div>
   <div id="lista"><p><strong>🛒 Carrito de compras:</strong></p><ul id="productos"></ul></div>
   <div class="acciones" style="display: flex; flex-direction: column;">
-    <div id="caja-metodo-pago" style="margin-bottom: 12px; background: var(--tarjetas); padding: 10px; border-radius: 10px; border: 1px solid var(--borde);">
-    <label style="font-weight: bold; font-size: 14px; color: var(--principal);">💳 Método de Pago:</label>
-    <select id="metodo-pago" style="width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 2px solid var(--borde); background: var(--fondo); font-family: 'Poppins', sans-serif; font-size: 15px; outline: none; color: var(--texto); cursor: pointer;">
-        <option value="Efectivo">💵 Efectivo</option>
-        <option value="Yape/Plin">📱 Yape / Plin</option>
-        <option value="Tarjeta">💳 Tarjeta</option>
-    </select>
+    <div id="caja-metodo-pago" class="admin-only" style="display:none; margin-bottom: 12px; background: var(--tarjetas); padding: 10px; border-radius: 10px; border: 1px solid var(--borde);">
+      <label style="font-weight: bold; font-size: 14px; color: var(--principal);">💳 Método de Pago:</label>
+      <select id="metodo-pago" style="width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 2px solid var(--borde); background: var(--fondo); font-family: 'Poppins', sans-serif; font-size: 15px; outline: none; color: var(--texto); cursor: pointer;">
+          <option value="Efectivo">💵 Efectivo</option>
+          <option value="Yape/Plin">📱 Yape / Plin</option>
+          <option value="Tarjeta">💳 Tarjeta</option>
+      </select>
     </div>
-    <button class="btn-finalizar" onclick="finalizarVenta()">💰 FINALIZAR VENTA</button>
+    <button class="btn-finalizar" onclick="finalizarVenta()">Enviar Pedido 🚀</button>
     <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Vaciar Carrito</button>
   </div>
 </div>
@@ -111,9 +99,9 @@
 <div id="vista-ventas" class="pantalla">
   <h2>📈 Balance General y Ventas</h2>
   <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📄 Bajar PDF</button>
-      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📗 Bajar Excel</button>
-      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🗑️ Reiniciar Datos</button>
+      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">📄 Bajar PDF</button>
+      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">📗 Bajar Excel</button>
+      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">🗑️ Reiniciar Datos</button>
   </div>
   <div id="kpis-ventas"></div>
 </div>
@@ -157,14 +145,12 @@
     <h3 style="margin-top: 0; color: var(--principal);">➕ Agregar Nueva Prenda</h3>
     <input type="text" id="nuevo-nombre" placeholder="Nombre (Ej. Polo Básico)">
     <input type="number" id="nuevo-precio" placeholder="Precio Base (S/)">
-    
     <select id="nuevo-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif;">
       <option value="Niñas">Niñas 🎀</option>
       <option value="Niños">Niños 🧢</option>
       <option value="Bebés">Bebés 🍼</option>
       <option value="Unisex">Unisex ✨</option>
     </select>
-
     <p style="font-size: 13px; margin: 0 0 5px 0; color: #666;">Tallas Iniciales (Ej: S, M, L):</p>
     <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
     <input type="text" id="nueva-imagen" placeholder="Enlace de la foto (Opcional)" class="form-inventario">
@@ -175,7 +161,7 @@
   <hr style="margin: 30px 0; border: 1px solid var(--borde);">
   
   <h2 style="color: var(--principal);">🕵️‍♂️ Historial de Movimientos</h2>
-  <div id="historial-movimientos" style="max-height: 400px; overflow-y: auto; background: var(--tarjetas); padding: 10px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+  <div id="historial-movimientos" style="max-height: 400px; overflow-y: auto; background: var(--tarjetas); padding: 10px; border-radius: 10px;">
     <p style="text-align: center; color: #888;">Cargando movimientos...</p>
   </div>
 </div>
@@ -185,14 +171,12 @@
     <h3>✏️ Editar Información</h3>
     <input type="text" id="edit-nombre" placeholder="Nombre de la Prenda">
     <input type="number" id="edit-precio" placeholder="Precio Base (S/)">
-    
     <select id="edit-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif;">
       <option value="Niñas">Niñas 🎀</option>
       <option value="Niños">Niños 🧢</option>
       <option value="Bebés">Bebés 🍼</option>
       <option value="Unisex">Unisex ✨</option>
     </select>
-
     <input type="text" id="edit-imagen" placeholder="Enlace de la foto (Opcional)" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); box-sizing: border-box;">
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
@@ -226,11 +210,9 @@
 <div id="modal-whatsapp" class="modal-oculto">
   <div class="modal-contenido form-inventario">
     <h3 style="color: #25D366;">📱 Enviar por WhatsApp</h3>
-    <p style="color:var(--texto); font-size:13px; margin-bottom:15px;">Ingresa los datos del cliente. Se guardarán en tu agenda automáticamente:</p>
-    
+    <p style="color:var(--texto); font-size:13px; margin-bottom:15px;">Ingresa los datos del cliente para enviarle su recibo y guardarlo en agenda:</p>
     <input type="text" id="wa-nombre" placeholder="Nombre del Cliente (Ej: María)" style="font-size: 1rem; text-align: center; padding: 12px; border: 2px solid var(--borde); border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px;">
     <input type="number" id="wa-numero" placeholder="Celular (Ej: 987654321)" style="font-size: 1.2rem; text-align: center; letter-spacing: 2px; padding: 15px; border: 2px solid #25D366; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none;">
-    
     <div style="display: flex; gap: 10px; margin-top: 15px;">
       <button onclick="cerrarModalWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">Omitir</button>
       <button onclick="enviarWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #25D366; color: white; font-weight: bold; cursor: pointer;">Enviar 🚀</button>
@@ -266,17 +248,23 @@
 <script src="app.js"></script>
   
 <script>
-  document.getElementById("user-display").innerText = usuario || "Usuario";
+  // LA MAGIA DE LA PUERTA SECRETA
+  const usuario = localStorage.getItem("usuarioActivo");
+  const rol = localStorage.getItem("rolActivo");
+  
+  // Si no hay usuario, dice "Invitado"
+  document.getElementById("user-display").innerText = usuario ? usuario : "Invitado";
   
   if (rol === "admin") {
-      if (document.getElementById("btn-inventario")) document.getElementById("btn-inventario").style.display = "flex";
-      if (document.getElementById("btn-gastos")) document.getElementById("btn-gastos").style.display = "flex";
+      // Si eres tú (Admin), muestras todos los botones secretos
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = "flex");
+      document.getElementById("btn-login").style.display = "none";
   }
 
   function cerrarSesion() {
-    if(confirm("¿Seguro que quieres cerrar sesión?")) {
+    if(confirm("¿Seguro que quieres salir del modo administrador?")) {
       localStorage.clear();
-      window.location.href = "login.html";
+      window.location.href = "index.html"; // Ahora te devuelve a la tienda pública
     }
   }
 
