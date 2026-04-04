@@ -26,7 +26,10 @@ async function cargarPrendas() {
     const snapshot = await db.collection("inventario").get();
     prendas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     generarVistaPrendas();
-  } catch (error) { notificar("❌ Error cargando el inventario.", "error"); }
+  } catch (error) { 
+    console.error("Motivo del error:", error);
+    notificar("❌ Error cargando el inventario.", "error"); 
+  }
 }
 
 function generarVistaPrendas() {
@@ -86,8 +89,12 @@ function filtrarPrendas() {
   if (!input) return;
   const textoFiltro = input.value.toLowerCase();
   
-  document.querySelectorAll(".producto-card").forEach(tarjeta => {
-    const titulo = tarjeta.querySelector("h3").innerText.toLowerCase();
+  // 🛡️ SOLUCIÓN: Solo busca dentro de #lista-prendas
+  document.querySelectorAll("#lista-prendas .producto-card").forEach(tarjeta => {
+    const h3 = tarjeta.querySelector("h3");
+    if (!h3) return; // Candado de seguridad
+    
+    const titulo = h3.innerText.toLowerCase();
     const catPrenda = tarjeta.getAttribute("data-categoria");
     const coincideTexto = titulo.includes(textoFiltro);
     const coincideCat = (categoriaActual === "Todas" || catPrenda === categoriaActual);
@@ -489,7 +496,6 @@ async function cargarInventarioSPA() {
     prendas.forEach(p => {
       let stockColor = p.stock > 5 ? '#27ae60' : (p.stock > 0 ? '#f39c12' : '#e74c3c');
       
-      // 🛡️ MAGIA ANTI-ERRORES AQUÍ
       let textoTallas = "Ninguna";
       if (Array.isArray(p.tallas) && p.tallas.length > 0) {
           textoTallas = p.tallas.map(t => `T${t.talla}(${t.stockTalla})`).join(', ');
