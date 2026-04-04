@@ -38,7 +38,6 @@ function generarVistaPrendas() {
   prendas.forEach(prenda => {
     const div = document.createElement("div");
     div.className = "producto-card";
-    // Agregamos la categoría como dato oculto para el filtro
     div.setAttribute("data-categoria", prenda.categoria || "Unisex"); 
     
     const img = document.createElement("img");
@@ -77,7 +76,6 @@ function generarVistaPrendas() {
 
 function setCategoria(cat, btnElement) {
   categoriaActual = cat;
-  // Cambiar estilo de botones
   document.querySelectorAll('.btn-cat').forEach(btn => btn.classList.remove('activa'));
   if(btnElement) btnElement.classList.add('activa');
   filtrarPrendas();
@@ -91,10 +89,8 @@ function filtrarPrendas() {
   document.querySelectorAll(".producto-card").forEach(tarjeta => {
     const titulo = tarjeta.querySelector("h3").innerText.toLowerCase();
     const catPrenda = tarjeta.getAttribute("data-categoria");
-    
     const coincideTexto = titulo.includes(textoFiltro);
     const coincideCat = (categoriaActual === "Todas" || catPrenda === categoriaActual);
-    
     tarjeta.style.display = (coincideTexto && coincideCat) ? "flex" : "none";
   });
 }
@@ -309,7 +305,6 @@ async function enviarWhatsApp() {
   let nombreCliente = document.getElementById("wa-nombre").value.trim();
   let textoWa = `¡Hola ${nombreCliente ? nombreCliente : ''}! 🛍️✨ Gracias por tu compra en *LUDAVA*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes! Síguenos en TikTok @ludava36`;
   
-  // Guardar en Agenda de Clientes
   if(numeroCliente && nombreCliente) {
      try {
        await db.collection("clientes").doc(numeroCliente).set({
@@ -339,7 +334,7 @@ window.navegarSPA = function(idDestino) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   if (idDestino === 'vista-historial') cargarHistorialSPA();
-  if (idDestino === 'vista-ventas') cargarReporteVentasSPA(); // Carga balance general
+  if (idDestino === 'vista-ventas') cargarReporteVentasSPA();
   if (idDestino === 'vista-tallas') cargarReporteTallasSPA();
   if (idDestino === 'vista-gastos') cargarGastosSPA();
   if (idDestino === 'vista-clientes') cargarClientesSPA();
@@ -358,14 +353,12 @@ async function cargarReporteVentasSPA() {
     const snapVentas = await db.collection("ventas").get();
     const snapGastos = await db.collection("gastos").get();
     
-    let totalVentas = 0; 
-    let totalGastos = 0;
+    let totalVentas = 0; let totalGastos = 0;
     let ventasPorDia = {};
     let resumenPagos = { "Efectivo": 0, "Yape/Plin": 0, "Tarjeta": 0 }; 
 
     snapVentas.forEach(doc => {
-      let v = doc.data(); 
-      totalVentas += v.total;
+      let v = doc.data(); totalVentas += v.total;
       let fecha = v.fechaTexto || "Sin fecha";
       ventasPorDia[fecha] = (ventasPorDia[fecha] || 0) + v.total;
       let metodo = v.metodoPago || "Efectivo";
@@ -449,7 +442,7 @@ async function cargarReporteTallasSPA() {
 }
 
 // ==========================================
-// 👥 AGENDA DE CLIENTES (NUEVO)
+// 👥 AGENDA DE CLIENTES
 // ==========================================
 async function cargarClientesSPA() {
   const div = document.getElementById("lista-clientes");
@@ -542,7 +535,6 @@ async function eliminarPrendaAdmin(id) {
 // 4. MODALES
 // ==========================================
 let prendaEditandoInfoId = null;
-
 function abrirEdicionInfo(id) {
   const prenda = prendas.find(p => p.id === id);
   if(!prenda) return;
@@ -574,14 +566,9 @@ async function guardarEdicionInfo() {
   } catch(error) { notificar("❌ Error al actualizar", "error"); }
 }
 
-let prendaEditandoId = null;
-let tallaEditando = null;
-let cantidadTeclado = "0";
-
+let prendaEditandoId = null; let tallaEditando = null; let cantidadTeclado = "0";
 function abrirEdicionStock(id) {
-  prendaEditandoId = id;
-  const prenda = prendas.find(p => p.id === id);
-  if (!prenda) return;
+  prendaEditandoId = id; const prenda = prendas.find(p => p.id === id); if (!prenda) return;
   document.getElementById("modal-stock-titulo").innerText = `${prenda.nombre}`;
   document.getElementById("modal-paso-tallas").style.display = "block";
   document.getElementById("modal-paso-teclado").style.display = "none";
@@ -589,10 +576,8 @@ function abrirEdicionStock(id) {
   contenedorTallas.innerHTML = "";
   if(prenda.tallas && prenda.tallas.length > 0) {
       prenda.tallas.forEach(t => {
-        const btn = document.createElement("button");
-        btn.innerText = `T${t.talla}`;
-        btn.onclick = () => seleccionarTallaTeclado(t.talla);
-        contenedorTallas.appendChild(btn);
+        const btn = document.createElement("button"); btn.innerText = `T${t.talla}`;
+        btn.onclick = () => seleccionarTallaTeclado(t.talla); contenedorTallas.appendChild(btn);
       });
   } else { contenedorTallas.innerHTML = "<p>No hay tallas.</p>"; }
   document.getElementById("modal-stock").classList.add("modal-activo");
@@ -602,16 +587,12 @@ function seleccionarTallaTeclado(talla) {
   tallaEditando = talla; cantidadTeclado = "0";
   document.getElementById("pantalla-cantidad").innerText = cantidadTeclado;
   document.getElementById("talla-seleccionada-txt").innerText = `${talla}`;
-  document.getElementById("modal-paso-tallas").style.display = "none";
-  document.getElementById("modal-paso-teclado").style.display = "block";
+  document.getElementById("modal-paso-tallas").style.display = "none"; document.getElementById("modal-paso-teclado").style.display = "block";
 }
 
 function teclear(valor) {
   if (valor === 'C') cantidadTeclado = "0";
-  else {
-    if (cantidadTeclado === "0") cantidadTeclado = String(valor);
-    else cantidadTeclado += String(valor);
-  }
+  else { if (cantidadTeclado === "0") cantidadTeclado = String(valor); else cantidadTeclado += String(valor); }
   if(cantidadTeclado.length > 4) cantidadTeclado = cantidadTeclado.slice(0, 4);
   document.getElementById("pantalla-cantidad").innerText = cantidadTeclado;
 }
@@ -649,7 +630,7 @@ async function guardarGasto() {
     });
     document.getElementById("gasto-motivo").value = "";
     document.getElementById("gasto-monto").value = "";
-    notificar("✅ Gasto registrado con éxito", "exito");
+    notificar("✅ Gasto registrado", "exito");
     cargarGastosSPA();
   } catch (e) { notificar("❌ Error al guardar gasto", "error"); }
 }
@@ -716,9 +697,9 @@ async function cargarHistorialMovimientosSPA() {
 
 // MAGIA PWA Y EXPORTAR
 let eventoInstalacion;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); eventoInstalacion = e; const btnInstalar = document.getElementById("btn-instalar"); if(btnInstalar) btnInstalar.style.display = "inline-block"; });
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); eventoInstalacion = e; const btnInstalar = document.getElementById("btn-instalar"); if(btnInstalar) btnInstalar.style.display = "flex"; });
 async function instalarApp() { if (!eventoInstalacion) return; eventoInstalacion.prompt(); const { outcome } = await eventoInstalacion.userChoice; if (outcome === 'accepted') { notificar("✅ ¡App instalada!"); document.getElementById("btn-instalar").style.display = "none"; } eventoInstalacion = null; }
 window.onload = async () => { if(window.location.href.includes("login.html")) return; cargarCarrito(); await cargarPrendas(); actualizarInterfaz(); };
 async function reiniciarTodoElHistorial() { if(!confirm("⚠️ ADVERTENCIA: Borrarás todo el historial de ventas. ¿Seguro?")) return; let btn = event.target; let textoOriginal = btn.innerText; btn.innerText = "⏳ Borrando..."; btn.disabled = true; try { const snapshot = await db.collection("ventas").get(); const batch = db.batch(); snapshot.docs.forEach((doc) => { batch.delete(doc.ref); }); await batch.commit(); notificar("✅ Historial limpiado", "exito"); cargarHistorialSPA(); cargarReporteVentasSPA(); } catch (error) { notificar("❌ Error", "error"); } finally { btn.innerText = textoOriginal; btn.disabled = false; } }
-async function descargarReporteExcel() { /* Función mantenida intacta */ notificar("⏳ Generando Excel...", "advertencia"); try { const snapshot = await db.collection("ventas").orderBy("fechaServidor", "desc").get(); if(snapshot.empty) return notificar("⚠️ No hay ventas"); let datosExcel = []; snapshot.forEach(doc => { let v = doc.data(); let descProductos = v.productos.map(p => `${p.nombre} (T${p.talla})`).join(" | "); datosExcel.push({ "Fecha": v.fechaTexto || "-", "Hora": v.hora || "-", "Método": v.metodoPago || "Efectivo", "Productos": descProductos, "Total": v.total }); }); const hoja = XLSX.utils.json_to_sheet(datosExcel); const libro = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(libro, hoja, "Ventas"); XLSX.writeFile(libro, `Ludava_${new Date().toLocaleDateString("es-PE").replace(/\//g, '-')}.xlsx`); notificar("✅ Excel bajado", "exito"); } catch (error) {} }
-async function descargarReportePDF() { /* Función mantenida intacta */ notificar("⏳ Generando PDF...", "advertencia"); try { const snapshot = await db.collection("ventas").orderBy("fechaServidor", "desc").get(); if(snapshot.empty) return notificar("⚠️ No hay ventas"); const { jsPDF } = window.jspdf; const doc = new jsPDF({ format: 'a4' }); doc.setFillColor(216, 27, 96); doc.rect(0, 0, 210, 25, 'F'); doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("LUDAVA - Reporte", 14, 17); let datosTabla = []; let totalGeneral = 0; snapshot.forEach(doc => { let v = doc.data(); totalGeneral += v.total; let desc = v.productos.map(p => `${p.nombre} (T${p.talla})`).join("\n"); datosTabla.push([ v.fechaTexto, v.metodoPago, desc, `S/ ${v.total.toFixed(2)}` ]); }); doc.autoTable({ startY: 35, head: [['Fecha', 'Pago', 'Productos', 'Total']], body: datosTabla, theme: 'grid' }); doc.setFontSize(14); doc.text(`Total: S/ ${totalGeneral.toFixed(2)}`, 130, doc.lastAutoTable.finalY + 10); doc.save(`Reporte_${new Date().toLocaleDateString("es-PE").replace(/\//g, '-')}.pdf`); notificar("✅ PDF bajado", "exito"); } catch (error) {} }
+async function descargarReporteExcel() { notificar("⏳ Generando Excel...", "advertencia"); try { const snapshot = await db.collection("ventas").orderBy("fechaServidor", "desc").get(); if(snapshot.empty) return notificar("⚠️ No hay ventas"); let datosExcel = []; snapshot.forEach(doc => { let v = doc.data(); let descProductos = v.productos.map(p => `${p.nombre} (T${p.talla})`).join(" | "); datosExcel.push({ "Fecha": v.fechaTexto || "-", "Hora": v.hora || "-", "Método": v.metodoPago || "Efectivo", "Productos": descProductos, "Total": v.total }); }); const hoja = XLSX.utils.json_to_sheet(datosExcel); const libro = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(libro, hoja, "Ventas"); XLSX.writeFile(libro, `Ludava_${new Date().toLocaleDateString("es-PE").replace(/\//g, '-')}.xlsx`); notificar("✅ Excel bajado", "exito"); } catch (error) {} }
+async function descargarReportePDF() { notificar("⏳ Generando PDF...", "advertencia"); try { const snapshot = await db.collection("ventas").orderBy("fechaServidor", "desc").get(); if(snapshot.empty) return notificar("⚠️ No hay ventas"); const { jsPDF } = window.jspdf; const doc = new jsPDF({ format: 'a4' }); doc.setFillColor(216, 27, 96); doc.rect(0, 0, 210, 25, 'F'); doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("LUDAVA - Reporte", 14, 17); let datosTabla = []; let totalGeneral = 0; snapshot.forEach(doc => { let v = doc.data(); totalGeneral += v.total; let desc = v.productos.map(p => `${p.nombre} (T${p.talla})`).join("\n"); datosTabla.push([ v.fechaTexto, v.metodoPago, desc, `S/ ${v.total.toFixed(2)}` ]); }); doc.autoTable({ startY: 35, head: [['Fecha', 'Pago', 'Productos', 'Total']], body: datosTabla, theme: 'grid' }); doc.setFontSize(14); doc.text(`Total: S/ ${totalGeneral.toFixed(2)}`, 130, doc.lastAutoTable.finalY + 10); doc.save(`Reporte_${new Date().toLocaleDateString("es-PE").replace(/\//g, '-')}.pdf`); notificar("✅ PDF bajado", "exito"); } catch (error) {} }
