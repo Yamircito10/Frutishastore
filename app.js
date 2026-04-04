@@ -269,12 +269,11 @@ async function finalizarVenta() {
   const btn = document.querySelector(".btn-finalizar");
   const metodoPagoSelect = document.getElementById("metodo-pago");
   const metodoPago = metodoPagoSelect ? metodoPagoSelect.value : "Pedido Web"; 
-  const rol = localStorage.getItem("rolActivo"); // Vemos quién está comprando
+  const rol = localStorage.getItem("rolActivo"); 
   
   btn.innerText = "⏳ Procesando..."; btn.disabled = true;
   
   try {
-    // 1. Guardamos la venta (Ya sea admin o cliente, la venta se registra en Firebase)
     await db.collection("ventas").add({
       fechaServidor: firebase.firestore.FieldValue.serverTimestamp(),
       fechaTexto: new Date().toLocaleDateString("es-PE"),
@@ -285,22 +284,16 @@ async function finalizarVenta() {
       origen: rol === "admin" ? "Local" : "Página Web"
     });
 
-    // 2. Generamos el PDF para que se descargue
     generarPDFRecibo(productosSeleccionados, total, metodoPago);
     notificar("📄 Generando recibo...", "exito");
 
-    // 3. LA MAGIA DE LA DECISIÓN
     if (rol === "admin") {
-        // Si eres tú (Admin): Abre el modal para que le pidas los datos al cliente y lo guardes.
         if(document.getElementById("wa-numero")) document.getElementById("wa-numero").value = ""; 
         if(document.getElementById("wa-nombre")) document.getElementById("wa-nombre").value = ""; 
         document.getElementById("modal-whatsapp").classList.add("modal-activo");
     } else {
-        // Si es un Cliente desde su casa: Le abre su WhatsApp directo para escribirte a TI.
         let textoWa = `¡Hola LUDAVA! 🛍️✨ Acabo de hacer un pedido en la tienda virtual por el monto de S/ ${total}. Mi recibo se acaba de descargar. ¡Deseo coordinar el pago y envío!`;
         window.open(`https://wa.me/51977757369?text=${encodeURIComponent(textoWa)}`, '_blank');
-        
-        // Limpiamos el carrito del cliente
         productosSeleccionados = []; recalcularTotal(); guardarCarrito(); actualizarInterfaz();
     }
 
@@ -495,13 +488,20 @@ async function cargarInventarioSPA() {
     let html = `<ul style="list-style:none; padding:0;">`;
     prendas.forEach(p => {
       let stockColor = p.stock > 5 ? '#27ae60' : (p.stock > 0 ? '#f39c12' : '#e74c3c');
+      
+      // 🛡️ MAGIA ANTI-ERRORES AQUÍ
+      let textoTallas = "Ninguna";
+      if (Array.isArray(p.tallas) && p.tallas.length > 0) {
+          textoTallas = p.tallas.map(t => `T${t.talla}(${t.stockTalla})`).join(', ');
+      }
+
       html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid ${stockColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.05); color: #333;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                     <strong>${p.nombre}</strong> 
                     <span style="color: ${stockColor}; font-weight: bold;">Stock: ${p.stock || 0}</span>
                 </div>
                 <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
-                  Precio: S/${p.precio} | Cat: ${p.categoria || 'Unisex'} | Tallas: ${p.tallas ? p.tallas.map(t => `T${t.talla}(${t.stockTalla})`).join(', ') : 'Ninguna'}
+                  Precio: S/${p.precio} | Cat: ${p.categoria || 'Unisex'} | Tallas: ${textoTallas}
                 </div>
                 <div style="display: flex; gap: 5px;">
                     <button onclick="eliminarPrendaAdmin('${p.id}')" style="background: #e74c3c; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">🗑️</button>
@@ -511,7 +511,10 @@ async function cargarInventarioSPA() {
                </li>`;
     });
     div.innerHTML = html + `</ul>`;
-  } catch (e) { div.innerHTML = "<p>Error cargando inventario.</p>"; }
+  } catch (e) { 
+    console.error("Error real:", e);
+    div.innerHTML = "<p>Error cargando el almacén.</p>"; 
+  }
 }
 
 async function guardarNuevaPrenda() {
