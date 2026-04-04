@@ -1,144 +1,134 @@
-/* =========================================
-   🎨 FRUTISHA STORE - TEMÁTICA BOUTIQUE ROSA (CSS COMPLETO)
-   ========================================= */
-
-/* 1. FUENTE PREMIUM */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-
-/* 2. VARIABLES DE COLORES (Modo Claro) */
-:root {
-  --principal: #d81b60;       
-  --rosa: #fd79a8;            
-  --fondo: #fff7fa;           
-  --tarjetas: #ffffff;        
-  --texto: #2d3436;           
-  --borde: #f8a5c2;           
-  --exito: #2ecc71;           
-}
-
-/* 3. VARIABLES DE COLORES (Modo Oscuro) */
-body.dark-mode {
-  --principal: #ff9ff3;       
-  --rosa: #f368e0;            
-  --fondo: #1c1a22;           
-  --tarjetas: #2b2735;        
-  --texto: #f5f6fa;           
-  --borde: #4a4055;           
-}
-
-/* 4. ESTILOS BASE */
-body { font-family: 'Poppins', sans-serif; background-color: var(--fondo); color: var(--texto); margin: 0; padding: 15px; transition: background-color 0.3s, color 0.3s; }
-h1, h2, h3 { color: var(--principal); margin-top: 0; }
-header p { font-size: 14px; color: var(--texto); margin-bottom: 15px; }
-
-/* 5. CABECERA */
-.header-container { display: flex; justify-content: space-between; align-items: center; background: var(--tarjetas); padding: 15px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(216, 27, 96, 0.1); margin-bottom: 20px; border-bottom: 3px solid var(--rosa); }
-.header-container h1 { margin: 0; font-size: 1.6rem; }
-.btn-tema { background: none; border: none; font-size: 1.8rem; cursor: pointer; padding: 5px; transition: transform 0.2s; }
-.btn-tema:active { transform: scale(0.9); }
-
-/* 6. NAVEGACIÓN Y VISTAS (SPA) */
-.nav-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
-.nav-acciones button { padding: 12px; font-size: 14px; font-weight: bold; border-radius: 10px; border: none; background: var(--tarjetas); color: var(--principal); box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: background 0.2s;}
-.nav-acciones button:active { background-color: var(--rosa); color: white; }
-.pantalla { display: none; animation: aparecer 0.3s ease-in; }
-.pantalla-activa { display: block; }
-@keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* 7. TARJETAS, BUSCADOR Y MOSAICO 3x3 */
-.pantalla > div, .pantalla > ul { background: var(--tarjetas); padding: 18px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.04); margin-bottom: 15px; border: 1px solid var(--borde); transition: transform 0.2s; }
-
-#lista-prendas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px 0; background: transparent; border: none; box-shadow: none; }
-.producto-card { background: var(--tarjetas); padding: 10px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); border: 1px solid var(--borde); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; }
-.producto-card h3 { font-size: 0.8rem; margin: 0 0 8px 0; line-height: 1.2; min-height: 2.4rem; overflow: hidden; }
-
-.buscador-container { margin-bottom: 15px; }
-#buscador-prendas { width: 100%; padding: 14px; font-size: 16px; border: 2px solid var(--borde); border-radius: 10px; box-sizing: border-box; background: var(--tarjetas); color: var(--texto); outline: none; transition: border-color 0.3s; font-family: 'Poppins', sans-serif;}
-#buscador-prendas:focus { border-color: var(--principal); }
-#total { background: var(--exito); color: white; padding: 18px; border-radius: 12px; font-size: 1.6rem; text-align: center; font-weight: bold; margin: 15px 0; position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-
-/* 8. BOTONES DE TALLAS Y DESCUENTOS */
-.tallas { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 5px; justify-content: center; }
-.boton-talla { background-color: var(--fondo); color: var(--principal); border: 2px solid var(--borde); padding: 5px 8px; font-size: 0.7rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; transition: all 0.2s; }
-.boton-talla:hover { border-color: var(--principal); transform: translateY(-2px); }
-.boton-talla:disabled { background-color: transparent; color: #ccc; border-color: #eee; text-decoration: line-through; cursor: not-allowed; transform: none; }
-
-.producto-card .descuentos { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-top: 5px; }
-.descuento-btn { background-color: var(--fondo); color: var(--principal); border: 1px solid var(--borde); padding: 4px 6px; border-radius: 5px; cursor: pointer; font-size: 0.65rem; font-family: 'Poppins', sans-serif; font-weight: bold; }
-.descuento-btn:active { background-color: var(--rosa); color: white; border-color: var(--rosa); }
-
-/* 9. CARRITO Y BOTONES DE ACCIÓN */
-#productos { padding: 0; list-style: none; }
-#productos li { background: var(--tarjetas); margin-bottom: 8px; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--rosa); box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 15px; color: var(--texto); }
-.btn-finalizar { background: var(--exito) !important; color: white !important; padding: 18px !important; font-size: 1.2rem !important; width: 100%; margin-top: 10px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-.reiniciar-btn { padding: 15px; border-radius: 10px; border: none; margin-top: 5px; font-weight: bold; cursor: pointer; background: #95a5a6; color: white; }
-
-/* 10. FORMULARIOS INVENTARIO */
-.form-inventario input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--tarjetas); color: var(--texto); box-sizing: border-box; font-size: 14px; font-family: 'Poppins', sans-serif;}
-
-/* 11. MODALES EMERGENTES Y TECLADO TÁCTIL */
-.modal-oculto { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-.modal-activo { display: flex; animation: aparecer 0.2s ease-out; }
-.modal-contenido { background: var(--tarjetas); padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--borde); }
-.botones-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px; }
-.botones-grid button { padding: 15px 20px; font-size: 1.2rem; border-radius: 10px; border: 2px solid var(--borde); background: var(--fondo); font-weight: bold; cursor: pointer; color: var(--principal); }
-.pantalla-teclado { font-size: 2.5rem; font-weight: bold; padding: 10px; border: 2px solid var(--principal); border-radius: 10px; margin-bottom: 15px; color: var(--principal); letter-spacing: 2px; }
-.teclado-numerico { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.teclado-numerico button { padding: 15px; font-size: 1.8rem; font-weight: bold; border-radius: 10px; border: none; background: var(--fondo); color: var(--texto); cursor: pointer; transition: background 0.1s; }
-.teclado-numerico button:active { transform: scale(0.95); }
-
-/* 12. AJUSTES FINOS MODO OSCURO */
-body.dark-mode .nav-acciones button { background-color: var(--tarjetas); color: var(--principal); border: 1px solid var(--borde); }
-body.dark-mode .boton-talla:disabled { color: #555; border-color: #444; }
-body.dark-mode .btn-finalizar { background: linear-gradient(135deg, #1e8449, #27ae60) !important; color: white !important; border: none; }
-body.dark-mode .reiniciar-btn { background-color: #424949 !important; color: white !important; }
-body.dark-mode .teclado-numerico button { background: #333; color: white; }
-body.dark-mode .pantalla-teclado { border-color: #ff9ff3; color: #ff9ff3; }
-body.dark-mode .botones-grid button { background: #2c2c2c; border-color: #444; color: #ff9ff3; }
-body.dark-mode .descuento-btn { background-color: #333; color: #ff9ff3; border-color: #555; }
-
-/* 13. ALERTAS DE STOCK BAJO */
-.stock-bajo { 
-  background-color: #e74c3c !important; /* Fondo rojo vibrante */
-  color: white !important; /* Letras blancas para contrastar */
-  border-color: #c0392b !important; /* Borde rojo un poco más oscuro */
-}
-
-/* En modo oscuro lo mantenemos naranjita brillante para que no lastime la vista */
-body.dark-mode .stock-bajo {
-  background-color: #4a3b2c !important;
-  color: #f1c40f !important;
-  border-color: #f1c40f !important;
-}
 /* ==========================================
-   🟢 BOTÓN FLOTANTE WHATSAPP
+   ✨ LUDAVA - ESTILOS PREMIUM (ROSADO Y CELESTE)
    ========================================== */
-.whatsapp-flotante {
-    position: fixed;
-    width: 60px;
-    height: 60px;
-    bottom: 25px;
-    right: 25px;
-    background-color: #25d366;
-    color: #FFF;
-    border-radius: 50px;
-    text-align: center;
-    font-size: 30px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all 0.3s ease;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
+:root {
+  /* COLORES PRINCIPALES DE LUDAVA */
+  --rosado: #ff7eb3; /* Rosado tierno para niñas */
+  --celeste: #6dd5ed; /* Celeste bebé para niños */
+  --gradiente: linear-gradient(135deg, #ff7eb3 0%, #6dd5ed 100%); /* Magia mezclada */
+  
+  --fondo: #f4f6f8;
+  --tarjetas: #ffffff;
+  --texto: #2d3436;
+  --borde: #e1e8ed;
+  --exito: #2ecc71;
+  --error: #e74c3c;
+  --principal: var(--rosado); /* Color base de respaldo */
 }
 
-.whatsapp-flotante:hover {
-    background-color: #1ebe57;
-    transform: scale(1.1);
+/* 🌙 MODO OSCURO (Colores adaptados para no lastimar la vista) */
+body.dark-mode {
+  --fondo: #1e272e;
+  --tarjetas: #2d3436;
+  --texto: #f5f6fa;
+  --borde: #4a4a4a;
+  --rosado: #ff9a9e;
+  --celeste: #a1c4fd;
+  --gradiente: linear-gradient(135deg, #ff9a9e 0%, #a1c4fd 100%);
 }
 
-.whatsapp-icono {
-    width: 35px;
-    height: 35px;
-    fill: white;
+/* ================== BASE ================== */
+body { 
+    font-family: 'Poppins', sans-serif; 
+    background: var(--fondo); 
+    color: var(--texto); 
+    margin: 0; 
+    padding: 0; 
+    padding-bottom: 90px !important; /* Espacio para el menú de App */
+    transition: background 0.3s, color 0.3s; 
 }
+
+/* ================== CABECERA (GRADIENTE) ================== */
+.header-container { 
+    background: var(--gradiente); /* El encabezado usa los dos colores */
+    color: white; 
+    padding: 15px 20px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-radius: 0 0 25px 25px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+    margin-bottom: 20px; 
+}
+.header-container h1 { margin: 0; font-size: 26px; font-weight: 800; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); letter-spacing: 1px; }
+.header-container p { margin: 0; font-size: 14px; opacity: 0.9; }
+.btn-tema { background: rgba(255,255,255,0.25); border: none; font-size: 20px; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; backdrop-filter: blur(5px); transition: 0.3s; }
+.btn-tema:hover { background: rgba(255,255,255,0.4); transform: rotate(15deg); }
+
+/* ================== PANTALLAS Y ANIMACIONES ================== */
+.pantalla { display: none; padding: 0 15px; animation: fadeIn 0.5s ease; }
+.pantalla-activa { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ================== FILTROS Y BUSCADOR ================== */
+.filtros-categorias { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
+.filtros-categorias::-webkit-scrollbar { display: none; }
+.btn-cat { background: var(--tarjetas); color: var(--texto); border: 2px solid var(--borde); padding: 8px 18px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; font-family: 'Poppins', sans-serif;}
+.btn-cat.activa { background: var(--gradiente); color: white; border-color: transparent; box-shadow: 0 4px 10px rgba(255, 126, 179, 0.3); }
+
+.buscador-container input { width: 100%; padding: 14px 20px; border-radius: 15px; border: 2px solid var(--borde); background: var(--tarjetas); color: var(--texto); font-family: 'Poppins', sans-serif; font-size: 14px; outline: none; transition: all 0.3s; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+.buscador-container input:focus { border-color: var(--celeste); box-shadow: 0 4px 12px rgba(109, 213, 237, 0.2); }
+
+/* ================== TARJETAS DE PRODUCTOS ================== */
+.productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
+.producto-card { background: var(--tarjetas); padding: 15px; border-radius: 18px; box-shadow: 0 6px 15px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 10px; transition: transform 0.3s, box-shadow 0.3s; }
+.producto-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+/* 👧👦 TRUCO MAGICO: Tarjetas alternan Borde Rosado y Borde Celeste */
+.producto-card:nth-child(odd) { border-top: 5px solid var(--rosado); }
+.producto-card:nth-child(even) { border-top: 5px solid var(--celeste); }
+
+.producto-card h3 { margin: 0; font-size: 15px; text-align: center; color: var(--texto); font-weight: 800;}
+.img-producto { width: 100%; height: 150px; object-fit: cover; border-radius: 12px; }
+
+/* ================== BOTONES DE TALLAS ================== */
+.tallas { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.boton-talla { background: var(--fondo); border: 2px solid var(--borde); color: var(--texto); padding: 6px 12px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; font-family: 'Poppins', sans-serif; }
+.boton-talla:hover:not(:disabled) { background: var(--celeste); color: white; border-color: var(--celeste); transform: scale(1.05); }
+.boton-talla:disabled { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
+.stock-bajo { border-color: #f1c40f; color: #f39c12; }
+
+/* ================== CARRITO Y TOTALES ================== */
+.descuentos { display: flex; flex-direction: column; gap: 5px; }
+.descuento-btn { background: var(--gradiente); color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: bold; font-family: 'Poppins', sans-serif; transition: 0.3s; }
+.descuento-btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+#lista { background: var(--tarjetas); padding: 15px; border-radius: 18px; margin-top: 20px; box-shadow: 0 6px 15px rgba(0,0,0,0.06); }
+#productos { list-style: none; padding: 0; margin: 0; }
+#productos li { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--borde); font-size: 14px; font-weight: 600; }
+#total { font-size: 24px; font-weight: 800; text-align: center; margin: 20px 0; color: var(--rosado); }
+
+.btn-finalizar { background: var(--gradiente); color: white; border: none; padding: 16px; border-radius: 15px; font-size: 16px; font-weight: 800; cursor: pointer; width: 100%; font-family: 'Poppins', sans-serif; box-shadow: 0 6px 20px rgba(255, 126, 179, 0.4); margin-bottom: 12px; transition: 0.3s; letter-spacing: 1px; }
+.btn-finalizar:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(109, 213, 237, 0.5); }
+.reiniciar-btn { background: var(--tarjetas); color: var(--error); border: 2px solid var(--error); padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; font-family: 'Poppins', sans-serif; }
+
+/* ================== MODALES (POP-UPS) ================== */
+.modal-oculto { display: none; }
+.modal-activo { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.3s; }
+.modal-contenido { background: var(--tarjetas); width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+
+.form-inventario input, .form-inventario select { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 2px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif; box-sizing: border-box; outline: none; transition: 0.3s; font-weight: 600; }
+.form-inventario input:focus, .form-inventario select:focus { border-color: var(--rosado); }
+
+/* ================== TECLADO TÁCTIL ================== */
+.pantalla-teclado { background: var(--fondo); color: var(--celeste); font-size: 32px; font-weight: 800; text-align: center; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--celeste); }
+.teclado-numerico { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.teclado-numerico button { padding: 18px; font-size: 22px; font-weight: 800; border-radius: 12px; border: none; background: var(--borde); color: var(--texto); cursor: pointer; font-family: 'Poppins', sans-serif; transition: 0.2s; }
+.teclado-numerico button:active { background: var(--gradiente); color: white; transform: scale(0.95); }
+.botones-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.botones-grid button { padding: 15px; border-radius: 12px; border: 2px solid var(--borde); background: var(--fondo); color: var(--texto); font-weight: bold; cursor: pointer; transition: 0.2s; }
+.botones-grid button:active { border-color: var(--celeste); background: var(--celeste); color: white; }
+
+/* ================== NAVEGACIÓN INFERIOR (APP MÓVIL) ================== */
+.nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--tarjetas); box-shadow: 0 -5px 20px rgba(0,0,0,0.08); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 25px 25px 0 0; }
+.nav-inferior::-webkit-scrollbar { display: none; }
+.nav-inferior button { background: transparent; color: var(--texto); border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; padding: 5px 12px; margin: 0; min-width: 70px; border-radius: 15px; transition: all 0.3s ease; font-family: 'Poppins', sans-serif; }
+.nav-inferior button .icono-nav { font-size: 24px; margin-bottom: 5px; transition: transform 0.2s ease; }
+.nav-inferior button:hover, .nav-inferior button:active { color: var(--rosado); background-color: var(--fondo); }
+.nav-inferior button:hover .icono-nav, .nav-inferior button:active .icono-nav { transform: translateY(-4px); }
+
+/* ================== WHATSAPP FLOTANTE ================== */
+.whatsapp-flotante { position: fixed; width: 60px; height: 60px; bottom: 100px !important; right: 20px; background-color: #25d366; border-radius: 50px; box-shadow: 0px 6px 15px rgba(37, 211, 102, 0.4); z-index: 1000; display: flex; justify-content: center; align-items: center; transition: all 0.3s ease; }
+.whatsapp-flotante:hover { background-color: #1ebe57; transform: scale(1.1) rotate(5deg); }
