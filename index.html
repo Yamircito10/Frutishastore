@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>✨ LUDAVA - Tienda Virtual</title>
+  <title>✨ LUDAVA - Sistema de Ventas</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#d81b60">
@@ -15,16 +15,23 @@
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
   <style>
+    /* ESPACIO PARA QUE EL MENÚ NO TAPE LA TIENDA */
     body { padding-bottom: 90px !important; }
+
+    /* FILTROS MÁGICOS DE CATEGORÍAS */
     .filtros-categorias { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
     .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; }
     .btn-cat.activa { background: var(--principal); color: white; border-color: var(--principal); }
+
+    /* NAVEGACIÓN INFERIOR (ESTILO APP NATIVA) */
     .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--tarjetas); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
     .nav-inferior::-webkit-scrollbar { display: none; }
     .nav-inferior button { background: transparent; color: var(--texto); border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; margin: 0; min-width: 70px; border-radius: 12px; transition: all 0.3s ease; box-shadow: none; font-family: 'Poppins', sans-serif; }
     .nav-inferior button .icono-nav { font-size: 22px; margin-bottom: 4px; transition: transform 0.2s ease; }
     .nav-inferior button:hover, .nav-inferior button:active { color: var(--principal); background-color: var(--fondo); }
     .nav-inferior button:hover .icono-nav, .nav-inferior button:active .icono-nav { transform: translateY(-3px); }
+    
+    /* SUBIR EL BOTÓN DE WHATSAPP */
     .whatsapp-flotante { bottom: 100px !important; }
   </style>
 </head>
@@ -264,7 +271,7 @@
   function cerrarSesion() {
     if(confirm("¿Seguro que quieres salir del modo administrador?")) {
       localStorage.clear();
-      window.location.href = "index.html"; // Ahora te devuelve a la tienda pública
+      window.location.href = "index.html"; 
     }
   }
 
