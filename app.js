@@ -5,7 +5,7 @@
 let total = 0;
 let productosSeleccionados = [];
 let prendas = [];
-let categoriaActual = "Todas"; // Para los filtros mágicos
+let categoriaActual = "Todas"; 
 
 const formatearSoles = (valor) => new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
 
@@ -124,9 +124,7 @@ async function ajustarStock(prendaId, tallaNumero, delta) {
     const nuevoTotal = tallas.reduce((acc, x) => acc + Number(x.stockTalla || 0), 0);
     tx.update(ref, { tallas, stock: nuevoTotal });
 
-    // Historial Automático
     registrarMovimiento(data.nombre, tallaNumero, Math.abs(delta), delta > 0 ? "suma" : "resta");
-
     return { nuevoTotal, tallas };
   });
 }
@@ -263,38 +261,53 @@ function generarPDFRecibo(productos, totalVenta, metodoPago) {
 }
 
 // ==========================================
-// 🚀 FINALIZAR VENTA Y AGENDA CLIENTES
+// 🚀 FINALIZAR VENTA (CLIENTE VS ADMIN)
 // ==========================================
 async function finalizarVenta() {
-  if (productosSeleccionados.length === 0) return notificar("⚠️ Agrega productos", "advertencia");
+  if (productosSeleccionados.length === 0) return notificar("⚠️ Agrega productos al carrito", "advertencia");
+  
   const btn = document.querySelector(".btn-finalizar");
   const metodoPagoSelect = document.getElementById("metodo-pago");
-  const metodoPago = metodoPagoSelect ? metodoPagoSelect.value : "Efectivo"; 
+  const metodoPago = metodoPagoSelect ? metodoPagoSelect.value : "Pedido Web"; 
+  const rol = localStorage.getItem("rolActivo"); // Vemos quién está comprando
   
   btn.innerText = "⏳ Procesando..."; btn.disabled = true;
   
   try {
+    // 1. Guardamos la venta (Ya sea admin o cliente, la venta se registra en Firebase)
     await db.collection("ventas").add({
       fechaServidor: firebase.firestore.FieldValue.serverTimestamp(),
       fechaTexto: new Date().toLocaleDateString("es-PE"),
       hora: new Date().toLocaleTimeString("es-PE"),
       productos: productosSeleccionados,
       total: Number(total),
-      metodoPago: metodoPago 
+      metodoPago: metodoPago,
+      origen: rol === "admin" ? "Local" : "Página Web"
     });
 
+    // 2. Generamos el PDF para que se descargue
     generarPDFRecibo(productosSeleccionados, total, metodoPago);
-    notificar("📄 Descargando PDF...", "exito");
+    notificar("📄 Generando recibo...", "exito");
 
-    if(document.getElementById("wa-numero")) document.getElementById("wa-numero").value = ""; 
-    if(document.getElementById("wa-nombre")) document.getElementById("wa-nombre").value = ""; 
-    document.getElementById("modal-whatsapp").classList.add("modal-activo");
+    // 3. LA MAGIA DE LA DECISIÓN
+    if (rol === "admin") {
+        // Si eres tú (Admin): Abre el modal para que le pidas los datos al cliente y lo guardes.
+        if(document.getElementById("wa-numero")) document.getElementById("wa-numero").value = ""; 
+        if(document.getElementById("wa-nombre")) document.getElementById("wa-nombre").value = ""; 
+        document.getElementById("modal-whatsapp").classList.add("modal-activo");
+    } else {
+        // Si es un Cliente desde su casa: Le abre su WhatsApp directo para escribirte a TI.
+        let textoWa = `¡Hola LUDAVA! 🛍️✨ Acabo de hacer un pedido en la tienda virtual por el monto de S/ ${total}. Mi recibo se acaba de descargar. ¡Deseo coordinar el pago y envío!`;
+        window.open(`https://wa.me/51977757369?text=${encodeURIComponent(textoWa)}`, '_blank');
+        
+        // Limpiamos el carrito del cliente
+        productosSeleccionados = []; recalcularTotal(); guardarCarrito(); actualizarInterfaz();
+    }
 
-    productosSeleccionados = []; recalcularTotal(); guardarCarrito(); actualizarInterfaz();
   } catch (err) { 
-    notificar("❌ Error guardando la venta", "error"); 
+    notificar("❌ Error al procesar", "error"); 
   } finally { 
-    btn.innerText = "💰 FINALIZAR VENTA"; btn.disabled = false; 
+    btn.innerText = "Enviar Pedido 🚀"; btn.disabled = false; 
   }
 }
 
@@ -323,6 +336,7 @@ async function enviarWhatsApp() {
     window.open(`https://wa.me/?text=${encodeURIComponent(textoWa)}`, '_blank');
   }
   cerrarModalWhatsApp();
+  productosSeleccionados = []; recalcularTotal(); guardarCarrito(); actualizarInterfaz();
 }
 
 // ==========================================
@@ -355,7 +369,7 @@ async function cargarReporteVentasSPA() {
     
     let totalVentas = 0; let totalGastos = 0;
     let ventasPorDia = {};
-    let resumenPagos = { "Efectivo": 0, "Yape/Plin": 0, "Tarjeta": 0 }; 
+    let resumenPagos = { "Efectivo": 0, "Yape/Plin": 0, "Tarjeta": 0, "Pedido Web": 0 }; 
 
     snapVentas.forEach(doc => {
       let v = doc.data(); totalVentas += v.total;
@@ -372,13 +386,13 @@ async function cargarReporteVentasSPA() {
 
     let html = `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center;">
                   <div style="background: #3498db; color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <h4 style="margin:0; font-size:12px;">Ingresos (Ventas)</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(totalVentas)}</h2>
+                    <h4 style="margin:0; font-size:12px;">Ingresos</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(totalVentas)}</h2>
                   </div>
                   <div style="background: #e74c3c; color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <h4 style="margin:0; font-size:12px;">Egresos (Gastos)</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(totalGastos)}</h2>
+                    <h4 style="margin:0; font-size:12px;">Egresos</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(totalGastos)}</h2>
                   </div>
                   <div style="background: ${colorGanancia}; color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <h4 style="margin:0; font-size:12px;">Ganancia Neta</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(gananciaNeta)}</h2>
+                    <h4 style="margin:0; font-size:12px;">Ganancia</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(gananciaNeta)}</h2>
                   </div>
                 </div>`;
                 
@@ -416,7 +430,7 @@ async function cargarHistorialSPA() {
     ul.innerHTML = snap.docs.map(doc => {
       const v = doc.data();
       const metodo = v.metodoPago || "Efectivo"; 
-      let iconoPago = metodo === "Efectivo" ? "💵" : (metodo === "Tarjeta" ? "💳" : "📱");
+      let iconoPago = metodo === "Efectivo" ? "💵" : (metodo === "Tarjeta" ? "💳" : (metodo === "Pedido Web" ? "🌐" : "📱"));
       return `<li>
           <div style="font-size: 12px; color: #888; margin-bottom: 4px;">📅 ${v.fechaTexto} - 🕒 ${v.hora} | ${iconoPago} ${metodo}</div>
           <div style="font-weight: bold;">${v.productos.map(p => p.texto || p.nombre).join(" | ")}</div>
