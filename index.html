@@ -153,8 +153,11 @@
     </select>
     <p style="font-size: 13px; margin: 0 0 5px 0; color: #666;">Tallas Iniciales (Ej: S, M, L):</p>
     <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
-    <input type="text" id="nueva-imagen" placeholder="Enlace de la foto (Opcional)" class="form-inventario">
-    <button onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;">💾 Guardar Prenda</button>
+    
+    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Subir Foto (Cámara o Galería):</p>
+    <input type="file" id="nueva-imagen-file" accept="image/*" capture="environment" class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--celeste);">
+    
+    <button id="btn-guardar-prenda" onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px;">💾 Guardar Prenda</button>
   </div>
   <div id="admin-inventario"><p>Cargando almacén...</p></div>
 
@@ -177,10 +180,13 @@
       <option value="Bebés">Bebés 🍼</option>
       <option value="Unisex">Unisex ✨</option>
     </select>
-    <input type="text" id="edit-imagen" placeholder="Enlace de la foto (Opcional)" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); box-sizing: border-box;">
+    
+    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Cambiar Foto (Opcional):</p>
+    <input type="file" id="edit-imagen-file" accept="image/*" capture="environment" class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--rosado);">
+    
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
-      <button onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer;">💾 Guardar</button>
+      <button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer;">💾 Guardar</button>
     </div>
   </div>
 </div>
@@ -226,6 +232,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
 <script>
   const firebaseConfig = {
