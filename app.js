@@ -89,10 +89,9 @@ function filtrarPrendas() {
   if (!input) return;
   const textoFiltro = input.value.toLowerCase();
   
-  // 🛡️ SOLUCIÓN: Solo busca dentro de #lista-prendas
   document.querySelectorAll("#lista-prendas .producto-card").forEach(tarjeta => {
     const h3 = tarjeta.querySelector("h3");
-    if (!h3) return; // Candado de seguridad
+    if (!h3) return; 
     
     const titulo = h3.innerText.toLowerCase();
     const catPrenda = tarjeta.getAttribute("data-categoria");
@@ -482,7 +481,7 @@ async function cargarClientesSPA() {
 }
 
 // ==========================================
-// 3. LÓGICA DE ADMINISTRACIÓN DE INVENTARIO
+// 📸 3. LÓGICA DE ALMACÉN Y FOTOS
 // ==========================================
 async function cargarInventarioSPA() {
   const div = document.getElementById("admin-inventario");
@@ -495,7 +494,6 @@ async function cargarInventarioSPA() {
     let html = `<ul style="list-style:none; padding:0;">`;
     prendas.forEach(p => {
       let stockColor = p.stock > 5 ? '#27ae60' : (p.stock > 0 ? '#f39c12' : '#e74c3c');
-      
       let textoTallas = "Ninguna";
       if (Array.isArray(p.tallas) && p.tallas.length > 0) {
           textoTallas = p.tallas.map(t => `T${t.talla}(${t.stockTalla})`).join(', ');
@@ -528,21 +526,51 @@ async function guardarNuevaPrenda() {
   const precio = Number(document.getElementById("nuevo-precio").value);
   const categoria = document.getElementById("nuevo-categoria").value;
   const tallasInput = document.getElementById("nuevas-tallas").value.trim();
-  const imagen = document.getElementById("nueva-imagen") ? document.getElementById("nueva-imagen").value.trim() : "";
+  const archivoFoto = document.getElementById("nueva-imagen-file").files[0]; // Capturamos la foto
   
   if (!nombre || !precio) return notificar("⚠️ Llena el nombre y precio", "advertencia");
+  
   let tallasArray = [];
   if (tallasInput) tallasArray = tallasInput.split(',').map(t => ({ talla: t.trim(), stockTalla: 0, precio: precio }));
 
+  const btnGuardar = document.getElementById("btn-guardar-prenda");
+  btnGuardar.innerText = "⏳ Subiendo foto y guardando..."; 
+  btnGuardar.disabled = true;
+
   try {
-    await db.collection("inventario").add({ nombre, precio, categoria, stock: 0, tallas: tallasArray, imagen: imagen });
+    let urlImagen = "";
+
+    // 📸 Si hay foto, la subimos a Firebase Storage
+    if (archivoFoto) {
+      notificar("📸 Subiendo imagen...", "exito");
+      const refStorage = firebase.storage().ref(`prendas/${Date.now()}_${archivoFoto.name}`);
+      const uploadTask = await refStorage.put(archivoFoto);
+      urlImagen = await uploadTask.ref.getDownloadURL();
+    }
+
+    await db.collection("inventario").add({ 
+      nombre, 
+      precio, 
+      categoria, 
+      stock: 0, 
+      tallas: tallasArray, 
+      imagen: urlImagen // Guardamos el enlace de la foto
+    });
+
     document.getElementById("nuevo-nombre").value = "";
     document.getElementById("nuevo-precio").value = "";
     document.getElementById("nuevas-tallas").value = "";
-    if(document.getElementById("nueva-imagen")) document.getElementById("nueva-imagen").value = "";
-    notificar("✅ Prenda creada con éxito");
+    document.getElementById("nueva-imagen-file").value = "";
+    
+    notificar("✅ Prenda creada con éxito", "exito");
     cargarInventarioSPA(); cargarPrendas();
-  } catch (error) { notificar("❌ Error guardando prenda", "error"); }
+  } catch (error) { 
+    console.error(error);
+    notificar("❌ Error guardando prenda", "error"); 
+  } finally {
+    btnGuardar.innerText = "💾 Guardar Prenda"; 
+    btnGuardar.disabled = false;
+  }
 }
 
 async function eliminarPrendaAdmin(id) {
@@ -565,7 +593,7 @@ function abrirEdicionInfo(id) {
   document.getElementById("edit-nombre").value = prenda.nombre;
   document.getElementById("edit-precio").value = prenda.precio;
   document.getElementById("edit-categoria").value = prenda.categoria || "Unisex";
-  if(document.getElementById("edit-imagen")) document.getElementById("edit-imagen").value = prenda.imagen || "";
+  document.getElementById("edit-imagen-file").value = ""; // Limpiamos por si quiere subir una nueva
   document.getElementById("modal-editar").classList.add("modal-activo");
 }
 
@@ -575,18 +603,44 @@ async function guardarEdicionInfo() {
   const nuevoNombre = document.getElementById("edit-nombre").value.trim();
   const nuevoPrecio = Number(document.getElementById("edit-precio").value);
   const nuevaCategoria = document.getElementById("edit-categoria").value;
-  const nuevaImagen = document.getElementById("edit-imagen") ? document.getElementById("edit-imagen").value.trim() : "";
+  const archivoFoto = document.getElementById("edit-imagen-file").files[0];
 
   if(!nuevoNombre || !nuevoPrecio) return notificar("⚠️ Llena ambos campos", "advertencia");
-  const prenda = prendas.find(p => p.id === prendaEditandoInfoId);
-  let tallasActualizadas = [];
-  if (prenda && prenda.tallas) tallasActualizadas = prenda.tallas.map(t => ({...t, precio: nuevoPrecio}));
+  
+  const btnGuardar = document.getElementById("btn-guardar-edicion");
+  btnGuardar.innerText = "⏳ Guardando..."; btnGuardar.disabled = true;
 
   try {
-    await db.collection("inventario").doc(prendaEditandoInfoId).update({ nombre: nuevoNombre, precio: nuevoPrecio, categoria: nuevaCategoria, tallas: tallasActualizadas, imagen: nuevaImagen });
+    const prenda = prendas.find(p => p.id === prendaEditandoInfoId);
+    let tallasActualizadas = [];
+    if (prenda && prenda.tallas) tallasActualizadas = prenda.tallas.map(t => ({...t, precio: nuevoPrecio}));
+    
+    let urlFinal = prenda.imagen || ""; // Mantenemos la foto vieja por defecto
+
+    // 📸 Si subió una foto nueva al editar, la actualizamos
+    if (archivoFoto) {
+      notificar("📸 Subiendo nueva imagen...", "exito");
+      const refStorage = firebase.storage().ref(`prendas/${Date.now()}_${archivoFoto.name}`);
+      const uploadTask = await refStorage.put(archivoFoto);
+      urlFinal = await uploadTask.ref.getDownloadURL();
+    }
+
+    await db.collection("inventario").doc(prendaEditandoInfoId).update({ 
+      nombre: nuevoNombre, 
+      precio: nuevoPrecio, 
+      categoria: nuevaCategoria, 
+      tallas: tallasActualizadas, 
+      imagen: urlFinal 
+    });
+
     notificar("✅ Información actualizada", "exito");
     cerrarModalEditar(); cargarInventarioSPA(); cargarPrendas();
-  } catch(error) { notificar("❌ Error al actualizar", "error"); }
+  } catch(error) { 
+    console.error(error);
+    notificar("❌ Error al actualizar", "error"); 
+  } finally {
+    btnGuardar.innerText = "💾 Guardar"; btnGuardar.disabled = false;
+  }
 }
 
 let prendaEditandoId = null; let tallaEditando = null; let cantidadTeclado = "0";
