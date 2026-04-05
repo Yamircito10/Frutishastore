@@ -6,7 +6,7 @@
   <title>✨ LUDAVA - Tienda Virtual</title>
   
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#d81b60">
+  <meta name="theme-color" content="#ff7eb3">
   <link rel="apple-touch-icon" href="icono-192.png">
   
   <link rel="stylesheet" href="styles.css" />
@@ -19,6 +19,12 @@
     .filtros-categorias { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
     .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; }
     .btn-cat.activa { background: var(--principal); color: white; border-color: var(--principal); }
+    
+    /* 📸 MAGIA DEL CARRUSEL TÁCTIL */
+    .carrusel-fotos { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 0; border-radius: 12px; margin-bottom: 10px; background: var(--fondo); }
+    .carrusel-fotos::-webkit-scrollbar { display: none; }
+    .carrusel-fotos img { width: 100%; flex-shrink: 0; scroll-snap-align: center; object-fit: cover; height: 180px; }
+    
     .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--tarjetas); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
     .nav-inferior::-webkit-scrollbar { display: none; }
     .nav-inferior button { background: transparent; color: var(--texto); border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; margin: 0; min-width: 70px; border-radius: 12px; transition: all 0.3s ease; box-shadow: none; font-family: 'Poppins', sans-serif; }
@@ -39,35 +45,15 @@
 </header>
 
 <nav class="nav-inferior">
-  <button onclick="navegarSPA('vista-tienda')">
-    <span class="icono-nav">🏠</span><span>Tienda</span>
-  </button>
-  
-  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-ventas')">
-    <span class="icono-nav">📈</span><span>Ventas</span>
-  </button>
-  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-clientes')">
-    <span class="icono-nav">👥</span><span>Clientes</span>
-  </button>
-  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-historial')">
-    <span class="icono-nav">📚</span><span>Historial</span>
-  </button>
-  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-tallas')">
-    <span class="icono-nav">📊</span><span>Tallas</span>
-  </button>
-  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-gastos')">
-    <span class="icono-nav">💸</span><span>Gastos</span>
-  </button>
-  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-inventario')">
-    <span class="icono-nav">📦</span><span>Almacén</span>
-  </button>
-
-  <button id="btn-login" onclick="window.location.href='login.html'">
-    <span class="icono-nav">🔒</span><span>Ingresar</span>
-  </button>
-  <button id="btn-salir" class="admin-only" style="display:none; color:#e74c3c;" onclick="cerrarSesion()">
-    <span class="icono-nav">🚪</span><span>Salir</span>
-  </button>
+  <button onclick="navegarSPA('vista-tienda')"><span class="icono-nav">🏠</span><span>Tienda</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-ventas')"><span class="icono-nav">📈</span><span>Ventas</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-clientes')"><span class="icono-nav">👥</span><span>Clientes</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-historial')"><span class="icono-nav">📚</span><span>Historial</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-tallas')"><span class="icono-nav">📊</span><span>Tallas</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-gastos')"><span class="icono-nav">💸</span><span>Gastos</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-inventario')"><span class="icono-nav">📦</span><span>Almacén</span></button>
+  <button id="btn-login" onclick="window.location.href='login.html'"><span class="icono-nav">🔒</span><span>Ingresar</span></button>
+  <button id="btn-salir" class="admin-only" style="display:none; color:#e74c3c;" onclick="cerrarSesion()"><span class="icono-nav">🚪</span><span>Salir</span></button>
 </nav>
 
 <div id="vista-tienda" class="pantalla pantalla-activa">
@@ -99,16 +85,15 @@
 <div id="vista-ventas" class="pantalla">
   <h2>📈 Balance General y Ventas</h2>
   <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">📄 Bajar PDF</button>
-      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">📗 Bajar Excel</button>
-      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">🗑️ Reiniciar Datos</button>
+      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">📄 PDF</button>
+      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">📗 Excel</button>
+      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">🗑️ Borrar</button>
   </div>
   <div id="kpis-ventas"></div>
 </div>
 
 <div id="vista-clientes" class="pantalla">
   <h2>👥 Agenda de Clientes</h2>
-  <p style="color:var(--texto); font-size:14px; margin-bottom:15px;">Tus clientes frecuentes se guardan aquí automáticamente al enviarles el recibo por WhatsApp.</p>
   <div id="lista-clientes"></div>
 </div>
 
@@ -118,12 +103,12 @@
 </div>
 
 <div id="vista-tallas" class="pantalla">
-  <h2>📊 Reporte de Tallas Más Vendidas</h2>
+  <h2>📊 Tallas Más Vendidas</h2>
   <div id="kpis-tallas"></div>
 </div>
 
 <div id="vista-gastos" class="pantalla">
-  <h2>💸 Registro de Gastos y Proveedores</h2>
+  <h2>💸 Gastos y Proveedores</h2>
   <div class="form-inventario producto-card">
     <input type="text" id="gasto-motivo" placeholder="Motivo (Ej: Compra Jean, Pago Envío)">
     <input type="number" id="gasto-monto" placeholder="Monto (S/)">
@@ -154,15 +139,14 @@
     <p style="font-size: 13px; margin: 0 0 5px 0; color: #666;">Tallas Iniciales (Ej: S, M, L):</p>
     <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
     
-    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Subir Foto (Cámara o Galería):</p>
-    <input type="file" id="nueva-imagen-file" accept="image/*" capture="environment" class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--celeste);">
+    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Subir Fotos (Hasta 4 - Colores/Modelos):</p>
+    <input type="file" id="nueva-imagen-file" accept="image/*" multiple class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--celeste);">
     
     <button id="btn-guardar-prenda" onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px;">💾 Guardar Prenda</button>
   </div>
   <div id="admin-inventario"><p>Cargando almacén...</p></div>
 
   <hr style="margin: 30px 0; border: 1px solid var(--borde);">
-  
   <h2 style="color: var(--principal);">🕵️‍♂️ Historial de Movimientos</h2>
   <div id="historial-movimientos" style="max-height: 400px; overflow-y: auto; background: var(--tarjetas); padding: 10px; border-radius: 10px;">
     <p style="text-align: center; color: #888;">Cargando movimientos...</p>
@@ -181,8 +165,8 @@
       <option value="Unisex">Unisex ✨</option>
     </select>
     
-    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Cambiar Foto (Opcional):</p>
-    <input type="file" id="edit-imagen-file" accept="image/*" capture="environment" class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--rosado);">
+    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Cambiar Fotos (Reemplaza las anteriores):</p>
+    <input type="file" id="edit-imagen-file" accept="image/*" multiple class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--rosado);">
     
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
@@ -216,7 +200,6 @@
 <div id="modal-whatsapp" class="modal-oculto">
   <div class="modal-contenido form-inventario">
     <h3 style="color: #25D366;">📱 Enviar por WhatsApp</h3>
-    <p style="color:var(--texto); font-size:13px; margin-bottom:15px;">Ingresa los datos del cliente para enviarle su recibo y guardarlo en agenda:</p>
     <input type="text" id="wa-nombre" placeholder="Nombre del Cliente (Ej: María)" style="font-size: 1rem; text-align: center; padding: 12px; border: 2px solid var(--borde); border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px;">
     <input type="number" id="wa-numero" placeholder="Celular (Ej: 987654321)" style="font-size: 1.2rem; text-align: center; letter-spacing: 2px; padding: 15px; border: 2px solid #25D366; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none;">
     <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -232,8 +215,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
@@ -244,66 +225,35 @@
     appId: "1:15388676345:web:72c8e22a2aece1d4151228"
   };
   firebase.initializeApp(firebaseConfig);
-  firebase.firestore().enablePersistence().catch(err => console.warn("Offline config:", err.code));
+  firebase.firestore().enablePersistence().catch(err => console.warn(err.code));
   const db = firebase.firestore();
 </script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
 <script src="app.js"></script>
-  
 <script>
-  // LA MAGIA DE LA PUERTA SECRETA
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
-  
   document.getElementById("user-display").innerText = usuario ? usuario : "Invitado";
-  
   if (rol === "admin") {
       document.querySelectorAll('.admin-only').forEach(el => el.style.display = "flex");
       document.getElementById("btn-login").style.display = "none";
   }
-
   function cerrarSesion() {
-    if(confirm("¿Seguro que quieres salir del modo administrador?")) {
-      localStorage.clear();
-      window.location.href = "index.html"; 
-    }
+    if(confirm("¿Seguro que quieres salir del modo administrador?")) { localStorage.clear(); window.location.href = "index.html"; }
   }
-
   function cargarTema() {
     const temaGuardado = localStorage.getItem("temaFrutisha");
-    const btnTema = document.getElementById("btn-tema");
-    if (temaGuardado === "oscuro") {
-      document.body.classList.add("dark-mode");
-      if(btnTema) btnTema.innerText = "☀️";
-    } else {
-      document.body.classList.remove("dark-mode");
-      if(btnTema) btnTema.innerText = "🌙";
-    }
+    if (temaGuardado === "oscuro") document.body.classList.add("dark-mode");
+    else document.body.classList.remove("dark-mode");
   }
   function toggleTema() {
     document.body.classList.toggle("dark-mode");
-    const btnTema = document.getElementById("btn-tema");
-    if (document.body.classList.contains("dark-mode")) {
-      localStorage.setItem("temaFrutisha", "oscuro");
-      if(btnTema) btnTema.innerText = "☀️";
-      Toastify({ text: "🌙 Modo Nocturno", backgroundColor: "#333", duration: 1500, gravity: "bottom" }).showToast();
-    } else {
-      localStorage.setItem("temaFrutisha", "claro");
-      if(btnTema) btnTema.innerText = "🌙";
-      Toastify({ text: "☀️ Modo Claro", backgroundColor: "#f39c12", duration: 1500, gravity: "bottom" }).showToast();
-    }
+    if (document.body.classList.contains("dark-mode")) localStorage.setItem("temaFrutisha", "oscuro");
+    else localStorage.setItem("temaFrutisha", "claro");
   }
   document.addEventListener("DOMContentLoaded", cargarTema);
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(err => console.log('❌ Error PWA', err));
-    });
-  }
 </script>
 </body>
 </html>
