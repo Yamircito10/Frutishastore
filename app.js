@@ -7,6 +7,9 @@ let productosSeleccionados = [];
 let prendas = [];
 let categoriaActual = "Todas"; 
 
+// 🔑 LLAVE SECRETA DE IMGBB (PEGA TU CÓDIGO AQUÍ ADENTRO DE LAS COMILLAS)
+const IMGBB_API_KEY = "5d117755ac501feb4dfb28b62d2a41bb";
+
 const formatearSoles = (valor) => new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(valor);
 
 function notificar(mensaje, tipo = "exito") {
@@ -481,7 +484,7 @@ async function cargarClientesSPA() {
 }
 
 // ==========================================
-// 📸 3. LÓGICA DE ALMACÉN Y FOTOS
+// 📸 3. LÓGICA DE ALMACÉN Y FOTOS CON IMGBB
 // ==========================================
 async function cargarInventarioSPA() {
   const div = document.getElementById("admin-inventario");
@@ -526,7 +529,7 @@ async function guardarNuevaPrenda() {
   const precio = Number(document.getElementById("nuevo-precio").value);
   const categoria = document.getElementById("nuevo-categoria").value;
   const tallasInput = document.getElementById("nuevas-tallas").value.trim();
-  const archivoFoto = document.getElementById("nueva-imagen-file").files[0]; // Capturamos la foto
+  const archivoFoto = document.getElementById("nueva-imagen-file").files[0]; 
   
   if (!nombre || !precio) return notificar("⚠️ Llena el nombre y precio", "advertencia");
   
@@ -534,18 +537,29 @@ async function guardarNuevaPrenda() {
   if (tallasInput) tallasArray = tallasInput.split(',').map(t => ({ talla: t.trim(), stockTalla: 0, precio: precio }));
 
   const btnGuardar = document.getElementById("btn-guardar-prenda");
-  btnGuardar.innerText = "⏳ Subiendo foto y guardando..."; 
+  btnGuardar.innerText = "⏳ Subiendo foto..."; 
   btnGuardar.disabled = true;
 
   try {
     let urlImagen = "";
 
-    // 📸 Si hay foto, la subimos a Firebase Storage
+    // 📸 MAGIA DE IMGBB (GRATIS Y SIN TARJETA)
     if (archivoFoto) {
-      notificar("📸 Subiendo imagen...", "exito");
-      const refStorage = firebase.storage().ref(`prendas/${Date.now()}_${archivoFoto.name}`);
-      const uploadTask = await refStorage.put(archivoFoto);
-      urlImagen = await uploadTask.ref.getDownloadURL();
+      notificar("📸 Subiendo imagen a la nube...", "exito");
+      const formData = new FormData();
+      formData.append("image", archivoFoto);
+      
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+          method: "POST",
+          body: formData
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+          urlImagen = data.data.url; // ¡Tenemos el enlace!
+      } else {
+          throw new Error("No se pudo subir la foto a ImgBB");
+      }
     }
 
     await db.collection("inventario").add({ 
@@ -554,7 +568,7 @@ async function guardarNuevaPrenda() {
       categoria, 
       stock: 0, 
       tallas: tallasArray, 
-      imagen: urlImagen // Guardamos el enlace de la foto
+      imagen: urlImagen // Guardamos el enlace gratis
     });
 
     document.getElementById("nuevo-nombre").value = "";
@@ -593,7 +607,7 @@ function abrirEdicionInfo(id) {
   document.getElementById("edit-nombre").value = prenda.nombre;
   document.getElementById("edit-precio").value = prenda.precio;
   document.getElementById("edit-categoria").value = prenda.categoria || "Unisex";
-  document.getElementById("edit-imagen-file").value = ""; // Limpiamos por si quiere subir una nueva
+  document.getElementById("edit-imagen-file").value = ""; 
   document.getElementById("modal-editar").classList.add("modal-activo");
 }
 
@@ -615,14 +629,23 @@ async function guardarEdicionInfo() {
     let tallasActualizadas = [];
     if (prenda && prenda.tallas) tallasActualizadas = prenda.tallas.map(t => ({...t, precio: nuevoPrecio}));
     
-    let urlFinal = prenda.imagen || ""; // Mantenemos la foto vieja por defecto
+    let urlFinal = prenda.imagen || ""; 
 
-    // 📸 Si subió una foto nueva al editar, la actualizamos
+    // 📸 MAGIA IMGBB PARA EDITAR
     if (archivoFoto) {
       notificar("📸 Subiendo nueva imagen...", "exito");
-      const refStorage = firebase.storage().ref(`prendas/${Date.now()}_${archivoFoto.name}`);
-      const uploadTask = await refStorage.put(archivoFoto);
-      urlFinal = await uploadTask.ref.getDownloadURL();
+      const formData = new FormData();
+      formData.append("image", archivoFoto);
+      
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+          method: "POST",
+          body: formData
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+          urlFinal = data.data.url;
+      }
     }
 
     await db.collection("inventario").doc(prendaEditandoInfoId).update({ 
