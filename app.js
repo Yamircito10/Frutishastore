@@ -6,6 +6,7 @@ let total = 0;
 let productosSeleccionados = [];
 let prendas = [];
 let categoriaActual = "Todas"; 
+let ventasHistorialCache = []; // 👈 Nueva memoria para los recibos
 
 // 🔑 LLAVE SECRETA DE IMGBB 
 const IMGBB_API_KEY = "5d117755ac501feb4dfb28b62d2a41bb";
@@ -43,12 +44,13 @@ function generarVistaPrendas() {
     div.className = "producto-card";
     div.setAttribute("data-categoria", prenda.categoria || "Unisex"); 
     
-    // 📸 MAGIA DEL MINI-CARRUSEL (Soporta múltiples fotos)
+    const carruselContenedor = document.createElement("div");
+    carruselContenedor.style.position = "relative"; 
+
     const carrusel = document.createElement("div");
     carrusel.className = "carrusel-fotos";
     
-    // Respaldo por si es un producto viejo con 1 sola foto, o si no tiene
-    let arrayFotos = prenda.imagenes || (prenda.imagen ? [prenda.imagen] : ["https://via.placeholder.com/150x140?text=Sin+Foto"]);
+    let arrayFotos = prenda.imagenes && prenda.imagenes.length > 0 ? prenda.imagenes : (prenda.imagen ? [prenda.imagen] : ["https://via.placeholder.com/150x140?text=Sin+Foto"]);
     
     arrayFotos.forEach(urlFoto => {
         const img = document.createElement("img");
@@ -56,7 +58,30 @@ function generarVistaPrendas() {
         img.alt = prenda.nombre;
         carrusel.appendChild(img);
     });
-    div.appendChild(carrusel);
+    
+    carruselContenedor.appendChild(carrusel);
+
+    if (arrayFotos.length > 1) {
+        const btnIzq = document.createElement("button");
+        btnIzq.innerHTML = "❮";
+        btnIzq.style = "position:absolute; left:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:35px; height:35px; font-size:18px; font-weight:bold; color:var(--rosado); cursor:pointer; z-index:10; box-shadow: 0 2px 5px rgba(0,0,0,0.2);";
+        btnIzq.onclick = () => carrusel.scrollBy({ left: -200, behavior: 'smooth' });
+
+        const btnDer = document.createElement("button");
+        btnDer.innerHTML = "❯";
+        btnDer.style = "position:absolute; right:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:35px; height:35px; font-size:18px; font-weight:bold; color:var(--rosado); cursor:pointer; z-index:10; box-shadow: 0 2px 5px rgba(0,0,0,0.2);";
+        btnDer.onclick = () => carrusel.scrollBy({ left: 200, behavior: 'smooth' });
+
+        const badge = document.createElement("div");
+        badge.innerHTML = `📸 ${arrayFotos.length} fotos`;
+        badge.style = "position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; padding: 5px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; pointer-events: none;";
+
+        carruselContenedor.appendChild(btnIzq);
+        carruselContenedor.appendChild(btnDer);
+        carruselContenedor.appendChild(badge);
+    }
+
+    div.appendChild(carruselContenedor);
 
     const titulo = document.createElement("h3");
     titulo.innerText = `${prenda.nombre} (Total: ${prenda.stock ?? 0})`;
@@ -204,14 +229,76 @@ function reiniciarCarrito() {
   productosSeleccionados = []; recalcularTotal(); localStorage.removeItem("carrito"); actualizarInterfaz(); notificar("🔄 Carrito vaciado", "exito");
 }
 
+// 📄 NUEVO: GENERADOR DE CATÁLOGO PDF (LISTA DE PRECIOS)
+async function descargarCatalogoPDF() {
+  if (prendas.length === 0) return notificar("⚠️ No hay prendas en el catálogo", "advertencia");
+  notificar("⏳ Generando Catálogo...", "exito");
+  
+  const btn = document.getElementById("btn-bajar-catalogo");
+  let textoOriginal = btn.innerText;
+  btn.innerText = "⏳..."; 
+  btn.disabled = true;
+
+  try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const fechaActual = new Date().toLocaleDateString("es-PE");
+
+      doc.setFillColor(216, 27, 96); 
+      doc.rect(0, 0, 210, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.text("CATÁLOGO OFICIAL - LUDAVA", 105, 20, { align: "center" });
+
+      doc.setTextColor(45, 52, 54);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Actualizado al: ${fechaActual}`, 105, 38, { align: "center" });
+      doc.text("📱 Pedidos por WhatsApp: 977 757 369", 105, 45, { align: "center" });
+
+      let datosTabla = [];
+      prendas.forEach(p => {
+          let tallasTexto = Array.isArray(p.tallas) && p.tallas.length > 0
+              ? p.tallas.map(t => `T${t.talla}`).join(', ')
+              : "Única";
+          datosTabla.push([ p.nombre, p.categoria || 'Unisex', tallasTexto, formatearSoles(p.precio) ]);
+      });
+
+      doc.autoTable({
+          startY: 55,
+          head: [['Prenda', 'Categoría', 'Tallas Disponibles', 'Precio Base']],
+          body: datosTabla,
+          theme: 'grid',
+          headStyles: { fillColor: [93, 173, 226], textColor: [255,255,255], fontStyle: 'bold', halign: 'center' },
+          bodyStyles: { fontSize: 11, valign: 'middle' },
+          columnStyles: {
+              0: { cellWidth: 70 },
+              1: { cellWidth: 35, halign: 'center' },
+              2: { cellWidth: 50, halign: 'center' },
+              3: { cellWidth: 30, halign: 'right', fontStyle: 'bold', textColor: [216, 27, 96] }
+          }
+      });
+
+      doc.save(`Catalogo_LUDAVA_${fechaActual.replace(/\//g, '-')}.pdf`);
+      notificar("✅ Catálogo descargado", "exito");
+  } catch (error) {
+      console.error(error);
+      notificar("❌ Error al generar el PDF", "error");
+  } finally {
+      btn.innerText = textoOriginal;
+      btn.disabled = false;
+  }
+}
+
 // ==========================================
-// 🎨 GENERAR RECIBO PDF (LUDAVA)
+// 🎨 GENERAR RECIBO PDF (LUDAVA) - AHORA CON FECHA DINÁMICA
 // ==========================================
-function generarPDFRecibo(productos, totalVenta, metodoPago) {
+function generarPDFRecibo(productos, totalVenta, metodoPago, fechaSale, horaSale) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ format: 'a5' }); 
-  const fechaActual = new Date().toLocaleDateString("es-PE");
-  const horaActual = new Date().toLocaleTimeString("es-PE");
+  const fechaActual = fechaSale || new Date().toLocaleDateString("es-PE");
+  const horaActual = horaSale || new Date().toLocaleTimeString("es-PE");
 
   doc.setFillColor(93, 173, 226); doc.rect(0, 0, 210, 25, 'F');
   doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("LUDAVA", 14, 17);
@@ -307,7 +394,7 @@ window.navegarSPA = function(idDestino) {
 // ==========================================
 // 📊 REPORTES Y KIPs
 // ==========================================
-async function cargarReporteVentasSPA() { /* ...Misma lógica de antes... */
+async function cargarReporteVentasSPA() { 
   const div = document.getElementById("kpis-ventas");
   try {
     const snapVentas = await db.collection("ventas").get();
@@ -337,18 +424,40 @@ async function cargarReporteVentasSPA() { /* ...Misma lógica de antes... */
   } catch (e) { div.innerHTML = "<p>Error cargando ventas.</p>"; }
 }
 
+// 📚 HISTORIAL MEJORADO CON REIMPRESIÓN
 async function cargarHistorialSPA() {
   const ul = document.getElementById("ventasDia");
   ul.innerHTML = "<li style='text-align:center;'>⏳ Buscando ventas...</li>";
   try {
     const snap = await db.collection("ventas").orderBy("fechaServidor", "desc").limit(30).get();
     if(snap.empty) return ul.innerHTML = "<li style='text-align:center;'>No hay ventas aún.</li>";
-    ul.innerHTML = snap.docs.map(doc => {
-      const v = doc.data(); const metodo = v.metodoPago || "Efectivo"; 
+    
+    ventasHistorialCache = snap.docs.map(doc => doc.data()); // 👈 Guardamos en la memoria
+
+    ul.innerHTML = ventasHistorialCache.map((v, index) => {
+      const metodo = v.metodoPago || "Efectivo"; 
       let iconoPago = metodo === "Efectivo" ? "💵" : (metodo === "Tarjeta" ? "💳" : (metodo === "Pedido Web" ? "🌐" : "📱"));
-      return `<li><div style="font-size: 12px; color: #888; margin-bottom: 4px;">📅 ${v.fechaTexto} - 🕒 ${v.hora} | ${iconoPago} ${metodo}</div><div style="font-weight: bold;">${v.productos.map(p => p.texto || p.nombre).join(" | ")}</div><div style="color: #27ae60; font-weight: bold; text-align: right; margin-top: 5px;">Total: ${formatearSoles(v.total)}</div></li>`;
+      return `<li style="background: var(--tarjetas); padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid var(--principal); box-shadow: 0 2px 4px rgba(0,0,0,0.05); color: var(--texto);">
+          <div style="font-size: 12px; color: #888; margin-bottom: 8px; display: flex; justify-content: space-between;">
+             <span>📅 ${v.fechaTexto} - 🕒 ${v.hora}</span>
+             <span>${iconoPago} ${metodo}</span>
+          </div>
+          <div style="font-weight: bold; margin-bottom: 8px;">${v.productos.map(p => p.texto || p.nombre).join(" | ")}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+             <button onclick="reimprimirRecibo(${index})" style="background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">📄 Bajar Recibo</button>
+             <span style="color: #27ae60; font-weight: bold; font-size: 15px;">Total: ${formatearSoles(v.total)}</span>
+          </div>
+        </li>`;
     }).join('');
   } catch (e) { ul.innerHTML = "<li>Error cargando historial</li>"; }
+}
+
+// 📄 FUNCIÓN PARA REIMPRIMIR
+window.reimprimirRecibo = function(index) {
+   const v = ventasHistorialCache[index];
+   if(!v) return notificar("⚠️ Error al buscar la venta", "error");
+   generarPDFRecibo(v.productos, v.total, v.metodoPago, v.fechaTexto, v.hora);
+   notificar("📄 Generando recibo nuevamente...", "exito");
 }
 
 async function cargarReporteTallasSPA() {
@@ -431,11 +540,10 @@ async function guardarNuevaPrenda() {
   try {
     let urlsImagenes = [];
 
-    // 📸 BUCLE MAGICO: Sube hasta 4 fotos a ImgBB
     if (archivosFotos.length > 0) {
       notificar(`📸 Subiendo ${Math.min(archivosFotos.length, 4)} imágenes a la nube...`, "exito");
       for (let i = 0; i < archivosFotos.length; i++) {
-         if (i >= 4) break; // Límite de 4 fotos por prenda para no saturar
+         if (i >= 4) break; 
          const formData = new FormData();
          formData.append("image", archivosFotos[i]);
          
@@ -451,7 +559,7 @@ async function guardarNuevaPrenda() {
       categoria, 
       stock: 0, 
       tallas: tallasArray, 
-      imagenes: urlsImagenes // ¡AQUÍ GUARDAMOS EL ARRAY DE FOTOS!
+      imagenes: urlsImagenes 
     });
 
     document.getElementById("nuevo-nombre").value = ""; document.getElementById("nuevo-precio").value = "";
@@ -501,12 +609,10 @@ async function guardarEdicionInfo() {
     let tallasActualizadas = [];
     if (prenda && prenda.tallas) tallasActualizadas = prenda.tallas.map(t => ({...t, precio: nuevoPrecio}));
     
-    // Mantenemos las fotos viejas si no sube nada nuevo
     let urlsFinales = prenda.imagenes || (prenda.imagen ? [prenda.imagen] : []); 
 
-    // 📸 Si subió fotos nuevas, reemplazamos las viejas
     if (archivosFotos.length > 0) {
-      urlsFinales = []; // Borramos las URLs viejas
+      urlsFinales = []; 
       notificar(`📸 Subiendo ${Math.min(archivosFotos.length, 4)} nuevas imágenes...`, "exito");
       for (let i = 0; i < archivosFotos.length; i++) {
          if (i >= 4) break; 
