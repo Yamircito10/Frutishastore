@@ -45,7 +45,7 @@ async function cargarConfiguracion() {
               if (imgLogo && titulo) {
                   imgLogo.src = configActual.logoUrl;
                   imgLogo.style.display = "block";
-                  titulo.style.display = "none"; // Oculta el texto si hay logo
+                  titulo.style.display = "none";
               }
           } else {
               const imgLogo = document.getElementById("logo-tienda");
@@ -53,14 +53,14 @@ async function cargarConfiguracion() {
               if (imgLogo && titulo) { imgLogo.style.display = "none"; titulo.style.display = "block"; }
           }
 
-          // 2. COLORES
+          // 2. COLORES PRINCIPALES
           if(configActual.colorPrincipal) document.documentElement.style.setProperty('--principal', configActual.colorPrincipal);
           if(configActual.colorWhatsApp) document.documentElement.style.setProperty('--color-wa', configActual.colorWhatsApp);
           
           // 3. TIPOGRAFÍA
           if(configActual.tipografia) document.documentElement.style.setProperty('--fuente-principal', configActual.tipografia);
 
-          // 4. ESTILO DE TARJETAS
+          // 4. ESTILO DE TARJETAS (VITRINAS)
           if(configActual.estiloTarjetas === "plano") {
               document.documentElement.style.setProperty('--radio-tarjeta', '0px');
               document.documentElement.style.setProperty('--sombra-tarjeta', 'none');
@@ -80,6 +80,53 @@ async function cargarConfiguracion() {
           } else if (banner) {
               banner.style.display = "none";
           }
+
+          // ⚡ 6. DISEÑO DEL CATÁLOGO (LISTA VS CUADRÍCULA)
+          const listaPrendas = document.getElementById("lista-prendas");
+          if(listaPrendas) {
+              if (configActual.layoutCatalogo === "cuadricula") {
+                  listaPrendas.classList.add("grid-view");
+              } else {
+                  listaPrendas.classList.remove("grid-view");
+              }
+          }
+
+          // ⚡ 7. COLOR DEL MENÚ DE ABAJO
+          if (configActual.colorNav === "principal") {
+              document.documentElement.style.setProperty('--nav-bg', 'var(--principal)');
+              document.documentElement.style.setProperty('--nav-texto', 'rgba(255,255,255,0.8)');
+              document.documentElement.style.setProperty('--nav-activo', '#ffffff');
+              document.documentElement.style.setProperty('--nav-bg-activo', 'rgba(0,0,0,0.1)');
+          } else {
+              document.documentElement.style.setProperty('--nav-bg', 'var(--tarjetas)');
+              document.documentElement.style.setProperty('--nav-texto', 'var(--texto)');
+              document.documentElement.style.setProperty('--nav-activo', 'var(--principal)');
+              document.documentElement.style.setProperty('--nav-bg-activo', 'var(--fondo)');
+          }
+
+          // ⚡ 8. ESTILO DE BOTONES
+          if (configActual.estiloBotones === "cuadrado") {
+              document.documentElement.style.setProperty('--radio-btn', '4px');
+          } else if (configActual.estiloBotones === "pildora") {
+              document.documentElement.style.setProperty('--radio-btn', '30px');
+          } else {
+              document.documentElement.style.setProperty('--radio-btn', '10px');
+          }
+
+          // ⚡ 9. EFECTO CRISTAL (GLASSMORPHISM)
+          if (configActual.efectoCristal === "activado") {
+              document.documentElement.style.setProperty('--filtro-cristal', 'blur(12px)');
+              if (document.body.classList.contains("dark-mode")) {
+                   document.documentElement.style.setProperty('--fondo-modal', 'rgba(30, 30, 30, 0.75)');
+                   if(configActual.colorNav !== "principal") document.documentElement.style.setProperty('--nav-bg', 'rgba(30, 30, 30, 0.75)');
+              } else {
+                   document.documentElement.style.setProperty('--fondo-modal', 'rgba(255, 255, 255, 0.75)');
+                   if(configActual.colorNav !== "principal") document.documentElement.style.setProperty('--nav-bg', 'rgba(255, 255, 255, 0.75)');
+              }
+          } else {
+              document.documentElement.style.setProperty('--filtro-cristal', 'none');
+              document.documentElement.style.setProperty('--fondo-modal', 'var(--tarjetas)');
+          }
       }
   } catch(e) { console.log("No hay diseño personalizado aún."); }
 }
@@ -91,8 +138,13 @@ function abrirModalDiseno() {
   document.getElementById("config-fuente").value = configActual.tipografia || "'Poppins', sans-serif";
   document.getElementById("config-banner").value = configActual.mensajeAnuncio || "";
   document.getElementById("config-tarjetas").value = configActual.estiloTarjetas || "redondeado";
+  
+  document.getElementById("config-layout").value = configActual.layoutCatalogo || "lista";
+  document.getElementById("config-colornav").value = configActual.colorNav || "blanco";
+  document.getElementById("config-botones").value = configActual.estiloBotones || "redondeado";
+  document.getElementById("config-cristal").value = configActual.efectoCristal || "desactivado";
+  
   document.getElementById("config-logo-file").value = ""; 
-
   document.getElementById("modal-diseno").classList.add("modal-activo");
 }
 
@@ -107,6 +159,12 @@ async function guardarDiseno() {
   const nuevaFuente = document.getElementById("config-fuente").value;
   const nuevoAnuncio = document.getElementById("config-banner").value.trim();
   const nuevoEstilo = document.getElementById("config-tarjetas").value;
+  
+  const nuevoLayout = document.getElementById("config-layout").value;
+  const nuevoColorNav = document.getElementById("config-colornav").value;
+  const nuevoBotones = document.getElementById("config-botones").value;
+  const nuevoCristal = document.getElementById("config-cristal").value;
+  
   const archivoLogo = document.getElementById("config-logo-file").files[0];
 
   if(!nuevoTitulo) return notificar("⚠️ El nombre no puede estar vacío", "advertencia");
@@ -117,7 +175,6 @@ async function guardarDiseno() {
   try {
       let logoFinal = configActual.logoUrl || "";
 
-      // 📸 Si subió un logo, lo mandamos a ImgBB
       if (archivoLogo) {
           notificar("📸 Subiendo logo a la nube...", "exito");
           const formData = new FormData();
@@ -134,12 +191,16 @@ async function guardarDiseno() {
           tipografia: nuevaFuente,
           mensajeAnuncio: nuevoAnuncio,
           estiloTarjetas: nuevoEstilo,
+          layoutCatalogo: nuevoLayout,
+          colorNav: nuevoColorNav,
+          estiloBotones: nuevoBotones,
+          efectoCristal: nuevoCristal,
           logoUrl: logoFinal
       }, { merge: true });
 
       notificar("🎨 Diseño aplicado con éxito", "exito");
       cerrarModalDiseno();
-      await cargarConfiguracion(); // Recarga los estilos al instante
+      await cargarConfiguracion(); // Recarga al instante
   } catch(e) {
       notificar("❌ Error al guardar diseño", "error");
   } finally {
