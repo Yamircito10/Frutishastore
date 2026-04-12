@@ -23,33 +23,76 @@ function recalcularTotal() {
 }
 
 // ==========================================
-// 🎨 NUEVO: LÓGICA DEL CREADOR VISUAL
+// 🎨 LÓGICA DEL CREADOR VISUAL (NIVEL DIOS)
 // ==========================================
+let configActual = {};
+
 async function cargarConfiguracion() {
   try {
       const doc = await db.collection("configuracion").doc("tienda").get();
       if(doc.exists) {
-          const data = doc.data();
-          if(data.titulo) {
-              document.title = data.titulo + " - Tienda Virtual";
-              const tituloTienda = document.getElementById("titulo-tienda");
-              if (tituloTienda) tituloTienda.innerText = data.titulo;
+          configActual = doc.data();
+          
+          // 1. TÍTULO Y LOGO
+          if(configActual.titulo) {
+              document.title = configActual.titulo + " - Tienda Virtual";
+              const titulo = document.getElementById("titulo-tienda");
+              if (titulo) titulo.innerText = configActual.titulo;
           }
-          if(data.colorPrincipal) {
-              document.documentElement.style.setProperty('--principal', data.colorPrincipal);
+          if(configActual.logoUrl) {
+              const imgLogo = document.getElementById("logo-tienda");
+              const titulo = document.getElementById("titulo-tienda");
+              if (imgLogo && titulo) {
+                  imgLogo.src = configActual.logoUrl;
+                  imgLogo.style.display = "block";
+                  titulo.style.display = "none"; // Oculta el texto si hay logo
+              }
+          } else {
+              const imgLogo = document.getElementById("logo-tienda");
+              const titulo = document.getElementById("titulo-tienda");
+              if (imgLogo && titulo) { imgLogo.style.display = "none"; titulo.style.display = "block"; }
+          }
+
+          // 2. COLORES
+          if(configActual.colorPrincipal) document.documentElement.style.setProperty('--principal', configActual.colorPrincipal);
+          if(configActual.colorWhatsApp) document.documentElement.style.setProperty('--color-wa', configActual.colorWhatsApp);
+          
+          // 3. TIPOGRAFÍA
+          if(configActual.tipografia) document.documentElement.style.setProperty('--fuente-principal', configActual.tipografia);
+
+          // 4. ESTILO DE TARJETAS
+          if(configActual.estiloTarjetas === "plano") {
+              document.documentElement.style.setProperty('--radio-tarjeta', '0px');
+              document.documentElement.style.setProperty('--sombra-tarjeta', 'none');
+              document.documentElement.style.setProperty('--borde-tarjeta', '1px solid var(--borde)');
+          } else {
+              document.documentElement.style.setProperty('--radio-tarjeta', '15px');
+              document.documentElement.style.setProperty('--sombra-tarjeta', '0 4px 6px rgba(0,0,0,0.05)');
+              document.documentElement.style.setProperty('--borde-tarjeta', '0px');
+          }
+
+          // 5. BANNER DE ANUNCIOS
+          const banner = document.getElementById("contenedor-banner");
+          const textoBanner = document.getElementById("texto-banner");
+          if(configActual.mensajeAnuncio && banner && textoBanner) {
+              textoBanner.innerText = configActual.mensajeAnuncio;
+              banner.style.display = "block";
+          } else if (banner) {
+              banner.style.display = "none";
           }
       }
   } catch(e) { console.log("No hay diseño personalizado aún."); }
 }
 
 function abrirModalDiseno() {
-  const tituloActual = document.getElementById("titulo-tienda").innerText;
-  let colorActual = getComputedStyle(document.documentElement).getPropertyValue('--principal').trim();
-  
-  if(!colorActual.startsWith('#')) colorActual = "#d81b60"; // Respaldo por si acaso
-  
-  document.getElementById("config-titulo").value = tituloActual;
-  document.getElementById("config-color").value = colorActual;
+  document.getElementById("config-titulo").value = configActual.titulo || "✨ LUDAVA";
+  document.getElementById("config-color").value = configActual.colorPrincipal || "#d81b60";
+  document.getElementById("config-wa").value = configActual.colorWhatsApp || "#25D366";
+  document.getElementById("config-fuente").value = configActual.tipografia || "'Poppins', sans-serif";
+  document.getElementById("config-banner").value = configActual.mensajeAnuncio || "";
+  document.getElementById("config-tarjetas").value = configActual.estiloTarjetas || "redondeado";
+  document.getElementById("config-logo-file").value = ""; 
+
   document.getElementById("modal-diseno").classList.add("modal-activo");
 }
 
@@ -60,24 +103,47 @@ function cerrarModalDiseno() {
 async function guardarDiseno() {
   const nuevoTitulo = document.getElementById("config-titulo").value.trim();
   const nuevoColor = document.getElementById("config-color").value;
+  const nuevoWa = document.getElementById("config-wa").value;
+  const nuevaFuente = document.getElementById("config-fuente").value;
+  const nuevoAnuncio = document.getElementById("config-banner").value.trim();
+  const nuevoEstilo = document.getElementById("config-tarjetas").value;
+  const archivoLogo = document.getElementById("config-logo-file").files[0];
 
   if(!nuevoTitulo) return notificar("⚠️ El nombre no puede estar vacío", "advertencia");
 
+  const btnGuardar = document.getElementById("btn-guardar-diseno");
+  btnGuardar.innerText = "⏳ Guardando..."; btnGuardar.disabled = true;
+
   try {
+      let logoFinal = configActual.logoUrl || "";
+
+      // 📸 Si subió un logo, lo mandamos a ImgBB
+      if (archivoLogo) {
+          notificar("📸 Subiendo logo a la nube...", "exito");
+          const formData = new FormData();
+          formData.append("image", archivoLogo);
+          const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
+          const data = await response.json();
+          if (data.success) logoFinal = data.data.url;
+      }
+
       await db.collection("configuracion").doc("tienda").set({
           titulo: nuevoTitulo,
-          colorPrincipal: nuevoColor
+          colorPrincipal: nuevoColor,
+          colorWhatsApp: nuevoWa,
+          tipografia: nuevaFuente,
+          mensajeAnuncio: nuevoAnuncio,
+          estiloTarjetas: nuevoEstilo,
+          logoUrl: logoFinal
       }, { merge: true });
 
-      // Aplicar los cambios al instante frente a tus ojos
-      document.title = nuevoTitulo + " - Tienda Virtual";
-      document.getElementById("titulo-tienda").innerText = nuevoTitulo;
-      document.documentElement.style.setProperty('--principal', nuevoColor);
-
-      notificar("🎨 Diseño actualizado con éxito", "exito");
+      notificar("🎨 Diseño aplicado con éxito", "exito");
       cerrarModalDiseno();
+      await cargarConfiguracion(); // Recarga los estilos al instante
   } catch(e) {
       notificar("❌ Error al guardar diseño", "error");
+  } finally {
+      btnGuardar.innerText = "💾 Aplicar Cambios"; btnGuardar.disabled = false;
   }
 }
 
@@ -123,12 +189,12 @@ function generarVistaPrendas() {
     if (arrayFotos.length > 1) {
         const btnIzq = document.createElement("button");
         btnIzq.innerHTML = "❮";
-        btnIzq.style = "position:absolute; left:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:35px; height:35px; font-size:18px; font-weight:bold; color:var(--rosado); cursor:pointer; z-index:10; box-shadow: 0 2px 5px rgba(0,0,0,0.2);";
+        btnIzq.style = "position:absolute; left:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:35px; height:35px; font-size:18px; font-weight:bold; color:var(--principal); cursor:pointer; z-index:10; box-shadow: 0 2px 5px rgba(0,0,0,0.2);";
         btnIzq.onclick = () => carrusel.scrollBy({ left: -200, behavior: 'smooth' });
 
         const btnDer = document.createElement("button");
         btnDer.innerHTML = "❯";
-        btnDer.style = "position:absolute; right:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:35px; height:35px; font-size:18px; font-weight:bold; color:var(--rosado); cursor:pointer; z-index:10; box-shadow: 0 2px 5px rgba(0,0,0,0.2);";
+        btnDer.style = "position:absolute; right:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:35px; height:35px; font-size:18px; font-weight:bold; color:var(--principal); cursor:pointer; z-index:10; box-shadow: 0 2px 5px rgba(0,0,0,0.2);";
         btnDer.onclick = () => carrusel.scrollBy({ left: 200, behavior: 'smooth' });
 
         const badge = document.createElement("div");
@@ -302,9 +368,8 @@ async function descargarCatalogoPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const fechaActual = new Date().toLocaleDateString("es-PE");
+      const tituloTienda = configActual.titulo || "LUDAVA"; 
       
-      const tituloTienda = document.getElementById("titulo-tienda").innerText; // Usa el nombre personalizado
-
       doc.setFillColor(216, 27, 96); 
       doc.rect(0, 0, 210, 30, 'F');
       doc.setTextColor(255, 255, 255);
@@ -360,7 +425,7 @@ function generarPDFRecibo(productos, totalVenta, metodoPago, fechaSale, horaSale
   const doc = new jsPDF({ format: 'a5' }); 
   const fechaActual = fechaSale || new Date().toLocaleDateString("es-PE");
   const horaActual = horaSale || new Date().toLocaleTimeString("es-PE");
-  const tituloTienda = document.getElementById("titulo-tienda").innerText;
+  const tituloTienda = configActual.titulo || "LUDAVA";
 
   doc.setFillColor(93, 173, 226); doc.rect(0, 0, 210, 25, 'F');
   doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text(tituloTienda, 14, 17);
@@ -399,7 +464,7 @@ async function finalizarVenta() {
   const metodoPagoSelect = document.getElementById("metodo-pago");
   const metodoPago = metodoPagoSelect ? metodoPagoSelect.value : "Pedido Web"; 
   const rol = localStorage.getItem("rolActivo"); 
-  const tituloTienda = document.getElementById("titulo-tienda").innerText;
+  const tituloTienda = configActual.titulo || "LUDAVA";
   
   btn.innerText = "⏳ Procesando..."; btn.disabled = true;
   try {
@@ -424,7 +489,7 @@ function cerrarModalWhatsApp() { document.getElementById("modal-whatsapp").class
 async function enviarWhatsApp() {
   let numeroCliente = document.getElementById("wa-numero").value.trim();
   let nombreCliente = document.getElementById("wa-nombre").value.trim();
-  const tituloTienda = document.getElementById("titulo-tienda").innerText;
+  const tituloTienda = configActual.titulo || "LUDAVA";
   let textoWa = `¡Hola ${nombreCliente ? nombreCliente : ''}! 🛍️✨ Gracias por tu compra en *${tituloTienda}*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes! Síguenos en TikTok @ludava36`;
   
   if(numeroCliente && nombreCliente) {
@@ -764,10 +829,10 @@ async function cargarHistorialMovimientosSPA() {
 
 let eventoInstalacion; window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); eventoInstalacion = e; });
 
-// 🎯 AQUÍ LE DECIMOS QUE CARGUE TU DISEÑO PERSONALIZADO AL ENTRAR A LA PÁGINA
+// 🎯 CARGAR EL DISEÑO AL ABRIR LA PÁGINA
 window.onload = async () => { 
   if(window.location.href.includes("login.html")) return; 
-  await cargarConfiguracion(); // 👈 Carga el modo creador visual
+  await cargarConfiguracion(); // Aplicamos la magia visual
   cargarCarrito(); 
   await cargarPrendas(); 
   actualizarInterfaz(); 
