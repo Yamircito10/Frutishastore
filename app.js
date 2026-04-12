@@ -6,7 +6,7 @@ let total = 0;
 let productosSeleccionados = [];
 let prendas = [];
 let categoriaActual = "Todas"; 
-let ventasHistorialCache = []; // 👈 Nueva memoria para los recibos
+let ventasHistorialCache = []; 
 
 // 🔑 LLAVE SECRETA DE IMGBB 
 const IMGBB_API_KEY = "5d117755ac501feb4dfb28b62d2a41bb";
@@ -20,6 +20,65 @@ function notificar(mensaje, tipo = "exito") {
 
 function recalcularTotal() {
   total = productosSeleccionados.reduce((suma, prod) => suma + Number(prod.precio), 0);
+}
+
+// ==========================================
+// 🎨 NUEVO: LÓGICA DEL CREADOR VISUAL
+// ==========================================
+async function cargarConfiguracion() {
+  try {
+      const doc = await db.collection("configuracion").doc("tienda").get();
+      if(doc.exists) {
+          const data = doc.data();
+          if(data.titulo) {
+              document.title = data.titulo + " - Tienda Virtual";
+              const tituloTienda = document.getElementById("titulo-tienda");
+              if (tituloTienda) tituloTienda.innerText = data.titulo;
+          }
+          if(data.colorPrincipal) {
+              document.documentElement.style.setProperty('--principal', data.colorPrincipal);
+          }
+      }
+  } catch(e) { console.log("No hay diseño personalizado aún."); }
+}
+
+function abrirModalDiseno() {
+  const tituloActual = document.getElementById("titulo-tienda").innerText;
+  let colorActual = getComputedStyle(document.documentElement).getPropertyValue('--principal').trim();
+  
+  if(!colorActual.startsWith('#')) colorActual = "#d81b60"; // Respaldo por si acaso
+  
+  document.getElementById("config-titulo").value = tituloActual;
+  document.getElementById("config-color").value = colorActual;
+  document.getElementById("modal-diseno").classList.add("modal-activo");
+}
+
+function cerrarModalDiseno() {
+  document.getElementById("modal-diseno").classList.remove("modal-activo");
+}
+
+async function guardarDiseno() {
+  const nuevoTitulo = document.getElementById("config-titulo").value.trim();
+  const nuevoColor = document.getElementById("config-color").value;
+
+  if(!nuevoTitulo) return notificar("⚠️ El nombre no puede estar vacío", "advertencia");
+
+  try {
+      await db.collection("configuracion").doc("tienda").set({
+          titulo: nuevoTitulo,
+          colorPrincipal: nuevoColor
+      }, { merge: true });
+
+      // Aplicar los cambios al instante frente a tus ojos
+      document.title = nuevoTitulo + " - Tienda Virtual";
+      document.getElementById("titulo-tienda").innerText = nuevoTitulo;
+      document.documentElement.style.setProperty('--principal', nuevoColor);
+
+      notificar("🎨 Diseño actualizado con éxito", "exito");
+      cerrarModalDiseno();
+  } catch(e) {
+      notificar("❌ Error al guardar diseño", "error");
+  }
 }
 
 // ==========================================
@@ -229,7 +288,7 @@ function reiniciarCarrito() {
   productosSeleccionados = []; recalcularTotal(); localStorage.removeItem("carrito"); actualizarInterfaz(); notificar("🔄 Carrito vaciado", "exito");
 }
 
-// 📄 NUEVO: GENERADOR DE CATÁLOGO PDF (LISTA DE PRECIOS)
+// 📄 GENERADOR DE CATÁLOGO PDF (LISTA DE PRECIOS)
 async function descargarCatalogoPDF() {
   if (prendas.length === 0) return notificar("⚠️ No hay prendas en el catálogo", "advertencia");
   notificar("⏳ Generando Catálogo...", "exito");
@@ -243,13 +302,15 @@ async function descargarCatalogoPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const fechaActual = new Date().toLocaleDateString("es-PE");
+      
+      const tituloTienda = document.getElementById("titulo-tienda").innerText; // Usa el nombre personalizado
 
       doc.setFillColor(216, 27, 96); 
       doc.rect(0, 0, 210, 30, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      doc.text("CATÁLOGO OFICIAL - LUDAVA", 105, 20, { align: "center" });
+      doc.text(`CATÁLOGO OFICIAL - ${tituloTienda}`, 105, 20, { align: "center" });
 
       doc.setTextColor(45, 52, 54);
       doc.setFontSize(12);
@@ -280,7 +341,7 @@ async function descargarCatalogoPDF() {
           }
       });
 
-      doc.save(`Catalogo_LUDAVA_${fechaActual.replace(/\//g, '-')}.pdf`);
+      doc.save(`Catalogo_${tituloTienda}_${fechaActual.replace(/\//g, '-')}.pdf`);
       notificar("✅ Catálogo descargado", "exito");
   } catch (error) {
       console.error(error);
@@ -292,16 +353,17 @@ async function descargarCatalogoPDF() {
 }
 
 // ==========================================
-// 🎨 GENERAR RECIBO PDF (LUDAVA) - AHORA CON FECHA DINÁMICA
+// 🎨 GENERAR RECIBO PDF
 // ==========================================
 function generarPDFRecibo(productos, totalVenta, metodoPago, fechaSale, horaSale) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ format: 'a5' }); 
   const fechaActual = fechaSale || new Date().toLocaleDateString("es-PE");
   const horaActual = horaSale || new Date().toLocaleTimeString("es-PE");
+  const tituloTienda = document.getElementById("titulo-tienda").innerText;
 
   doc.setFillColor(93, 173, 226); doc.rect(0, 0, 210, 25, 'F');
-  doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("LUDAVA", 14, 17);
+  doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text(tituloTienda, 14, 17);
   doc.setFontSize(11); doc.setFont("helvetica", "normal"); doc.text("TikTok: @ludava36", 100, 17);
   doc.setTextColor(45, 52, 54); doc.setFontSize(10); doc.text("Recibo de Compra Digital", 14, 35);
   doc.text(`Fecha: ${fechaActual}`, 14, 42); doc.text(`Hora: ${horaActual}`, 14, 49);
@@ -325,7 +387,7 @@ function generarPDFRecibo(productos, totalVenta, metodoPago, fechaSale, horaSale
   doc.setFontSize(11); doc.setTextColor(150, 150, 150); doc.text("y al", 74, contactoY + 7, { align: "center" });
   doc.setFontSize(14); doc.setTextColor(93, 173, 226); doc.text("903 053 700", 106, contactoY + 7, { align: "center" });
 
-  doc.save(`Recibo_Ludava_${fechaActual.replace(/\//g, '-')}.pdf`);
+  doc.save(`Recibo_${tituloTienda}_${fechaActual.replace(/\//g, '-')}.pdf`);
 }
 
 // ==========================================
@@ -337,6 +399,7 @@ async function finalizarVenta() {
   const metodoPagoSelect = document.getElementById("metodo-pago");
   const metodoPago = metodoPagoSelect ? metodoPagoSelect.value : "Pedido Web"; 
   const rol = localStorage.getItem("rolActivo"); 
+  const tituloTienda = document.getElementById("titulo-tienda").innerText;
   
   btn.innerText = "⏳ Procesando..."; btn.disabled = true;
   try {
@@ -349,7 +412,7 @@ async function finalizarVenta() {
         if(document.getElementById("wa-nombre")) document.getElementById("wa-nombre").value = ""; 
         document.getElementById("modal-whatsapp").classList.add("modal-activo");
     } else {
-        let textoWa = `¡Hola LUDAVA! 🛍️✨ Acabo de hacer un pedido en la tienda virtual por el monto de S/ ${total}. Mi recibo se acaba de descargar. ¡Deseo coordinar el pago y envío!`;
+        let textoWa = `¡Hola ${tituloTienda}! 🛍️✨ Acabo de hacer un pedido en la tienda virtual por el monto de S/ ${total}. Mi recibo se acaba de descargar. ¡Deseo coordinar el pago y envío!`;
         window.open(`https://wa.me/51977757369?text=${encodeURIComponent(textoWa)}`, '_blank');
         productosSeleccionados = []; recalcularTotal(); guardarCarrito(); actualizarInterfaz();
     }
@@ -361,7 +424,8 @@ function cerrarModalWhatsApp() { document.getElementById("modal-whatsapp").class
 async function enviarWhatsApp() {
   let numeroCliente = document.getElementById("wa-numero").value.trim();
   let nombreCliente = document.getElementById("wa-nombre").value.trim();
-  let textoWa = `¡Hola ${nombreCliente ? nombreCliente : ''}! 🛍️✨ Gracias por tu compra en *LUDAVA*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes! Síguenos en TikTok @ludava36`;
+  const tituloTienda = document.getElementById("titulo-tienda").innerText;
+  let textoWa = `¡Hola ${nombreCliente ? nombreCliente : ''}! 🛍️✨ Gracias por tu compra en *${tituloTienda}*.\n\nAquí te adjunto el detalle de tu compra en PDF. ¡Que lo disfrutes! Síguenos en TikTok @ludava36`;
   
   if(numeroCliente && nombreCliente) {
      try { await db.collection("clientes").doc(numeroCliente).set({ nombre: nombreCliente, celular: numeroCliente, ultimaCompra: new Date().toLocaleDateString("es-PE") }, { merge: true });
@@ -424,7 +488,6 @@ async function cargarReporteVentasSPA() {
   } catch (e) { div.innerHTML = "<p>Error cargando ventas.</p>"; }
 }
 
-// 📚 HISTORIAL MEJORADO CON REIMPRESIÓN
 async function cargarHistorialSPA() {
   const ul = document.getElementById("ventasDia");
   ul.innerHTML = "<li style='text-align:center;'>⏳ Buscando ventas...</li>";
@@ -432,7 +495,7 @@ async function cargarHistorialSPA() {
     const snap = await db.collection("ventas").orderBy("fechaServidor", "desc").limit(30).get();
     if(snap.empty) return ul.innerHTML = "<li style='text-align:center;'>No hay ventas aún.</li>";
     
-    ventasHistorialCache = snap.docs.map(doc => doc.data()); // 👈 Guardamos en la memoria
+    ventasHistorialCache = snap.docs.map(doc => doc.data()); 
 
     ul.innerHTML = ventasHistorialCache.map((v, index) => {
       const metodo = v.metodoPago || "Efectivo"; 
@@ -452,7 +515,6 @@ async function cargarHistorialSPA() {
   } catch (e) { ul.innerHTML = "<li>Error cargando historial</li>"; }
 }
 
-// 📄 FUNCIÓN PARA REIMPRIMIR
 window.reimprimirRecibo = function(index) {
    const v = ventasHistorialCache[index];
    if(!v) return notificar("⚠️ Error al buscar la venta", "error");
@@ -701,7 +763,16 @@ async function cargarHistorialMovimientosSPA() {
 }
 
 let eventoInstalacion; window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); eventoInstalacion = e; });
-window.onload = async () => { if(window.location.href.includes("login.html")) return; cargarCarrito(); await cargarPrendas(); actualizarInterfaz(); };
+
+// 🎯 AQUÍ LE DECIMOS QUE CARGUE TU DISEÑO PERSONALIZADO AL ENTRAR A LA PÁGINA
+window.onload = async () => { 
+  if(window.location.href.includes("login.html")) return; 
+  await cargarConfiguracion(); // 👈 Carga el modo creador visual
+  cargarCarrito(); 
+  await cargarPrendas(); 
+  actualizarInterfaz(); 
+};
+
 async function reiniciarTodoElHistorial() { if(!confirm("⚠️ ADVERTENCIA: Borrarás todo el historial. ¿Seguro?")) return; let btn = event.target; let textoOriginal = btn.innerText; btn.innerText = "⏳ Borrando..."; btn.disabled = true; try { const snapshot = await db.collection("ventas").get(); const batch = db.batch(); snapshot.docs.forEach((doc) => { batch.delete(doc.ref); }); await batch.commit(); notificar("✅ Historial limpiado", "exito"); cargarHistorialSPA(); cargarReporteVentasSPA(); } catch (error) {} finally { btn.innerText = textoOriginal; btn.disabled = false; } }
 async function descargarReporteExcel() { notificar("⏳ Generando Excel...", "advertencia"); try { const snapshot = await db.collection("ventas").orderBy("fechaServidor", "desc").get(); if(snapshot.empty) return notificar("⚠️ No hay ventas"); let datosExcel = []; snapshot.forEach(doc => { let v = doc.data(); let descProductos = v.productos.map(p => `${p.nombre} (T${p.talla})`).join(" | "); datosExcel.push({ "Fecha": v.fechaTexto || "-", "Hora": v.hora || "-", "Método": v.metodoPago || "Efectivo", "Productos": descProductos, "Total": v.total }); }); const hoja = XLSX.utils.json_to_sheet(datosExcel); const libro = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(libro, hoja, "Ventas"); XLSX.writeFile(libro, `Ludava_${new Date().toLocaleDateString("es-PE").replace(/\//g, '-')}.xlsx`); notificar("✅ Excel bajado", "exito"); } catch (error) {} }
 async function descargarReportePDF() { notificar("⏳ Generando PDF...", "advertencia"); try { const snapshot = await db.collection("ventas").orderBy("fechaServidor", "desc").get(); if(snapshot.empty) return notificar("⚠️ No hay ventas"); const { jsPDF } = window.jspdf; const doc = new jsPDF({ format: 'a4' }); doc.setFillColor(216, 27, 96); doc.rect(0, 0, 210, 25, 'F'); doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("LUDAVA - Reporte", 14, 17); let datosTabla = []; let totalGeneral = 0; snapshot.forEach(doc => { let v = doc.data(); totalGeneral += v.total; let desc = v.productos.map(p => `${p.nombre} (T${p.talla})`).join("\n"); datosTabla.push([ v.fechaTexto, v.metodoPago, desc, `S/ ${v.total.toFixed(2)}` ]); }); doc.autoTable({ startY: 35, head: [['Fecha', 'Pago', 'Productos', 'Total']], body: datosTabla, theme: 'grid' }); doc.setFontSize(14); doc.text(`Total: S/ ${totalGeneral.toFixed(2)}`, 130, doc.lastAutoTable.finalY + 10); doc.save(`Reporte_${new Date().toLocaleDateString("es-PE").replace(/\//g, '-')}.pdf`); notificar("✅ PDF bajado", "exito"); } catch (error) {} }
