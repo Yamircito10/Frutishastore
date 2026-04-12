@@ -291,24 +291,39 @@
 <script>
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
-  document.getElementById("user-display").innerText = usuario ? usuario : "Invitado";
-  if (rol === "admin") {
+  
+  // 🛡️ BLINDAJE: Solo cambiamos el nombre si el elemento existe
+  const cajitaNombre = document.getElementById("user-display");
+  if (cajitaNombre) {
+      cajitaNombre.innerText = usuario ? usuario : "Invitado";
+  }
+
+  // 👑 ACTIVACIÓN DE PODERES DE JEFE
+  if (rol === "admin" || rol === "trabajador") {
       document.querySelectorAll('.admin-only').forEach(el => el.style.display = "flex");
-      document.getElementById("btn-login").style.display = "none";
+      const btnLogin = document.getElementById("btn-login");
+      if (btnLogin) btnLogin.style.display = "none";
   }
+
   function cerrarSesion() {
-    if(confirm("¿Seguro que quieres salir del modo administrador?")) { localStorage.clear(); window.location.href = "index.html"; }
+    if(confirm("¿Seguro que quieres salir del sistema?")) { 
+        localStorage.clear(); 
+        window.location.href = "index.html"; 
+    }
   }
+  
   function cargarTema() {
     const temaGuardado = localStorage.getItem("temaFrutisha");
     if (temaGuardado === "oscuro") document.body.classList.add("dark-mode");
     else document.body.classList.remove("dark-mode");
   }
+  
   function toggleTema() {
     document.body.classList.toggle("dark-mode");
     if (document.body.classList.contains("dark-mode")) localStorage.setItem("temaFrutisha", "oscuro");
     else localStorage.setItem("temaFrutisha", "claro");
   }
+  
   document.addEventListener("DOMContentLoaded", cargarTema);
 </script>
 </body>
