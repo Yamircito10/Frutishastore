@@ -9,15 +9,38 @@
   <meta name="theme-color" content="#ff7eb3">
   <link rel="apple-touch-icon" href="icono-192.png">
   
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Montserrat:wght@600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="styles.css" />
   
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
   <style>
-    body { padding-bottom: 90px !important; }
+    /* 🎨 VARIABLES DINÁMICAS (SE REESCRIBEN CON EL CREADOR VISUAL) */
+    :root {
+      --fuente-principal: 'Poppins', sans-serif;
+      --borde-tarjeta: 0px;
+      --sombra-tarjeta: 0 4px 6px rgba(0,0,0,0.05);
+      --radio-tarjeta: 15px;
+      --color-wa: #25D366;
+    }
+    
+    body { font-family: var(--fuente-principal) !important; padding-bottom: 90px !important; transition: background 0.3s; }
+    
+    /* ANIMACIÓN DEL BANNER DE ANUNCIOS */
+    @keyframes marquesina {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+    .banner-anuncio { background: var(--principal); color: white; padding: 8px; font-size: 13px; font-weight: bold; overflow: hidden; white-space: nowrap; position: relative; z-index: 900; }
+    .banner-texto { display: inline-block; animation: marquesina 15s linear infinite; }
+
+    /* ESTILOS DINÁMICOS DE TARJETAS */
+    .producto-card { border-radius: var(--radio-tarjeta) !important; box-shadow: var(--sombra-tarjeta) !important; border: var(--borde-tarjeta) !important; transition: all 0.3s; }
+
     .filtros-categorias { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
-    .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; }
+    .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; font-family: inherit; }
     .btn-cat.activa { background: var(--principal); color: white; border-color: var(--principal); }
     
     .carrusel-fotos { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 0; border-radius: 12px; margin-bottom: 10px; background: var(--fondo); scroll-behavior: smooth; }
@@ -29,19 +52,24 @@
     
     .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--tarjetas); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
     .nav-inferior::-webkit-scrollbar { display: none; }
-    .nav-inferior button { background: transparent; color: var(--texto); border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; margin: 0; min-width: 70px; border-radius: 12px; transition: all 0.3s ease; box-shadow: none; font-family: 'Poppins', sans-serif; }
+    .nav-inferior button { background: transparent; color: var(--texto); border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; margin: 0; min-width: 70px; border-radius: 12px; transition: all 0.3s ease; box-shadow: none; font-family: inherit; }
     .nav-inferior button .icono-nav { font-size: 22px; margin-bottom: 4px; transition: transform 0.2s ease; }
     .nav-inferior button:hover, .nav-inferior button:active { color: var(--principal); background-color: var(--fondo); }
     .nav-inferior button:hover .icono-nav, .nav-inferior button:active .icono-nav { transform: translateY(-3px); }
-    .whatsapp-flotante { bottom: 100px !important; }
+    
+    .whatsapp-flotante { bottom: 100px !important; background-color: var(--color-wa) !important; }
   </style>
 </head>
 <body>
 
+<div id="contenedor-banner" class="banner-anuncio" style="display: none;">
+  <div id="texto-banner" class="banner-texto">🎉 ¡Bienvenido a nuestra tienda virtual!</div>
+</div>
+
 <header class="header-container">
-  <div>
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <img id="logo-tienda" src="" alt="Logo" style="display: none; height: 40px; border-radius: 8px; object-fit: contain;">
     <h1 id="titulo-tienda">✨ LUDAVA</h1>
-    <p>Bienvenido, <strong><span id="user-display">Invitado</span></strong></p>
   </div>
   <button id="btn-tema" class="btn-tema" onclick="toggleTema()" title="Cambiar Tema">🌙</button>
 </header>
@@ -54,9 +82,7 @@
   <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-tallas')"><span class="icono-nav">📊</span><span>Tallas</span></button>
   <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-gastos')"><span class="icono-nav">💸</span><span>Gastos</span></button>
   <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-inventario')"><span class="icono-nav">📦</span><span>Almacén</span></button>
-  
   <button class="admin-only" style="display:none; color: var(--principal);" onclick="abrirModalDiseno()"><span class="icono-nav">🎨</span><span>Diseño</span></button>
-  
   <button id="btn-login" onclick="window.location.href='login.html'"><span class="icono-nav">🔒</span><span>Ingresar</span></button>
   <button id="btn-salir" class="admin-only" style="display:none; color:#e74c3c;" onclick="cerrarSesion()"><span class="icono-nav">🚪</span><span>Salir</span></button>
 </nav>
@@ -70,8 +96,8 @@
   </div>
   
   <div class="buscador-container" style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-    <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda..." onkeyup="filtrarPrendas()" style="flex: 1; margin-bottom: 0;">
-    <button id="btn-bajar-catalogo" onclick="descargarCatalogoPDF()" style="background: var(--principal); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">📄 Catálogo</button>
+    <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda..." onkeyup="filtrarPrendas()" style="flex: 1; margin-bottom: 0; font-family: inherit;">
+    <button id="btn-bajar-catalogo" onclick="descargarCatalogoPDF()" style="background: var(--principal); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-family: inherit;">📄 Catálogo</button>
   </div>
 
   <section id="lista-prendas" class="productos"><p>Cargando catálogo...</p></section>
@@ -80,23 +106,23 @@
   <div class="acciones" style="display: flex; flex-direction: column;">
     <div id="caja-metodo-pago" class="admin-only" style="display:none; margin-bottom: 12px; background: var(--tarjetas); padding: 10px; border-radius: 10px; border: 1px solid var(--borde);">
       <label style="font-weight: bold; font-size: 14px; color: var(--principal);">💳 Método de Pago:</label>
-      <select id="metodo-pago" style="width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 2px solid var(--borde); background: var(--fondo); font-family: 'Poppins', sans-serif; font-size: 15px; outline: none; color: var(--texto); cursor: pointer;">
+      <select id="metodo-pago" style="width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 2px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 15px; outline: none; color: var(--texto); cursor: pointer;">
           <option value="Efectivo">💵 Efectivo</option>
           <option value="Yape/Plin">📱 Yape / Plin</option>
           <option value="Tarjeta">💳 Tarjeta</option>
       </select>
     </div>
-    <button class="btn-finalizar" onclick="finalizarVenta()">Enviar Pedido 🚀</button>
-    <button class="reiniciar-btn" onclick="reiniciarCarrito()">🔄 Vaciar Carrito</button>
+    <button class="btn-finalizar" onclick="finalizarVenta()" style="font-family: inherit;">Enviar Pedido 🚀</button>
+    <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="font-family: inherit;">🔄 Vaciar Carrito</button>
   </div>
 </div>
 
 <div id="vista-ventas" class="pantalla">
   <h2>📈 Balance General y Ventas</h2>
   <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">📄 PDF</button>
-      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">📗 Excel</button>
-      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">🗑️ Borrar</button>
+      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-family: inherit;">📄 PDF</button>
+      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-family: inherit;">📗 Excel</button>
+      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-family: inherit;">🗑️ Borrar</button>
   </div>
   <div id="kpis-ventas"></div>
 </div>
@@ -108,12 +134,12 @@
 <div id="vista-gastos" class="pantalla">
   <h2>💸 Gastos y Proveedores</h2>
   <div class="form-inventario producto-card">
-    <input type="text" id="gasto-motivo" placeholder="Motivo (Ej: Compra Jean, Pago Envío)">
-    <input type="number" id="gasto-monto" placeholder="Monto (S/)">
-    <select id="gasto-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif;">
+    <input type="text" id="gasto-motivo" placeholder="Motivo (Ej: Compra Jean, Pago Envío)" style="font-family: inherit;">
+    <input type="number" id="gasto-monto" placeholder="Monto (S/)" style="font-family: inherit;">
+    <select id="gasto-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: inherit;">
       <option value="Mercadería">📦 Mercadería</option><option value="Envío">🚚 Envío / Pasajes</option><option value="Local">🏠 Alquiler / Luz</option><option value="Publicidad">📱 Publicidad / TikTok</option><option value="Otros">✨ Otros</option>
     </select>
-    <button onclick="guardarGasto()" style="background: var(--principal); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;">💾 Registrar Gasto</button>
+    <button onclick="guardarGasto()" style="background: var(--principal); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-family: inherit;">💾 Registrar Gasto</button>
   </div>
   <div id="lista-gastos"></div>
 </div>
@@ -122,16 +148,16 @@
   <h2>📦 Gestión de Inventario</h2>
   <div class="form-inventario producto-card">
     <h3 style="margin-top: 0; color: var(--principal);">➕ Agregar Nueva Prenda</h3>
-    <input type="text" id="nuevo-nombre" placeholder="Nombre (Ej. Polo Básico)">
-    <input type="number" id="nuevo-precio" placeholder="Precio Base (S/)">
-    <select id="nuevo-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif;">
+    <input type="text" id="nuevo-nombre" placeholder="Nombre (Ej. Polo Básico)" style="font-family: inherit;">
+    <input type="number" id="nuevo-precio" placeholder="Precio Base (S/)" style="font-family: inherit;">
+    <select id="nuevo-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: inherit;">
       <option value="Niñas">Niñas 🎀</option><option value="Niños">Niños 🧢</option><option value="Bebés">Bebés 🍼</option><option value="Unisex">Unisex ✨</option>
     </select>
     <p style="font-size: 13px; margin: 0 0 5px 0; color: #666;">Tallas Iniciales (Ej: S, M, L):</p>
-    <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
-    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Subir Fotos (Marca hasta 4 al mismo tiempo):</p>
+    <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)" style="font-family: inherit;">
+    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Subir Fotos (Marca hasta 4):</p>
     <input type="file" id="nueva-imagen-file" accept="image/*" multiple class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--celeste);">
-    <button id="btn-guardar-prenda" onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px;">💾 Guardar Prenda</button>
+    <button id="btn-guardar-prenda" onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; font-family: inherit;">💾 Guardar Prenda</button>
   </div>
   <div id="admin-inventario"><p>Cargando almacén...</p></div>
   <hr style="margin: 30px 0; border: 1px solid var(--borde);">
@@ -144,16 +170,16 @@
 <div id="modal-editar" class="modal-oculto">
   <div class="modal-contenido form-inventario">
     <h3>✏️ Editar Información</h3>
-    <input type="text" id="edit-nombre" placeholder="Nombre de la Prenda">
-    <input type="number" id="edit-precio" placeholder="Precio Base (S/)">
-    <select id="edit-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif;">
+    <input type="text" id="edit-nombre" placeholder="Nombre de la Prenda" style="font-family: inherit;">
+    <input type="number" id="edit-precio" placeholder="Precio Base (S/)" style="font-family: inherit;">
+    <select id="edit-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: inherit;">
       <option value="Niñas">Niñas 🎀</option><option value="Niños">Niños 🧢</option><option value="Bebés">Bebés 🍼</option><option value="Unisex">Unisex ✨</option>
     </select>
-    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Cambiar Fotos (Marca varias al mismo tiempo):</p>
+    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Cambiar Fotos:</p>
     <input type="file" id="edit-imagen-file" accept="image/*" multiple class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--rosado);">
     <div style="display: flex; gap: 10px; margin-top: 10px;">
-      <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
-      <button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer;">💾 Guardar</button>
+      <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer; font-family: inherit;">❌ Cancelar</button>
+      <button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer; font-family: inherit;">💾 Guardar</button>
     </div>
   </div>
 </div>
@@ -164,7 +190,7 @@
     <div id="modal-paso-tallas">
       <p style="color:var(--texto); font-size:14px; margin-bottom:15px;">Toca la talla que vas a recargar:</p>
       <div id="modal-tallas-botones" class="botones-grid"></div>
-      <button onclick="cerrarModalStock()" style="margin-top:10px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold;">❌ Cancelar</button>
+      <button onclick="cerrarModalStock()" style="margin-top:10px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold; font-family: inherit;">❌ Cancelar</button>
     </div>
     <div id="modal-paso-teclado" style="display:none;">
       <p style="margin:0 0 10px 0;">Sumar a Talla: <strong id="talla-seleccionada-txt" style="color:var(--principal); font-size:1.3rem;"></strong></p>
@@ -175,7 +201,7 @@
         <button onclick="teclear(7)">7</button><button onclick="teclear(8)">8</button><button onclick="teclear(9)">9</button>
         <button onclick="teclear('C')" style="background:#e74c3c; color:white;">C</button><button onclick="teclear(0)">0</button><button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="background:var(--exito); color:white;">✔</button>
       </div>
-      <button onclick="cerrarModalStock()" style="margin-top:15px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold;">Volver a Tallas</button>
+      <button onclick="cerrarModalStock()" style="margin-top:15px; width:100%; padding:12px; border-radius:10px; border:none; background:#95a5a6; color:white; font-weight:bold; font-family: inherit;">Volver a Tallas</button>
     </div>
   </div>
 </div>
@@ -183,29 +209,58 @@
 <div id="modal-whatsapp" class="modal-oculto">
   <div class="modal-contenido form-inventario">
     <h3 style="color: #25D366;">📱 Enviar por WhatsApp</h3>
-    <input type="text" id="wa-nombre" placeholder="Nombre del Cliente (Ej: María)" style="font-size: 1rem; text-align: center; padding: 12px; border: 2px solid var(--borde); border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px;">
-    <input type="number" id="wa-numero" placeholder="Celular (Ej: 987654321)" style="font-size: 1.2rem; text-align: center; letter-spacing: 2px; padding: 15px; border: 2px solid #25D366; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none;">
+    <input type="text" id="wa-nombre" placeholder="Nombre del Cliente (Ej: María)" style="font-size: 1rem; text-align: center; padding: 12px; border: 2px solid var(--borde); border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px; font-family: inherit;">
+    <input type="number" id="wa-numero" placeholder="Celular (Ej: 987654321)" style="font-size: 1.2rem; text-align: center; letter-spacing: 2px; padding: 15px; border: 2px solid #25D366; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; font-family: inherit;">
     <div style="display: flex; gap: 10px; margin-top: 15px;">
-      <button onclick="cerrarModalWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">Omitir</button>
-      <button onclick="enviarWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #25D366; color: white; font-weight: bold; cursor: pointer;">Enviar 🚀</button>
+      <button onclick="cerrarModalWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer; font-family: inherit;">Omitir</button>
+      <button onclick="enviarWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #25D366; color: white; font-weight: bold; cursor: pointer; font-family: inherit;">Enviar 🚀</button>
     </div>
   </div>
 </div>
 
 <div id="modal-diseno" class="modal-oculto">
-  <div class="modal-contenido form-inventario">
-    <h3 style="color: var(--principal);">🎨 Creador Visual</h3>
-    <p style="font-size:13px; color:var(--texto); margin-bottom: 15px;">Edita la apariencia de tu tienda en tiempo real. Los cambios se guardarán automáticamente.</p>
+  <div class="modal-contenido form-inventario" style="max-height: 80vh; overflow-y: auto;">
+    <h3 style="color: var(--principal); margin-top: 0;">🎨 Creador Visual LUDAVA</h3>
+    <p style="font-size:13px; color:var(--texto); margin-bottom: 15px;">Controla la apariencia de tu tienda sin tocar código.</p>
     
-    <label style="font-weight: bold; font-size: 14px; color: var(--texto);">Nombre de la Tienda:</label>
-    <input type="text" id="config-titulo" placeholder="Ej: ✨ LUDAVA" style="margin-bottom: 15px;">
+    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">1. Nombre de la Tienda (Texto):</label>
+    <input type="text" id="config-titulo" placeholder="Ej: ✨ LUDAVA" style="margin-bottom: 15px; font-family: inherit;">
     
-    <label style="font-weight: bold; font-size: 14px; color: var(--texto);">Color Principal (Botones y Detalles):</label>
-    <input type="color" id="config-color" style="width: 100%; height: 50px; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; background: var(--fondo);">
+    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">2. Logo Oficial (Imagen PNG/JPG):</label>
+    <p style="font-size: 11px; margin: 0 0 5px 0; color: #888;">Si subes logo, ocultará el texto de arriba.</p>
+    <input type="file" id="config-logo-file" accept="image/*" style="background: white; padding: 8px; border-radius: 8px; border: 1px solid var(--borde); margin-bottom: 15px; width: 100%; box-sizing: border-box;">
     
+    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">3. Tipografía (Tipo de Letra):</label>
+    <select id="config-fuente" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 14px; outline: none; color: var(--texto); cursor: pointer;">
+        <option value="'Poppins', sans-serif">Moderna (Poppins)</option>
+        <option value="'Montserrat', sans-serif">Elegante (Montserrat)</option>
+        <option value="'Comic Neue', cursive">Divertida / Niños (Comic Neue)</option>
+    </select>
+
+    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">4. Banner de Anuncios (Marquesina):</label>
+    <p style="font-size: 11px; margin: 0 0 5px 0; color: #888;">Déjalo en blanco para ocultarlo.</p>
+    <input type="text" id="config-banner" placeholder="Ej: 🎉 ¡Envíos gratis por el Día del Niño!" style="margin-bottom: 15px; font-family: inherit;">
+
+    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">5. Estilo de las Vitrinas (Tarjetas):</label>
+    <select id="config-tarjetas" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 14px; outline: none; color: var(--texto); cursor: pointer;">
+        <option value="redondeado">Suave (Bordes redondos y sombras)</option>
+        <option value="plano">Plano (Minimalista, sin sombras)</option>
+    </select>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <div style="flex: 1;">
+            <label style="font-weight: bold; font-size: 12px; color: var(--texto);">Color Principal:</label>
+            <input type="color" id="config-color" style="width: 100%; height: 40px; border: none; border-radius: 8px; cursor: pointer; background: var(--fondo);">
+        </div>
+        <div style="flex: 1;">
+            <label style="font-weight: bold; font-size: 12px; color: var(--texto);">Color Botón WA:</label>
+            <input type="color" id="config-wa" style="width: 100%; height: 40px; border: none; border-radius: 8px; cursor: pointer; background: var(--fondo);">
+        </div>
+    </div>
+
     <div style="display: flex; gap: 10px; margin-top: 15px;">
-      <button onclick="cerrarModalDiseno()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
-      <button onclick="guardarDiseno()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer;">💾 Aplicar</button>
+      <button onclick="cerrarModalDiseno()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer; font-family: inherit;">❌ Cancelar</button>
+      <button id="btn-guardar-diseno" onclick="guardarDiseno()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer; font-family: inherit;">💾 Aplicar Cambios</button>
     </div>
   </div>
 </div>
