@@ -10,25 +10,30 @@
   <link rel="apple-touch-icon" href="icono-192.png">
   
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Montserrat:wght@600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  
   <link rel="stylesheet" href="styles.css" />
-  
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
   <style>
-    /* 🎨 VARIABLES DINÁMICAS (SE REESCRIBEN CON EL CREADOR VISUAL) */
+    /* 🎨 VARIABLES DINÁMICAS NÚCLEO */
     :root {
       --fuente-principal: 'Poppins', sans-serif;
       --borde-tarjeta: 0px;
       --sombra-tarjeta: 0 4px 6px rgba(0,0,0,0.05);
       --radio-tarjeta: 15px;
       --color-wa: #25D366;
+      /* Nuevas super variables */
+      --nav-bg: var(--tarjetas);
+      --nav-texto: var(--texto);
+      --nav-activo: var(--principal);
+      --nav-bg-activo: var(--fondo);
+      --radio-btn: 8px;
+      --fondo-modal: var(--tarjetas);
+      --filtro-cristal: none;
     }
     
     body { font-family: var(--fuente-principal) !important; padding-bottom: 90px !important; transition: background 0.3s; }
     
-    /* ANIMACIÓN DEL BANNER DE ANUNCIOS */
     @keyframes marquesina {
       0% { transform: translateX(100vw); }
       100% { transform: translateX(-100%); }
@@ -36,9 +41,8 @@
     .banner-anuncio { background: var(--principal); color: white; padding: 8px; font-size: 13px; font-weight: bold; overflow: hidden; white-space: nowrap; position: relative; z-index: 900; }
     .banner-texto { display: inline-block; animation: marquesina 15s linear infinite; }
 
-    /* ESTILOS DINÁMICOS DE TARJETAS */
+    /* ESTILOS DINÁMICOS */
     .producto-card { border-radius: var(--radio-tarjeta) !important; box-shadow: var(--sombra-tarjeta) !important; border: var(--borde-tarjeta) !important; transition: all 0.3s; }
-
     .filtros-categorias { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
     .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; font-family: inherit; }
     .btn-cat.activa { background: var(--principal); color: white; border-color: var(--principal); }
@@ -50,14 +54,32 @@
     .carrusel-fotos::-webkit-scrollbar-thumb:hover { background: var(--celeste); }
     .carrusel-fotos img { width: 100%; flex-shrink: 0; scroll-snap-align: center; object-fit: cover; height: 180px; }
     
-    .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--tarjetas); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
+    /* MAGIA EFECTO CRISTAL Y NAV INFERIOR */
+    .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--nav-bg) !important; backdrop-filter: var(--filtro-cristal); -webkit-backdrop-filter: var(--filtro-cristal); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
     .nav-inferior::-webkit-scrollbar { display: none; }
-    .nav-inferior button { background: transparent; color: var(--texto); border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; margin: 0; min-width: 70px; border-radius: 12px; transition: all 0.3s ease; box-shadow: none; font-family: inherit; }
+    .nav-inferior button { background: transparent; color: var(--nav-texto) !important; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; margin: 0; min-width: 70px; border-radius: 12px; transition: all 0.3s ease; box-shadow: none; font-family: inherit; }
     .nav-inferior button .icono-nav { font-size: 22px; margin-bottom: 4px; transition: transform 0.2s ease; }
-    .nav-inferior button:hover, .nav-inferior button:active { color: var(--principal); background-color: var(--fondo); }
+    .nav-inferior button:hover, .nav-inferior button:active { color: var(--nav-activo) !important; background-color: var(--nav-bg-activo) !important; }
     .nav-inferior button:hover .icono-nav, .nav-inferior button:active .icono-nav { transform: translateY(-3px); }
     
     .whatsapp-flotante { bottom: 100px !important; background-color: var(--color-wa) !important; }
+    
+    /* BOTONES DINÁMICOS */
+    .btn-finalizar, #btn-bajar-catalogo, .btn-guardar-prenda, #btn-guardar-edicion, #btn-guardar-diseno { border-radius: var(--radio-btn) !important; }
+    
+    /* EFECTO CRISTAL PARA MODALES */
+    .modal-contenido { background: var(--fondo-modal) !important; backdrop-filter: var(--filtro-cristal); -webkit-backdrop-filter: var(--filtro-cristal); border: 1px solid rgba(255,255,255,0.1); }
+
+    /* 📱 MODO CUADRÍCULA (2 COLUMNAS) */
+    .productos { display: flex; flex-direction: column; gap: 15px; }
+    .productos.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .productos.grid-view .producto-card { margin-bottom: 0; padding: 10px; }
+    .productos.grid-view .producto-card h3 { font-size: 13px; margin: 5px 0; }
+    .productos.grid-view .carrusel-fotos img { height: 130px; }
+    .productos.grid-view .tallas { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+    .productos.grid-view .boton-talla { padding: 4px 6px; font-size: 10px; }
+    .productos.grid-view .descuentos { display: flex; flex-direction: column; gap: 4px; }
+    .productos.grid-view .descuento-btn { font-size: 10px; padding: 5px; }
   </style>
 </head>
 <body>
@@ -97,7 +119,7 @@
   
   <div class="buscador-container" style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
     <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda..." onkeyup="filtrarPrendas()" style="flex: 1; margin-bottom: 0; font-family: inherit;">
-    <button id="btn-bajar-catalogo" onclick="descargarCatalogoPDF()" style="background: var(--principal); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-family: inherit;">📄 Catálogo</button>
+    <button id="btn-bajar-catalogo" onclick="descargarCatalogoPDF()" style="background: var(--principal); color: white; border: none; padding: 12px 15px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-family: inherit;">📄 Catálogo</button>
   </div>
 
   <section id="lista-prendas" class="productos"><p>Cargando catálogo...</p></section>
@@ -112,8 +134,8 @@
           <option value="Tarjeta">💳 Tarjeta</option>
       </select>
     </div>
-    <button class="btn-finalizar" onclick="finalizarVenta()" style="font-family: inherit;">Enviar Pedido 🚀</button>
-    <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="font-family: inherit;">🔄 Vaciar Carrito</button>
+    <button class="btn-finalizar" onclick="finalizarVenta()" style="font-family: inherit; background: var(--principal); color: white; padding: 14px; font-weight: bold; border: none; width: 100%;">Enviar Pedido 🚀</button>
+    <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="font-family: inherit; margin-top: 10px;">🔄 Vaciar Carrito</button>
   </div>
 </div>
 
@@ -157,7 +179,7 @@
     <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)" style="font-family: inherit;">
     <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Subir Fotos (Marca hasta 4):</p>
     <input type="file" id="nueva-imagen-file" accept="image/*" multiple class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--celeste);">
-    <button id="btn-guardar-prenda" onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; font-family: inherit;">💾 Guardar Prenda</button>
+    <button id="btn-guardar-prenda" class="btn-guardar-prenda" onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; font-family: inherit;">💾 Guardar Prenda</button>
   </div>
   <div id="admin-inventario"><p>Cargando almacén...</p></div>
   <hr style="margin: 30px 0; border: 1px solid var(--borde);">
@@ -179,7 +201,7 @@
     <input type="file" id="edit-imagen-file" accept="image/*" multiple class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--rosado);">
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer; font-family: inherit;">❌ Cancelar</button>
-      <button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer; font-family: inherit;">💾 Guardar</button>
+      <button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer; font-family: inherit;">💾 Guardar</button>
     </div>
   </div>
 </div>
@@ -219,48 +241,71 @@
 </div>
 
 <div id="modal-diseno" class="modal-oculto">
-  <div class="modal-contenido form-inventario" style="max-height: 80vh; overflow-y: auto;">
+  <div class="modal-contenido form-inventario" style="max-height: 85vh; overflow-y: auto;">
     <h3 style="color: var(--principal); margin-top: 0;">🎨 Creador Visual LUDAVA</h3>
-    <p style="font-size:13px; color:var(--texto); margin-bottom: 15px;">Controla la apariencia de tu tienda sin tocar código.</p>
+    <p style="font-size:12px; color:var(--texto); margin-bottom: 15px;">Controla tu tienda sin tocar código.</p>
     
-    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">1. Nombre de la Tienda (Texto):</label>
-    <input type="text" id="config-titulo" placeholder="Ej: ✨ LUDAVA" style="margin-bottom: 15px; font-family: inherit;">
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">1. Nombre de la Tienda:</label>
+    <input type="text" id="config-titulo" placeholder="Ej: ✨ LUDAVA" style="margin-bottom: 12px; font-family: inherit; font-size: 13px;">
     
-    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">2. Logo Oficial (Imagen PNG/JPG):</label>
-    <p style="font-size: 11px; margin: 0 0 5px 0; color: #888;">Si subes logo, ocultará el texto de arriba.</p>
-    <input type="file" id="config-logo-file" accept="image/*" style="background: white; padding: 8px; border-radius: 8px; border: 1px solid var(--borde); margin-bottom: 15px; width: 100%; box-sizing: border-box;">
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">2. Logo Oficial (Imagen):</label>
+    <input type="file" id="config-logo-file" accept="image/*" style="background: white; padding: 6px; border-radius: 8px; border: 1px solid var(--borde); margin-bottom: 12px; width: 100%; box-sizing: border-box; font-size: 12px;">
     
-    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">3. Tipografía (Tipo de Letra):</label>
-    <select id="config-fuente" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 14px; outline: none; color: var(--texto); cursor: pointer;">
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">3. Tipografía:</label>
+    <select id="config-fuente" style="width: 100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 13px; outline: none; color: var(--texto);">
         <option value="'Poppins', sans-serif">Moderna (Poppins)</option>
         <option value="'Montserrat', sans-serif">Elegante (Montserrat)</option>
-        <option value="'Comic Neue', cursive">Divertida / Niños (Comic Neue)</option>
+        <option value="'Comic Neue', cursive">Divertida (Comic Neue)</option>
     </select>
 
-    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">4. Banner de Anuncios (Marquesina):</label>
-    <p style="font-size: 11px; margin: 0 0 5px 0; color: #888;">Déjalo en blanco para ocultarlo.</p>
-    <input type="text" id="config-banner" placeholder="Ej: 🎉 ¡Envíos gratis por el Día del Niño!" style="margin-bottom: 15px; font-family: inherit;">
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">4. Banner de Anuncios:</label>
+    <input type="text" id="config-banner" placeholder="Ej: 🎉 ¡Envíos gratis!" style="margin-bottom: 12px; font-family: inherit; font-size: 13px;">
 
-    <label style="font-weight: bold; font-size: 13px; color: var(--texto);">5. Estilo de las Vitrinas (Tarjetas):</label>
-    <select id="config-tarjetas" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 14px; outline: none; color: var(--texto); cursor: pointer;">
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">5. Diseño del Catálogo:</label>
+    <select id="config-layout" style="width: 100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 13px; color: var(--texto);">
+        <option value="lista">Lista (1 columna, fotos grandes)</option>
+        <option value="cuadricula">Cuadrícula (2 columnas, para móviles)</option>
+    </select>
+
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">6. Color del Menú de Abajo:</label>
+    <select id="config-colornav" style="width: 100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 13px; color: var(--texto);">
+        <option value="blanco">Clásico (Fondo claro/oscuro)</option>
+        <option value="principal">Estilo App (Color principal de marca)</option>
+    </select>
+
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">7. Estilo de Botones:</label>
+    <select id="config-botones" style="width: 100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 13px; color: var(--texto);">
+        <option value="redondeado">Redondeado (Normal)</option>
+        <option value="cuadrado">Rectangular (Serio)</option>
+        <option value="pildora">Píldora (Muy amigable)</option>
+    </select>
+    
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">8. Estilo de Vitrinas:</label>
+    <select id="config-tarjetas" style="width: 100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 13px; color: var(--texto);">
         <option value="redondeado">Suave (Bordes redondos y sombras)</option>
-        <option value="plano">Plano (Minimalista, sin sombras)</option>
+        <option value="plano">Plano (Minimalista)</option>
+    </select>
+
+    <label style="font-weight: bold; font-size: 12px; color: var(--texto);">9. Efecto Cristal (NUEVO 🧊):</label>
+    <select id="config-cristal" style="width: 100%; padding: 8px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); font-family: inherit; font-size: 13px; color: var(--texto);">
+        <option value="desactivado">Desactivado (Sólido)</option>
+        <option value="activado">Activado (Transparente y empañado)</option>
     </select>
 
     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
         <div style="flex: 1;">
-            <label style="font-weight: bold; font-size: 12px; color: var(--texto);">Color Principal:</label>
-            <input type="color" id="config-color" style="width: 100%; height: 40px; border: none; border-radius: 8px; cursor: pointer; background: var(--fondo);">
+            <label style="font-weight: bold; font-size: 11px; color: var(--texto);">Color Principal:</label>
+            <input type="color" id="config-color" style="width: 100%; height: 35px; border: none; border-radius: 8px; cursor: pointer; background: var(--fondo);">
         </div>
         <div style="flex: 1;">
-            <label style="font-weight: bold; font-size: 12px; color: var(--texto);">Color Botón WA:</label>
-            <input type="color" id="config-wa" style="width: 100%; height: 40px; border: none; border-radius: 8px; cursor: pointer; background: var(--fondo);">
+            <label style="font-weight: bold; font-size: 11px; color: var(--texto);">Color Botón WA:</label>
+            <input type="color" id="config-wa" style="width: 100%; height: 35px; border: none; border-radius: 8px; cursor: pointer; background: var(--fondo);">
         </div>
     </div>
 
-    <div style="display: flex; gap: 10px; margin-top: 15px;">
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button onclick="cerrarModalDiseno()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer; font-family: inherit;">❌ Cancelar</button>
-      <button id="btn-guardar-diseno" onclick="guardarDiseno()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer; font-family: inherit;">💾 Aplicar Cambios</button>
+      <button id="btn-guardar-diseno" onclick="guardarDiseno()" style="flex: 1; padding: 12px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer; font-family: inherit;">💾 Aplicar Cambios</button>
     </div>
   </div>
 </div>
@@ -292,13 +337,9 @@
   const usuario = localStorage.getItem("usuarioActivo");
   const rol = localStorage.getItem("rolActivo");
   
-  // 🛡️ BLINDAJE: Solo cambiamos el nombre si el elemento existe
   const cajitaNombre = document.getElementById("user-display");
-  if (cajitaNombre) {
-      cajitaNombre.innerText = usuario ? usuario : "Invitado";
-  }
+  if (cajitaNombre) cajitaNombre.innerText = usuario ? usuario : "Invitado";
 
-  // 👑 ACTIVACIÓN DE PODERES DE JEFE
   if (rol === "admin" || rol === "trabajador") {
       document.querySelectorAll('.admin-only').forEach(el => el.style.display = "flex");
       const btnLogin = document.getElementById("btn-login");
@@ -306,24 +347,21 @@
   }
 
   function cerrarSesion() {
-    if(confirm("¿Seguro que quieres salir del sistema?")) { 
-        localStorage.clear(); 
-        window.location.href = "index.html"; 
-    }
+    if(confirm("¿Seguro que quieres salir del sistema?")) { localStorage.clear(); window.location.href = "index.html"; }
   }
-  
   function cargarTema() {
     const temaGuardado = localStorage.getItem("temaFrutisha");
     if (temaGuardado === "oscuro") document.body.classList.add("dark-mode");
     else document.body.classList.remove("dark-mode");
   }
-  
   function toggleTema() {
     document.body.classList.toggle("dark-mode");
     if (document.body.classList.contains("dark-mode")) localStorage.setItem("temaFrutisha", "oscuro");
     else localStorage.setItem("temaFrutisha", "claro");
+    
+    // Si tienes el Cristal activado, recalcula en oscuro
+    if (typeof cargarConfiguracion === "function") cargarConfiguracion();
   }
-  
   document.addEventListener("DOMContentLoaded", cargarTema);
 </script>
 </body>
