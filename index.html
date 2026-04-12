@@ -20,9 +20,11 @@
     .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; }
     .btn-cat.activa { background: var(--principal); color: white; border-color: var(--principal); }
     
-    /* 📸 MAGIA DEL CARRUSEL TÁCTIL */
-    .carrusel-fotos { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 0; border-radius: 12px; margin-bottom: 10px; background: var(--fondo); }
-    .carrusel-fotos::-webkit-scrollbar { display: none; }
+    .carrusel-fotos { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 0; border-radius: 12px; margin-bottom: 10px; background: var(--fondo); scroll-behavior: smooth; }
+    .carrusel-fotos::-webkit-scrollbar { height: 8px; display: block; }
+    .carrusel-fotos::-webkit-scrollbar-track { background: var(--borde); border-radius: 10px; }
+    .carrusel-fotos::-webkit-scrollbar-thumb { background: var(--rosado); border-radius: 10px; cursor: grab; }
+    .carrusel-fotos::-webkit-scrollbar-thumb:hover { background: var(--celeste); }
     .carrusel-fotos img { width: 100%; flex-shrink: 0; scroll-snap-align: center; object-fit: cover; height: 180px; }
     
     .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--tarjetas); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
@@ -38,7 +40,7 @@
 
 <header class="header-container">
   <div>
-    <h1>✨ LUDAVA</h1>
+    <h1 id="titulo-tienda">✨ LUDAVA</h1>
     <p>Bienvenido, <strong><span id="user-display">Invitado</span></strong></p>
   </div>
   <button id="btn-tema" class="btn-tema" onclick="toggleTema()" title="Cambiar Tema">🌙</button>
@@ -52,6 +54,9 @@
   <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-tallas')"><span class="icono-nav">📊</span><span>Tallas</span></button>
   <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-gastos')"><span class="icono-nav">💸</span><span>Gastos</span></button>
   <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-inventario')"><span class="icono-nav">📦</span><span>Almacén</span></button>
+  
+  <button class="admin-only" style="display:none; color: var(--principal);" onclick="abrirModalDiseno()"><span class="icono-nav">🎨</span><span>Diseño</span></button>
+  
   <button id="btn-login" onclick="window.location.href='login.html'"><span class="icono-nav">🔒</span><span>Ingresar</span></button>
   <button id="btn-salir" class="admin-only" style="display:none; color:#e74c3c;" onclick="cerrarSesion()"><span class="icono-nav">🚪</span><span>Salir</span></button>
 </nav>
@@ -63,8 +68,12 @@
     <button onclick="setCategoria('Niños', this)" class="btn-cat">Niños 🧢</button>
     <button onclick="setCategoria('Bebés', this)" class="btn-cat">Bebés 🍼</button>
   </div>
+  
+  <div class="buscador-container" style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+    <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda..." onkeyup="filtrarPrendas()" style="flex: 1; margin-bottom: 0;">
+    <button id="btn-bajar-catalogo" onclick="descargarCatalogoPDF()" style="background: var(--principal); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">📄 Catálogo</button>
+  </div>
 
-  <div class="buscador-container"><input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda (Ej. Jean, Polo...)" onkeyup="filtrarPrendas()"></div>
   <section id="lista-prendas" class="productos"><p>Cargando catálogo...</p></section>
   <div id="total">Total: S/ 0.00</div>
   <div id="lista"><p><strong>🛒 Carrito de compras:</strong></p><ul id="productos"></ul></div>
@@ -92,20 +101,9 @@
   <div id="kpis-ventas"></div>
 </div>
 
-<div id="vista-clientes" class="pantalla">
-  <h2>👥 Agenda de Clientes</h2>
-  <div id="lista-clientes"></div>
-</div>
-
-<div id="vista-historial" class="pantalla">
-  <h2>📋 Historial de Ventas</h2>
-  <ul id="ventasDia"></ul>
-</div>
-
-<div id="vista-tallas" class="pantalla">
-  <h2>📊 Tallas Más Vendidas</h2>
-  <div id="kpis-tallas"></div>
-</div>
+<div id="vista-clientes" class="pantalla"><h2>👥 Agenda de Clientes</h2><div id="lista-clientes"></div></div>
+<div id="vista-historial" class="pantalla"><h2>📋 Historial de Ventas</h2><ul id="ventasDia"></ul></div>
+<div id="vista-tallas" class="pantalla"><h2>📊 Tallas Más Vendidas</h2><div id="kpis-tallas"></div></div>
 
 <div id="vista-gastos" class="pantalla">
   <h2>💸 Gastos y Proveedores</h2>
@@ -113,11 +111,7 @@
     <input type="text" id="gasto-motivo" placeholder="Motivo (Ej: Compra Jean, Pago Envío)">
     <input type="number" id="gasto-monto" placeholder="Monto (S/)">
     <select id="gasto-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif;">
-      <option value="Mercadería">📦 Mercadería</option>
-      <option value="Envío">🚚 Envío / Pasajes</option>
-      <option value="Local">🏠 Alquiler / Luz</option>
-      <option value="Publicidad">📱 Publicidad / TikTok</option>
-      <option value="Otros">✨ Otros</option>
+      <option value="Mercadería">📦 Mercadería</option><option value="Envío">🚚 Envío / Pasajes</option><option value="Local">🏠 Alquiler / Luz</option><option value="Publicidad">📱 Publicidad / TikTok</option><option value="Otros">✨ Otros</option>
     </select>
     <button onclick="guardarGasto()" style="background: var(--principal); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;">💾 Registrar Gasto</button>
   </div>
@@ -131,21 +125,15 @@
     <input type="text" id="nuevo-nombre" placeholder="Nombre (Ej. Polo Básico)">
     <input type="number" id="nuevo-precio" placeholder="Precio Base (S/)">
     <select id="nuevo-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif;">
-      <option value="Niñas">Niñas 🎀</option>
-      <option value="Niños">Niños 🧢</option>
-      <option value="Bebés">Bebés 🍼</option>
-      <option value="Unisex">Unisex ✨</option>
+      <option value="Niñas">Niñas 🎀</option><option value="Niños">Niños 🧢</option><option value="Bebés">Bebés 🍼</option><option value="Unisex">Unisex ✨</option>
     </select>
     <p style="font-size: 13px; margin: 0 0 5px 0; color: #666;">Tallas Iniciales (Ej: S, M, L):</p>
     <input type="text" id="nuevas-tallas" placeholder="S, M, L (Separadas por coma)">
-    
-    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Subir Fotos (Hasta 4 - Colores/Modelos):</p>
+    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Subir Fotos (Marca hasta 4 al mismo tiempo):</p>
     <input type="file" id="nueva-imagen-file" accept="image/*" multiple class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--celeste);">
-    
     <button id="btn-guardar-prenda" onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px;">💾 Guardar Prenda</button>
   </div>
   <div id="admin-inventario"><p>Cargando almacén...</p></div>
-
   <hr style="margin: 30px 0; border: 1px solid var(--borde);">
   <h2 style="color: var(--principal);">🕵️‍♂️ Historial de Movimientos</h2>
   <div id="historial-movimientos" style="max-height: 400px; overflow-y: auto; background: var(--tarjetas); padding: 10px; border-radius: 10px;">
@@ -159,15 +147,10 @@
     <input type="text" id="edit-nombre" placeholder="Nombre de la Prenda">
     <input type="number" id="edit-precio" placeholder="Precio Base (S/)">
     <select id="edit-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: 'Poppins', sans-serif;">
-      <option value="Niñas">Niñas 🎀</option>
-      <option value="Niños">Niños 🧢</option>
-      <option value="Bebés">Bebés 🍼</option>
-      <option value="Unisex">Unisex ✨</option>
+      <option value="Niñas">Niñas 🎀</option><option value="Niños">Niños 🧢</option><option value="Bebés">Bebés 🍼</option><option value="Unisex">Unisex ✨</option>
     </select>
-    
-    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Cambiar Fotos (Reemplaza las anteriores):</p>
+    <p style="font-size: 13px; margin: 10px 0 5px 0; color: var(--principal); font-weight: bold;">📸 Cambiar Fotos (Marca varias al mismo tiempo):</p>
     <input type="file" id="edit-imagen-file" accept="image/*" multiple class="form-inventario" style="background: white; padding: 10px; border-radius: 8px; border: 2px dashed var(--rosado);">
-    
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button onclick="cerrarModalEditar()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
       <button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer;">💾 Guardar</button>
@@ -205,6 +188,24 @@
     <div style="display: flex; gap: 10px; margin-top: 15px;">
       <button onclick="cerrarModalWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">Omitir</button>
       <button onclick="enviarWhatsApp()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #25D366; color: white; font-weight: bold; cursor: pointer;">Enviar 🚀</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-diseno" class="modal-oculto">
+  <div class="modal-contenido form-inventario">
+    <h3 style="color: var(--principal);">🎨 Creador Visual</h3>
+    <p style="font-size:13px; color:var(--texto); margin-bottom: 15px;">Edita la apariencia de tu tienda en tiempo real. Los cambios se guardarán automáticamente.</p>
+    
+    <label style="font-weight: bold; font-size: 14px; color: var(--texto);">Nombre de la Tienda:</label>
+    <input type="text" id="config-titulo" placeholder="Ej: ✨ LUDAVA" style="margin-bottom: 15px;">
+    
+    <label style="font-weight: bold; font-size: 14px; color: var(--texto);">Color Principal (Botones y Detalles):</label>
+    <input type="color" id="config-color" style="width: 100%; height: 50px; border: none; border-radius: 8px; margin-bottom: 10px; cursor: pointer; background: var(--fondo);">
+    
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+      <button onclick="cerrarModalDiseno()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #95a5a6; color: white; font-weight: bold; cursor: pointer;">❌ Cancelar</button>
+      <button onclick="guardarDiseno()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--exito); color: white; font-weight: bold; cursor: pointer;">💾 Aplicar</button>
     </div>
   </div>
 </div>
