@@ -3,45 +3,59 @@ async function cargarPrendas() {
     const snapshot = await db.collection("inventario").get();
     prendas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     generarVistaPrendas();
-  } catch (error) { notificar("❌ Error inventario.", "error"); }
+  } catch (error) { notificar("❌ Error catálogo.", "error"); }
 }
 
 function generarVistaPrendas() {
   const contenedor = document.getElementById("lista-prendas");
   if(!contenedor) return;
   contenedor.innerHTML = "";
-  if (prendas.length === 0) return contenedor.innerHTML = "<p>⚠️ Vacío.</p>";
+  if (prendas.length === 0) return contenedor.innerHTML = "<p>⚠️ No hay productos.</p>";
+
   prendas.forEach(prenda => {
     const div = document.createElement("div");
     div.className = "producto-card";
     div.setAttribute("data-categoria", prenda.categoria || "Unisex"); 
+    
     const carruselContenedor = document.createElement("div");
     carruselContenedor.style.position = "relative"; 
+
     const carrusel = document.createElement("div");
     carrusel.className = "carrusel-fotos";
+    
     let arrayFotos = prenda.imagenes && prenda.imagenes.length > 0 ? prenda.imagenes : (prenda.imagen ? [prenda.imagen] : ["https://via.placeholder.com/150x140?text=Sin+Foto"]);
+    
     arrayFotos.forEach(urlFoto => {
         const img = document.createElement("img");
         img.src = urlFoto; img.alt = prenda.nombre; carrusel.appendChild(img);
     });
+    
     carruselContenedor.appendChild(carrusel);
+
     if (arrayFotos.length > 1) {
         const btnIzq = document.createElement("button");
         btnIzq.innerHTML = "❮";
-        btnIzq.style = "position:absolute; left:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:35px; height:35px; font-size:18px; color:var(--principal); z-index:10;";
+        btnIzq.style = "position:absolute; left:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:30px; height:30px; font-size:16px; color:var(--principal); z-index:10;";
         btnIzq.onclick = () => carrusel.scrollBy({ left: -200, behavior: 'smooth' });
+
         const btnDer = document.createElement("button");
         btnDer.innerHTML = "❯";
-        btnDer.style = "position:absolute; right:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:35px; height:35px; font-size:18px; color:var(--principal); z-index:10;";
+        btnDer.style = "position:absolute; right:5px; top:40%; background:rgba(255,255,255,0.8); border:none; border-radius:50%; width:30px; height:30px; font-size:16px; color:var(--principal); z-index:10;";
         btnDer.onclick = () => carrusel.scrollBy({ left: 200, behavior: 'smooth' });
-        carruselContenedor.appendChild(btnIzq); carruselContenedor.appendChild(btnDer);
+
+        carruselContenedor.appendChild(btnIzq);
+        carruselContenedor.appendChild(btnDer);
     }
+
     div.appendChild(carruselContenedor);
+
     const titulo = document.createElement("h3");
-    titulo.innerText = `${prenda.nombre} (Stock: ${prenda.stock ?? 0})`;
+    titulo.innerText = `${prenda.nombre} (${prenda.stock ?? 0})`;
     div.appendChild(titulo);
+    
     const tallasDiv = document.createElement("div");
     tallasDiv.className = "tallas";
+
     const tallas = Array.isArray(prenda.tallas) ? prenda.tallas : [];
     tallas.forEach(t => {
       const btn = document.createElement("button");
@@ -52,6 +66,7 @@ function generarVistaPrendas() {
       btn.onclick = () => mostrarDescuentos(div, prenda, t);
       tallasDiv.appendChild(btn);
     });
+
     div.appendChild(tallasDiv);
     const descDiv = document.createElement("div");
     descDiv.className = "descuentos";
@@ -75,7 +90,9 @@ function filtrarPrendas() {
   document.querySelectorAll("#lista-prendas .producto-card").forEach(tarjeta => {
     const titulo = tarjeta.querySelector("h3").innerText.toLowerCase();
     const catPrenda = tarjeta.getAttribute("data-categoria");
-    tarjeta.style.display = (titulo.includes(textoFiltro) && (categoriaActual === "Todas" || catPrenda === categoriaActual)) ? "flex" : "none";
+    const coincideTexto = titulo.includes(textoFiltro);
+    const coincideCat = (categoriaActual === "Todas" || catPrenda === categoriaActual);
+    tarjeta.style.display = (coincideTexto && coincideCat) ? "flex" : "none";
   });
 }
 
@@ -83,10 +100,11 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
   const descDiv = contenedor.querySelector(".descuentos");
   descDiv.innerHTML = "";
   const precioBase = (tallaSel.precio ?? prenda.precio);
+  
   [0, 1, 2].forEach(desc => {
     const btn = document.createElement("button");
     btn.className = "descuento-btn";
-    btn.innerText = desc === 0 ? `Normal: S/${precioBase}` : `-S/${desc}`;
+    btn.innerText = desc === 0 ? `Precio: S/${precioBase}` : `-S/${desc}`;
     btn.onclick = () => agregarProducto(prenda, tallaSel, Number(precioBase) - desc);
     descDiv.appendChild(btn);
   });
@@ -95,6 +113,9 @@ function mostrarDescuentos(contenedor, prenda, tallaSel) {
 async function agregarProducto(prenda, tallaSel, precioFinal) {
   try {
     const res = await ajustarStock(prenda.id, tallaSel.talla, -1);
+    const idx = prendas.findIndex(p => p.id === prenda.id);
+    if (idx !== -1) { prendas[idx].tallas = res.tallas; prendas[idx].stock = res.nuevoTotal; }
+    
     productosSeleccionados.push({ id: prenda.id, nombre: prenda.nombre, talla: tallaSel.talla, precio: Number(precioFinal), texto: `${prenda.nombre} T${tallaSel.talla} - ${formatearSoles(precioFinal)}` });
     recalcularTotal(); guardarCarrito(); generarVistaPrendas(); actualizarInterfaz();
     notificar(`🛒 Agregado`, "exito");
@@ -104,10 +125,13 @@ async function agregarProducto(prenda, tallaSel, precioFinal) {
 async function eliminarProducto(index) {
   const prod = productosSeleccionados[index];
   try {
-    await ajustarStock(prod.id, prod.talla, +1);
+    const res = await ajustarStock(prod.id, prod.talla, +1);
+    const idx = prendas.findIndex(p => p.id === prod.id);
+    if (idx !== -1) { prendas[idx].tallas = res.tallas; prendas[idx].stock = res.nuevoTotal; }
     productosSeleccionados.splice(index, 1);
     recalcularTotal(); guardarCarrito(); generarVistaPrendas(); actualizarInterfaz();
-  } catch (e) {}
+    notificar("🗑️ Retirado", "advertencia");
+  } catch (error) { notificar("❌ Error", "error"); }
 }
 
 function actualizarInterfaz() {
@@ -118,7 +142,7 @@ function actualizarInterfaz() {
     ul.innerHTML = "";
     productosSeleccionados.forEach((p, i) => {
       const li = document.createElement("li");
-      li.innerHTML = `<span style="flex:1;">${p.texto}</span><button onclick="eliminarProducto(${i})">❌</button>`;
+      li.innerHTML = `<span style="flex:1;">${p.texto}</span><button style="background:#ff7675; color:white; border:none; padding:5px; border-radius:5px;" onclick="eliminarProducto(${i})">❌</button>`;
       ul.appendChild(li);
     });
   }
@@ -127,9 +151,14 @@ function actualizarInterfaz() {
 function guardarCarrito() { localStorage.setItem("carrito", JSON.stringify({ productos: productosSeleccionados, total })); }
 function cargarCarrito() {
   const data = localStorage.getItem("carrito");
-  if (data) { const p = JSON.parse(data); productosSeleccionados = p.productos || []; recalcularTotal(); }
+  if (data) { 
+    const p = JSON.parse(data); 
+    productosSeleccionados = p.productos || []; 
+    recalcularTotal(); 
+  }
 }
 function reiniciarCarrito() {
+  if (productosSeleccionados.length === 0) return;
   if (!confirm("¿Vaciar?")) return;
   productosSeleccionados = []; recalcularTotal(); localStorage.removeItem("carrito"); actualizarInterfaz();
 }
