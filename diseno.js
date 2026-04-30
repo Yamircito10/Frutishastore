@@ -5,11 +5,13 @@ async function cargarConfiguracion() {
       const doc = await db.collection("configuracion").doc("tienda").get();
       if(doc.exists) {
           configActual = doc.data();
+          
           if(configActual.titulo) {
               document.title = configActual.titulo + " - Tienda Virtual";
               const titulo = document.getElementById("titulo-tienda");
               if (titulo) titulo.innerText = configActual.titulo;
           }
+
           if(configActual.logoUrl) {
               const imgLogo = document.getElementById("logo-tienda");
               const titulo = document.getElementById("titulo-tienda");
@@ -23,9 +25,11 @@ async function cargarConfiguracion() {
               const titulo = document.getElementById("titulo-tienda");
               if (imgLogo && titulo) { imgLogo.style.display = "none"; titulo.style.display = "block"; }
           }
+
           if(configActual.colorPrincipal) document.documentElement.style.setProperty('--principal', configActual.colorPrincipal);
           if(configActual.colorWhatsApp) document.documentElement.style.setProperty('--color-wa', configActual.colorWhatsApp);
           if(configActual.tipografia) document.documentElement.style.setProperty('--fuente-principal', configActual.tipografia);
+
           if(configActual.estiloTarjetas === "plano") {
               document.documentElement.style.setProperty('--radio-tarjeta', '0px');
               document.documentElement.style.setProperty('--sombra-tarjeta', 'none');
@@ -35,20 +39,23 @@ async function cargarConfiguracion() {
               document.documentElement.style.setProperty('--sombra-tarjeta', '0 4px 6px rgba(0,0,0,0.05)');
               document.documentElement.style.setProperty('--borde-tarjeta', '0px');
           }
+
           const banner = document.getElementById("contenedor-banner");
           const textoBanner = document.getElementById("texto-banner");
           if(configActual.mensajeAnuncio && banner && textoBanner) {
               textoBanner.innerText = configActual.mensajeAnuncio;
               banner.style.display = "block";
           } else if (banner) { banner.style.display = "none"; }
+
           const listaPrendas = document.getElementById("lista-prendas");
           if(listaPrendas) {
               if (configActual.layoutCatalogo === "cuadricula") listaPrendas.classList.add("grid-view");
               else listaPrendas.classList.remove("grid-view");
           }
+
           if (configActual.colorNav === "principal") {
               document.documentElement.style.setProperty('--nav-bg', 'var(--principal)');
-              document.documentElement.style.setProperty('--nav-texto', 'rgba(255,255,255,0.8)');
+              document.documentElement.style.setProperty('--nav-texto', '#ffffff');
               document.documentElement.style.setProperty('--nav-activo', '#ffffff');
               document.documentElement.style.setProperty('--nav-bg-activo', 'rgba(0,0,0,0.1)');
           } else {
@@ -57,24 +64,24 @@ async function cargarConfiguracion() {
               document.documentElement.style.setProperty('--nav-activo', 'var(--principal)');
               document.documentElement.style.setProperty('--nav-bg-activo', 'var(--fondo)');
           }
+
           if (configActual.estiloBotones === "cuadrado") document.documentElement.style.setProperty('--radio-btn', '4px');
           else if (configActual.estiloBotones === "pildora") document.documentElement.style.setProperty('--radio-btn', '30px');
           else document.documentElement.style.setProperty('--radio-btn', '10px');
+
           if (configActual.efectoCristal === "activado") {
               document.documentElement.style.setProperty('--filtro-cristal', 'blur(12px)');
-              if (document.body.classList.contains("dark-mode")) {
-                   document.documentElement.style.setProperty('--fondo-modal', 'rgba(30, 30, 30, 0.75)');
-                   if(configActual.colorNav !== "principal") document.documentElement.style.setProperty('--nav-bg', 'rgba(30, 30, 30, 0.75)');
-              } else {
-                   document.documentElement.style.setProperty('--fondo-modal', 'rgba(255, 255, 255, 0.75)');
-                   if(configActual.colorNav !== "principal") document.documentElement.style.setProperty('--nav-bg', 'rgba(255, 255, 255, 0.75)');
+              const esOscuro = document.body.classList.contains("dark-mode");
+              document.documentElement.style.setProperty('--fondo-modal', esOscuro ? 'rgba(30, 30, 30, 0.75)' : 'rgba(255, 255, 255, 0.75)');
+              if(configActual.colorNav !== "principal") {
+                  document.documentElement.style.setProperty('--nav-bg', esOscuro ? 'rgba(30, 30, 30, 0.75)' : 'rgba(255, 255, 255, 0.75)');
               }
           } else {
               document.documentElement.style.setProperty('--filtro-cristal', 'none');
               document.documentElement.style.setProperty('--fondo-modal', 'var(--tarjetas)');
           }
       }
-  } catch(e) { console.log("Error de diseño"); }
+  } catch(e) { console.error("Error cargando diseño:", e); }
 }
 
 function abrirModalDiseno() {
@@ -91,6 +98,8 @@ function abrirModalDiseno() {
   document.getElementById("modal-diseno").classList.add("modal-activo");
 }
 
+function cerrarModalDiseno() { document.getElementById("modal-diseno").classList.remove("modal-activo"); }
+
 async function guardarDiseno() {
   const nuevoTitulo = document.getElementById("config-titulo").value.trim();
   const nuevoColor = document.getElementById("config-color").value;
@@ -103,9 +112,11 @@ async function guardarDiseno() {
   const nuevoBotones = document.getElementById("config-botones").value;
   const nuevoCristal = document.getElementById("config-cristal").value;
   const archivoLogo = document.getElementById("config-logo-file").files[0];
+
   if(!nuevoTitulo) return notificar("⚠️ Nombre vacío", "advertencia");
   const btnGuardar = document.getElementById("btn-guardar-diseno");
   btnGuardar.innerText = "⏳..."; btnGuardar.disabled = true;
+
   try {
       let logoFinal = configActual.logoUrl || "";
       if (archivoLogo) {
@@ -121,9 +132,7 @@ async function guardarDiseno() {
           colorNav: nuevoColorNav, estiloBotones: nuevoBotones, efectoCristal: nuevoCristal, logoUrl: logoFinal
       }, { merge: true });
       notificar("🎨 Diseño aplicado", "exito");
-      document.getElementById("modal-diseno").classList.remove("modal-activo");
+      cerrarModalDiseno();
       await cargarConfiguracion();
   } catch(e) { notificar("❌ Error", "error"); } finally { btnGuardar.innerText = "💾 Aplicar Cambios"; btnGuardar.disabled = false; }
 }
-
-function cerrarModalDiseno() { document.getElementById("modal-diseno").classList.remove("modal-activo"); }
