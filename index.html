@@ -10,18 +10,16 @@
   <link rel="apple-touch-icon" href="icono-192.png">
   
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Montserrat:wght@600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  
   <link rel="stylesheet" href="styles.css" />
-  
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
   <style>
-    /* 🎨 VARIABLES DINÁMICAS NÚCLEO (Se controlan desde el botón Diseño) */
+    /* 🎨 VARIABLES DINÁMICAS */
     :root {
       --fuente-principal: 'Poppins', sans-serif;
       --borde-tarjeta: 0px;
-      --sombra-tarjeta: 0 4px 6px rgba(0,0,0,0.05);
+      --sombra-tarjeta: 0 4px 15px rgba(0,0,0,0.1);
       --radio-tarjeta: 15px;
       --color-wa: #25D366;
       --nav-bg: var(--tarjetas);
@@ -35,43 +33,38 @@
     
     body { font-family: var(--fuente-principal) !important; padding-bottom: 90px !important; transition: background 0.3s; }
     
-    /* ANIMACIÓN DEL BANNER DE ANUNCIOS */
-    @keyframes marquesina {
-      0% { transform: translateX(100vw); }
-      100% { transform: translateX(-100%); }
-    }
+    @keyframes marquesina { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
     .banner-anuncio { background: var(--principal); color: white; padding: 8px; font-size: 13px; font-weight: bold; overflow: hidden; white-space: nowrap; position: relative; z-index: 900; }
     .banner-texto { display: inline-block; animation: marquesina 15s linear infinite; }
 
-    /* ESTILOS DINÁMICOS DE TARJETAS Y FILTROS */
-    .producto-card { border-radius: var(--radio-tarjeta) !important; box-shadow: var(--sombra-tarjeta) !important; border: var(--borde-tarjeta) !important; transition: all 0.3s; }
-    .filtros-categorias { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
-    .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; transition: all 0.3s; font-family: inherit; }
-    .btn-cat.activa { background: var(--principal); color: white; border-color: var(--principal); }
+    /* CSS DE MODALES */
+    .modal-oculto { display: none; }
+    .modal-activo { display: flex !important; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+    .modal-contenido { width: 90%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); background: var(--fondo-modal) !important; backdrop-filter: var(--filtro-cristal); -webkit-backdrop-filter: var(--filtro-cristal); max-height: 85vh; overflow-y: auto;}
+
+    /* DISEÑO DE TARJETAS */
+    .producto-card { border-radius: var(--radio-tarjeta) !important; box-shadow: var(--sombra-tarjeta) !important; border: var(--borde-tarjeta) !important; padding: 15px; margin-bottom: 15px; background: var(--tarjetas); transition: all 0.3s;}
     
     .carrusel-fotos { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 0; border-radius: 12px; margin-bottom: 10px; background: var(--fondo); scroll-behavior: smooth; }
     .carrusel-fotos::-webkit-scrollbar { height: 8px; display: block; }
     .carrusel-fotos::-webkit-scrollbar-track { background: var(--borde); border-radius: 10px; }
-    .carrusel-fotos::-webkit-scrollbar-thumb { background: var(--rosado); border-radius: 10px; cursor: grab; }
+    .carrusel-fotos::-webkit-scrollbar-thumb { background: var(--rosado); border-radius: 10px; }
     .carrusel-fotos img { width: 100%; flex-shrink: 0; scroll-snap-align: center; object-fit: cover; height: 180px; }
-    
-    /* MENÚ INFERIOR DINÁMICO */
+
+    /* NAVEGACIÓN Y BOTONES */
     .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--nav-bg) !important; backdrop-filter: var(--filtro-cristal); -webkit-backdrop-filter: var(--filtro-cristal); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
     .nav-inferior button { background: transparent; color: var(--nav-texto) !important; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; min-width: 70px; transition: all 0.3s ease; font-family: inherit; }
     .nav-inferior button .icono-nav { font-size: 22px; margin-bottom: 4px; }
     .nav-inferior button:hover, .nav-inferior button:active { color: var(--nav-activo) !important; background-color: var(--nav-bg-activo) !important; }
     
-    /* BOTONES GLOBALES */
     .btn-finalizar, #btn-bajar-catalogo, .btn-guardar-prenda, #btn-guardar-edicion, #btn-guardar-diseno { border-radius: var(--radio-btn) !important; }
     
-    .modal-contenido { background: var(--fondo-modal) !important; backdrop-filter: var(--filtro-cristal); -webkit-backdrop-filter: var(--filtro-cristal); }
-
-    /* 📱 MODO CUADRÍCULA */
     .productos.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .productos.grid-view .producto-card { padding: 10px; }
-    .productos.grid-view .carrusel-fotos img { height: 130px; }
-    
     .whatsapp-flotante { bottom: 100px !important; background-color: var(--color-wa) !important; }
+    
+    .filtros-categorias { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
+    .btn-cat { background: var(--tarjetas); color: var(--texto); border: 1px solid var(--borde); padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; font-family: inherit; }
+    .btn-cat.activa { background: var(--principal); color: white; border-color: var(--principal); }
   </style>
 </head>
 <body>
@@ -110,68 +103,153 @@
   </div>
   
   <div class="buscador-container" style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-    <input type="text" id="buscador-prendas" placeholder="🔍 Buscar..." onkeyup="filtrarPrendas()" style="flex: 1; font-family: inherit;">
-    <button id="btn-bajar-catalogo" onclick="descargarCatalogoPDF()" style="background: var(--principal); color: white; border: none; padding: 12px 15px; font-weight: bold; cursor: pointer; white-space: nowrap; font-family: inherit;">📄 Catálogo</button>
+    <input type="text" id="buscador-prendas" placeholder="🔍 Buscar prenda..." onkeyup="filtrarPrendas()" style="flex: 1; font-family: inherit; padding: 10px; border-radius:8px; border:1px solid var(--borde);">
+    <button id="btn-bajar-catalogo" onclick="descargarCatalogoPDF()" style="background: var(--principal); color: white; border: none; padding: 12px 15px; font-weight: bold; cursor: pointer; font-family: inherit;">📄 Catálogo</button>
   </div>
 
-  <section id="lista-prendas" class="productos"><p>Cargando...</p></section>
-  <div id="total">Total: S/ 0.00</div>
+  <section id="lista-prendas" class="productos"><p>Cargando catálogo...</p></section>
+  <div id="total" style="font-weight:bold; font-size:18px; margin-top:10px;">Total: S/ 0.00</div>
   <div id="lista"><p><strong>🛒 Carrito:</strong></p><ul id="productos"></ul></div>
   <div class="acciones">
-    <div id="caja-metodo-pago" class="admin-only" style="display:none; margin-bottom: 12px; background: var(--tarjetas); padding: 10px; border-radius: 10px; border: 1px solid var(--borde);">
+    <div id="caja-metodo-pago" class="admin-only" style="display:none; margin-bottom: 12px; background: var(--tarjetas); padding: 10px; border-radius: 10px;">
       <label style="font-weight: bold; font-size: 14px; color: var(--principal);">💳 Método de Pago:</label>
       <select id="metodo-pago" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--fondo); font-family: inherit; color: var(--texto);">
-          <option value="Efectivo">💵 Efectivo</option>
-          <option value="Yape/Plin">📱 Yape / Plin</option>
-          <option value="Tarjeta">💳 Tarjeta</option>
+          <option value="Efectivo">💵 Efectivo</option><option value="Yape/Plin">📱 Yape / Plin</option><option value="Tarjeta">💳 Tarjeta</option>
       </select>
     </div>
-    <button class="btn-finalizar" onclick="finalizarVenta()" style="font-family: inherit; background: var(--principal); color: white; padding: 14px; font-weight: bold; border: none; width: 100%;">Enviar Pedido 🚀</button>
-    <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="font-family: inherit; margin-top: 10px;">🔄 Vaciar Carrito</button>
+    <button class="btn-finalizar" onclick="finalizarVenta()" style="background: var(--principal); color: white; padding: 14px; font-weight: bold; border: none; width: 100%; font-family: inherit;">Enviar Pedido 🚀</button>
+    <button class="reiniciar-btn" onclick="reiniciarCarrito()" style="width:100%; padding:10px; border-radius:10px; border:none; margin-top:10px; font-family:inherit;">🔄 Vaciar Carrito</button>
   </div>
 </div>
 
-<div id="vista-ventas" class="pantalla"><h2>📈 Ventas</h2><div id="kpis-ventas"></div><div style="display: flex; gap: 10px; margin-top: 20px;"><button onclick="descargarReportePDF()" style="flex:1; background:#e74c3c; color:white; border:none; padding:10px; border-radius:8px;">PDF</button><button onclick="descargarReporteExcel()" style="flex:1; background:#27ae60; color:white; border:none; padding:10px; border-radius:8px;">Excel</button></div></div>
-<div id="vista-clientes" class="pantalla"><h2>👥 Agenda</h2><div id="lista-clientes"></div></div>
-<div id="vista-historial" class="pantalla"><h2>📋 Historial</h2><ul id="ventasDia"></ul></div>
-<div id="vista-tallas" class="pantalla"><h2>📊 Tallas</h2><div id="kpis-tallas"></div></div>
-<div id="vista-gastos" class="pantalla"><h2>💸 Gastos</h2><div class="producto-card" style="padding:15px;"><input type="text" id="gasto-motivo" placeholder="Motivo"><input type="number" id="gasto-monto" placeholder="Monto"><button onclick="guardarGasto()" style="width:100%; padding:10px; background:var(--principal); color:white; border:none; margin-top:10px;">💾 Guardar Gasto</button></div><div id="lista-gastos"></div></div>
+<!-- VISTAS ADMIN -->
+<div id="vista-ventas" class="pantalla">
+  <h2>📈 Balance General y Ventas</h2>
+  <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+      <button onclick="descargarReportePDF()" style="background: #e74c3c; color: white; padding: 12px; border: none; border-radius: 8px; flex: 1; font-family: inherit;">📄 PDF</button>
+      <button onclick="descargarReporteExcel()" style="background: #27ae60; color: white; padding: 12px; border: none; border-radius: 8px; flex: 1; font-family: inherit;">📗 Excel</button>
+      <button onclick="reiniciarTodoElHistorial()" style="background: #2d3436; color: white; padding: 12px; border: none; border-radius: 8px; flex: 1; font-family: inherit;">🗑️ Borrar</button>
+  </div>
+  <div id="kpis-ventas"></div>
+</div>
+
+<div id="vista-clientes" class="pantalla"><h2>👥 Agenda de Clientes</h2><div id="lista-clientes"></div></div>
+<div id="vista-historial" class="pantalla"><h2>📋 Historial de Recibos</h2><ul id="ventasDia"></ul></div>
+<div id="vista-tallas" class="pantalla"><h2>📊 Tallas Más Vendidas</h2><div id="kpis-tallas"></div></div>
+
+<div id="vista-gastos" class="pantalla">
+  <h2>💸 Gastos y Proveedores</h2>
+  <div class="producto-card">
+    <input type="text" id="gasto-motivo" placeholder="Motivo" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--borde); font-family:inherit;">
+    <input type="number" id="gasto-monto" placeholder="Monto (S/)" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--borde); font-family:inherit;">
+    <select id="gasto-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: inherit;">
+      <option value="Mercadería">📦 Mercadería</option><option value="Envío">🚚 Envío / Pasajes</option><option value="Local">🏠 Alquiler / Luz</option><option value="Publicidad">📱 Publicidad / TikTok</option><option value="Otros">✨ Otros</option>
+    </select>
+    <button onclick="guardarGasto()" style="background: var(--principal); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; font-family: inherit;">💾 Registrar Gasto</button>
+  </div>
+  <div id="lista-gastos"></div>
+</div>
 
 <div id="vista-inventario" class="pantalla">
-  <h2>📦 Almacén</h2>
-  <div class="producto-card" style="padding:15px;">
-    <input type="text" id="nuevo-nombre" placeholder="Nombre"><input type="number" id="nuevo-precio" placeholder="Precio">
-    <select id="nuevo-categoria" style="width:100%; padding:10px; margin:10px 0;"><option value="Niñas">Niñas 🎀</option><option value="Niños">Niños 🧢</option><option value="Bebés">Bebés 🍼</option></select>
-    <input type="text" id="nuevas-tallas" placeholder="Tallas (S, M, L)"><input type="file" id="nueva-imagen-file" multiple style="margin:10px 0;">
-    <button onclick="guardarNuevaPrenda()" style="width:100%; background:var(--exito); color:white; padding:12px; border:none;">💾 Guardar Prenda</button>
+  <h2>📦 Gestión de Inventario</h2>
+  <div class="producto-card">
+    <h3 style="margin-top: 0; color: var(--principal);">➕ Agregar Nueva Prenda</h3>
+    <input type="text" id="nuevo-nombre" placeholder="Nombre (Ej. Polo)" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--borde); font-family:inherit;">
+    <input type="number" id="nuevo-precio" placeholder="Precio (S/)" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--borde); font-family:inherit;">
+    <select id="nuevo-categoria" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); font-family: inherit;">
+      <option value="Niñas">Niñas 🎀</option><option value="Niños">Niños 🧢</option><option value="Bebés">Bebés 🍼</option><option value="Unisex">Unisex ✨</option>
+    </select>
+    <input type="text" id="nuevas-tallas" placeholder="Tallas: S, M, L" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--borde); font-family:inherit;">
+    <input type="file" id="nueva-imagen-file" multiple style="margin-bottom:10px;">
+    <button id="btn-guardar-prenda" onclick="guardarNuevaPrenda()" style="background: var(--exito); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; font-family: inherit;">💾 Guardar Prenda</button>
   </div>
-  <div id="admin-inventario"></div>
-  <h3 style="margin-top:30px;">🕵️ Movimientos</h3>
-  <div id="historial-movimientos" style="max-height: 300px; overflow-y: auto;"></div>
+  <div id="admin-inventario"><p>Cargando almacén...</p></div>
+  <h2 style="color: var(--principal); margin-top:30px;">🕵️‍♂️ Movimientos</h2>
+  <div id="historial-movimientos" style="max-height: 400px; overflow-y: auto; background: var(--tarjetas); padding: 10px; border-radius: 10px;"></div>
 </div>
 
+<!-- MODALES (Diseño, Edición, Stock, WhatsApp) -->
 <div id="modal-diseno" class="modal-oculto">
-  <div class="modal-contenido form-inventario" style="max-height: 85vh; overflow-y: auto;">
+  <div class="modal-contenido form-inventario">
     <h3 style="color: var(--principal); margin-top: 0;">🎨 Creador Visual</h3>
-    <label>1. Nombre de la Tienda:</label><input type="text" id="config-titulo" placeholder="✨ LUDAVA">
-    <label>2. Logo:</label><input type="file" id="config-logo-file" accept="image/*">
-    <label>3. Tipografía:</label><select id="config-fuente"><option value="'Poppins', sans-serif">Poppins</option><option value="'Montserrat', sans-serif">Montserrat</option><option value="'Comic Neue', cursive">Comic Neue</option></select>
-    <label>4. Banner Anuncios:</label><input type="text" id="config-banner" placeholder="¡Ofertas!">
-    <label>5. Layout:</label><select id="config-layout"><option value="lista">Lista (1 col)</option><option value="cuadricula">Cuadrícula (2 col)</option></select>
-    <label>6. Color Menú:</label><select id="config-colornav"><option value="blanco">Clásico</option><option value="principal">Color Marca</option></select>
-    <label>7. Botones:</label><select id="config-botones"><option value="redondeado">Redondo</option><option value="cuadrado">Cuadrado</option><option value="pildora">Píldora</option></select>
-    <label>8. Vitrinas:</label><select id="config-tarjetas"><option value="redondeado">Suave</option><option value="plano">Plano</option></select>
-    <label>9. Cristal (NUEVO 🧊):</label><select id="config-cristal"><option value="desactivado">No</option><option value="activado">Sí</option></select>
-    <div style="display: flex; gap: 10px; margin-top:15px;"><input type="color" id="config-color" style="flex:1;"><input type="color" id="config-wa" style="flex:1;"></div>
-    <div style="display: flex; gap: 10px; margin-top: 20px;"><button onclick="cerrarModalDiseno()" style="flex:1; background:#95a5a6; color:white; border:none; padding:10px;">❌</button><button id="btn-guardar-diseno" onclick="guardarDiseno()" style="flex:1; background:var(--exito); color:white; border:none; padding:10px;">💾 Aplicar</button></div>
+    <label style="font-size:12px;">1. Nombre Tienda:</label><input type="text" id="config-titulo" style="width:100%; padding:8px; margin-bottom:10px;">
+    <label style="font-size:12px;">2. Logo:</label><input type="file" id="config-logo-file" accept="image/*" style="margin-bottom:10px;">
+    <label style="font-size:12px;">3. Tipografía:</label><select id="config-fuente" style="width:100%; padding:8px; margin-bottom:10px;"><option value="'Poppins', sans-serif">Poppins</option><option value="'Montserrat', sans-serif">Montserrat</option><option value="'Comic Neue', cursive">Comic Neue</option></select>
+    <label style="font-size:12px;">4. Anuncio:</label><input type="text" id="config-banner" style="width:100%; padding:8px; margin-bottom:10px;">
+    <label style="font-size:12px;">5. Catálogo:</label><select id="config-layout" style="width:100%; padding:8px; margin-bottom:10px;"><option value="lista">Lista (1 col)</option><option value="cuadricula">Cuadrícula (2 col)</option></select>
+    <label style="font-size:12px;">6. Menú Abajo:</label><select id="config-colornav" style="width:100%; padding:8px; margin-bottom:10px;"><option value="blanco">Clásico</option><option value="principal">Color Marca</option></select>
+    <label style="font-size:12px;">7. Botones:</label><select id="config-botones" style="width:100%; padding:8px; margin-bottom:10px;"><option value="redondeado">Redondeado</option><option value="cuadrado">Cuadrado</option><option value="pildora">Píldora</option></select>
+    <label style="font-size:12px;">8. Vitrinas:</label><select id="config-tarjetas" style="width:100%; padding:8px; margin-bottom:10px;"><option value="redondeado">Suave</option><option value="plano">Plano</option></select>
+    <label style="font-size:12px;">9. Cristal:</label><select id="config-cristal" style="width:100%; padding:8px; margin-bottom:10px;"><option value="desactivado">Desactivado</option><option value="activado">Activado</option></select>
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <input type="color" id="config-color" style="flex:1; height:35px; border:none; border-radius:8px;">
+        <input type="color" id="config-wa" style="flex:1; height:35px; border:none; border-radius:8px;">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button onclick="cerrarModalDiseno()" style="flex:1; padding:12px; border-radius:8px; border:none; background:#95a5a6; color:white;">❌</button>
+      <button id="btn-guardar-diseno" onclick="guardarDiseno()" style="flex:1; padding:12px; border-radius:8px; border:none; background:var(--exito); color:white;">💾</button>
+    </div>
   </div>
 </div>
 
-<div id="modal-editar" class="modal-oculto"><div class="modal-contenido form-inventario"><h3>✏️ Editar Prenda</h3><input type="text" id="edit-nombre"><input type="number" id="edit-precio"><select id="edit-categoria"><option value="Niñas">Niñas</option><option value="Niños">Niños</option><option value="Bebés">Bebés</option></select><input type="file" id="edit-imagen-file" multiple><div style="display:flex; gap:10px; margin-top:15px;"><button onclick="cerrarModalEditar()" style="flex:1; background:#95a5a6; color:white; border:none; padding:10px;">❌</button><button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex:1; background:var(--exito); color:white; border:none; padding:10px;">💾</button></div></div></div>
-<div id="modal-stock" class="modal-oculto"><div class="modal-contenido"><h3>📦 Stock</h3><div id="modal-paso-tallas"><div id="modal-tallas-botones" class="botones-grid"></div><button onclick="cerrarModalStock()" style="margin-top:15px; width:100%; padding:10px; background:#95a5a6; color:white; border:none;">❌</button></div><div id="modal-paso-teclado" style="display:none;"><div class="pantalla-teclado" id="pantalla-cantidad">0</div><div class="teclado-numerico"><button onclick="teclear(1)">1</button><button onclick="teclear(2)">2</button><button onclick="teclear(3)">3</button><button onclick="teclear(4)">4</button><button onclick="teclear(5)">5</button><button onclick="teclear(6)">6</button><button onclick="teclear(7)">7</button><button onclick="teclear(8)">8</button><button onclick="teclear(9)">9</button><button onclick="teclear('C')" style="background:#e74c3c;">C</button><button onclick="teclear(0)">0</button><button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="background:var(--exito);">✔</button></div></div></div></div>
-<div id="modal-whatsapp" class="modal-oculto"><div class="modal-contenido form-inventario"><h3>📱 Enviar Recibo</h3><input type="number" id="wa-numero" placeholder="Celular"><div style="display:flex; gap:10px; margin-top:15px;"><button onclick="cerrarModalWhatsApp()" style="flex:1; background:#95a5a6; color:white; border:none; padding:10px;">Omitir</button><button onclick="enviarWhatsApp()" style="flex:1; background:#25D366; color:white; border:none; padding:10px;">Enviar</button></div></div></div>
+<div id="modal-editar" class="modal-oculto">
+  <div class="modal-contenido form-inventario">
+    <h3 style="color:var(--principal)">✏️ Editar Prenda</h3>
+    <label style="font-size:12px;">Nombre:</label><input type="text" id="edit-nombre" style="width:100%; padding:8px; margin-bottom:10px;">
+    <label style="font-size:12px;">Precio:</label><input type="number" id="edit-precio" style="width:100%; padding:8px; margin-bottom:10px;">
+    <label style="font-size:12px;">Categoría:</label><select id="edit-categoria" style="width:100%; padding:8px; margin-bottom:10px;"><option value="Niñas">Niñas</option><option value="Niños">Niños</option><option value="Bebés">Bebés</option><option value="Unisex">Unisex</option></select>
+    <label style="font-size:12px;">Tallas (Ej: S, M, L):</label><input type="text" id="edit-tallas" style="width:100%; padding:8px; margin-bottom:10px;">
+    <label style="font-size:12px;">Cambiar Fotos:</label><input type="file" id="edit-imagen-file" multiple style="margin-bottom:10px;">
+    <div style="display:flex; gap:10px;">
+      <button onclick="cerrarModalEditar()" style="flex:1; background:#95a5a6; color:white; border:none; padding:12px; border-radius:10px;">❌</button>
+      <button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex:1; background:var(--exito); color:white; border:none; padding:12px; border-radius:10px;">💾</button>
+    </div>
+  </div>
+</div>
 
-<a href="https://wa.me/51977757369" class="whatsapp-flotante" target="_blank"><svg viewBox="0 0 32 32" style="width:35px; height:35px; fill:white;"><path d="M16.002 0C7.165 0 0 7.163 0 16.004c0 2.82.74 5.568 2.146 7.994L.705 31.285l7.464-1.954A15.908 15.908 0 0016.002 32c8.836 0 16-7.164 16-16.004C32 7.163 24.838 0 16.002 0zm0 29.32c-2.38 0-4.717-.617-6.762-1.785l-.485-.276-5.023 1.314.996-4.887-.314-.492A13.25 13.25 0 012.678 16c0-7.36 5.986-13.344 13.324-13.344 7.338 0 13.322 5.984 13.322 13.344S23.34 29.32 16.002 29.32zm7.324-9.98c-.402-.2-2.378-1.176-2.746-1.31-.368-.135-.636-.2-.904.202-.268.402-1.038 1.31-1.272 1.578-.235.268-.47.302-.87.102a10.96 10.96 0 01-3.21-1.986 12.06 12.06 0 01-2.227-2.766c-.235-.402-.025-.618.175-.818.18-.18.402-.47.603-.705.2-.235.268-.402.402-.67.134-.268.067-.503-.034-.704-.102-.202-1.206-2.903-1.642-3.975-.424-1.045-.855-.904-1.173-.92-.302-.016-.637-.016-.97-.016s-.872.117-1.325.62C3.69 9.42 2.45 10.593 2.45 12.973c0 2.38 1.442 4.686 1.643 4.954.2.268 3.376 5.152 8.182 7.228 1.144.492 2.036.786 2.735 1.006 1.15.334 2.196.286 3.023.174.93-.127 2.855-1.164 3.257-2.288.402-1.124.402-2.086.282-2.287-.118-.202-.453-.32-.855-.52z" fill="#FFF"/></svg></a>
+<div id="modal-stock" class="modal-oculto">
+  <div class="modal-contenido">
+    <h3 id="modal-stock-titulo">Cargar Stock</h3>
+    <div id="modal-paso-tallas">
+      <div id="modal-tallas-botones" class="botones-grid" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;"></div>
+      <button onclick="cerrarModalStock()" style="margin-top:20px; width:100%; padding:12px; background:#95a5a6; color:white; border:none; border-radius:10px;">❌ Cancelar</button>
+    </div>
+    <div id="modal-paso-teclado" style="display:none;">
+      <p>Sumar a: <b id="talla-seleccionada-txt" style="color:var(--principal);"></b></p>
+      <div class="pantalla-teclado" id="pantalla-cantidad" style="background:var(--fondo); padding:15px; font-size:24px; text-align:center; border-radius:10px; margin-bottom:15px;">0</div>
+      <div class="teclado-numerico" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+        <button onclick="teclear(1)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">1</button>
+        <button onclick="teclear(2)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">2</button>
+        <button onclick="teclear(3)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">3</button>
+        <button onclick="teclear(4)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">4</button>
+        <button onclick="teclear(5)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">5</button>
+        <button onclick="teclear(6)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">6</button>
+        <button onclick="teclear(7)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">7</button>
+        <button onclick="teclear(8)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">8</button>
+        <button onclick="teclear(9)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">9</button>
+        <button onclick="teclear('C')" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:#e74c3c; color:white; cursor:pointer;">C</button>
+        <button onclick="teclear(0)" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--fondo); cursor:pointer;">0</button>
+        <button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="padding:15px; font-size:18px; border-radius:10px; border:none; background:var(--exito); color:white; cursor:pointer;">✔</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-whatsapp" class="modal-oculto">
+  <div class="modal-contenido form-inventario">
+    <h3 style="color: #25D366;">📱 Enviar por WhatsApp</h3>
+    <input type="text" id="wa-nombre" placeholder="Nombre (Ej: María)" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid var(--borde);">
+    <input type="number" id="wa-numero" placeholder="Celular" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:2px solid #25D366;">
+    <div style="display: flex; gap: 10px;">
+      <button onclick="cerrarModalWhatsApp()" style="flex:1; padding:12px; border-radius:8px; border:none; background:#95a5a6; color:white;">Omitir</button>
+      <button onclick="enviarWhatsApp()" style="flex:1; padding:12px; border-radius:8px; border:none; background:#25D366; color:white;">Enviar 🚀</button>
+    </div>
+  </div>
+</div>
+
+<a href="https://wa.me/51977757369" class="whatsapp-flotante" target="_blank">
+  <svg viewBox="0 0 32 32" style="width: 35px; height: 35px; fill: white;"><path d="M16.002 0C7.165 0 0 7.163 0 16.004c0 2.82.74 5.568 2.146 7.994L.705 31.285l7.464-1.954A15.908 15.908 0 0016.002 32c8.836 0 16-7.164 16-16.004C32 7.163 24.838 0 16.002 0zm0 29.32c-2.38 0-4.717-.617-6.762-1.785l-.485-.276-5.023 1.314.996-4.887-.314-.492A13.25 13.25 0 012.678 16c0-7.36 5.986-13.344 13.324-13.344 7.338 0 13.322 5.984 13.322 13.344S23.34 29.32 16.002 29.32zm7.324-9.98c-.402-.2-2.378-1.176-2.746-1.31-.368-.135-.636-.2-.904.202-.268.402-1.038 1.31-1.272 1.578-.235.268-.47.302-.87.102a10.96 10.96 0 01-3.21-1.986 12.06 12.06 0 01-2.227-2.766c-.235-.402-.025-.618.175-.818.18-.18.402-.47.603-.705.2-.235.268-.402.402-.67.134-.268.067-.503-.034-.704-.102-.202-1.206-2.903-1.642-3.975-.424-1.045-.855-.904-1.173-.92-.302-.016-.637-.016-.97-.016s-.872.117-1.325.62C3.69 9.42 2.45 10.593 2.45 12.973c0 2.38 1.442 4.686 1.643 4.954.2.268 3.376 5.152 8.182 7.228 1.144.492 2.036.786 2.735 1.006 1.15.334 2.196.286 3.023.174.93-.127 2.855-1.164 3.257-2.288.402-1.124.402-2.086.282-2.287-.118-.202-.453-.32-.855-.52z" fill="#FFF"/></svg>
+</a>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -191,11 +269,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-<script src="core.js"></script>
-<script src="diseno.js"></script>
-<script src="tienda.js"></script>
-<script src="ventas.js"></script>
-<script src="inventario.js"></script>
+<!-- 🚀 LLAMAMOS A UN SOLO ARCHIVO GIGANTE -->
+<script src="app.js"></script>
 
 <script>
   const usuario = localStorage.getItem("usuarioActivo");
