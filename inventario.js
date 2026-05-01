@@ -1,263 +1,182 @@
-// ==========================================
-// 📦 LÓGICA DE ALMACÉN, STOCK Y EDICIÓN
-// ==========================================
-
-async function ajustarStock(prendaId, tallaNumero, delta) {
-  return db.runTransaction(async (tx) => {
-    const ref = db.collection("inventario").doc(prendaId);
-    const snap = await tx.get(ref);
-    if (!snap.exists) throw new Error("Prenda no encontrada");
-    const data = snap.data();
-    const tallas = Array.isArray(data.tallas) ? [...data.tallas] : [];
-    const idx = tallas.findIndex(x => String(x.talla).trim().toUpperCase() === String(tallaNumero).trim().toUpperCase());
-    if (idx === -1) throw new Error("Talla no encontrada en base de datos");
-    
-    const actual = Number(tallas[idx].stockTalla || 0) + delta;
-    if (actual < 0) throw new Error("Sin stock suficiente");
-    
-    tallas[idx].stockTalla = actual;
-    const nuevoTotal = tallas.reduce((acc, x) => acc + Number(x.stockTalla || 0), 0);
-    tx.update(ref, { tallas, stock: nuevoTotal });
-
-    registrarMovimiento(data.nombre, tallaNumero, Math.abs(delta), delta > 0 ? "suma" : "resta");
-    return { nuevoTotal, tallas };
-  });
-}
-
-async function cargarInventarioSPA() {
-  const div = document.getElementById("admin-inventario");
-  div.innerHTML = "<p>⏳ Cargando almacén...</p>";
-  try {
-    const snapshot = await db.collection("inventario").get();
-    prendas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    if(prendas.length === 0) return div.innerHTML = "<p>No hay prendas registradas.</p>";
-
-    let html = `<ul style="list-style:none; padding:0;">`;
-    prendas.forEach(p => {
-      let stockColor = p.stock > 5 ? '#27ae60' : (p.stock > 0 ? '#f39c12' : '#e74c3c');
-      let textoTallas = "Ninguna";
-      if (Array.isArray(p.tallas) && p.tallas.length > 0) textoTallas = p.tallas.map(t => `T${t.talla}(${t.stockTalla})`).join(', ');
-      
-      let cantFotos = p.imagenes ? p.imagenes.length : (p.imagen ? 1 : 0);
-
-      html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 5px solid ${stockColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.05); color: #333;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <strong>${p.nombre}</strong> 
-                    <span style="color: ${stockColor}; font-weight: bold;">Stock: ${p.stock || 0}</span>
-                </div>
-                <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
-                  Precio: S/${p.precio} | Cat: ${p.categoria || 'Unisex'} | Tallas: ${textoTallas} | 📸 ${cantFotos} fotos
-                </div>
-                <div style="display: flex; gap: 5px;">
-                    <button onclick="eliminarPrendaAdmin('${p.id}')" style="background: #e74c3c; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">🗑️</button>
-                    <button onclick="abrirEdicionInfo('${p.id}')" style="background: #f39c12; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">✏️ Info</button>
-                    <button onclick="abrirEdicionStock('${p.id}')" style="background: #3498db; color: white; border: none; padding: 8px; border-radius: 5px; flex: 1; cursor: pointer; font-weight: bold;">📦 Stock</button>
-                </div>
-               </li>`;
-    });
-    div.innerHTML = html + `</ul>`;
-  } catch (e) { div.innerHTML = "<p>Error cargando el almacén.</p>"; }
-}
-
-async function guardarNuevaPrenda() {
-  const nombre = document.getElementById("nuevo-nombre").value.trim();
-  const precio = Number(document.getElementById("nuevo-precio").value);
-  const categoria = document.getElementById("nuevo-categoria").value;
-  const tallasInput = document.getElementById("nuevas-tallas").value.trim();
-  const archivosFotos = document.getElementById("nueva-imagen-file").files; 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>✨ LUDAVA - Tienda Virtual</title>
   
-  if (!nombre || !precio) return notificar("⚠️ Llena el nombre y precio", "advertencia");
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff7eb3">
+  <link rel="apple-touch-icon" href="icono-192.png">
   
-  let tallasArray = [];
-  if (tallasInput) tallasArray = tallasInput.split(',').map(t => ({ talla: t.trim(), stockTalla: 0, precio: precio }));
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Montserrat:wght@600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-  const btnGuardar = document.getElementById("btn-guardar-prenda");
-  btnGuardar.innerText = "⏳ Subiendo fotos..."; 
-  btnGuardar.disabled = true;
-
-  try {
-    let urlsImagenes = [];
-
-    if (archivosFotos.length > 0) {
-      notificar(`📸 Subiendo ${Math.min(archivosFotos.length, 4)} imágenes a la nube...`, "exito");
-      for (let i = 0; i < archivosFotos.length; i++) {
-         if (i >= 4) break; 
-         const formData = new FormData();
-         formData.append("image", archivosFotos[i]);
-         
-         const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
-         const data = await response.json();
-         if (data.success) urlsImagenes.push(data.data.url);
-      }
+  <style>
+    /* 🎨 VARIABLES DINÁMICAS */
+    :root {
+      --fuente-principal: 'Poppins', sans-serif;
+      --borde-tarjeta: 0px;
+      --sombra-tarjeta: 0 4px 15px rgba(0,0,0,0.1);
+      --radio-tarjeta: 15px;
+      --color-wa: #25D366;
+      --nav-bg: var(--tarjetas);
+      --nav-texto: var(--texto);
+      --nav-activo: var(--principal);
+      --nav-bg-activo: var(--fondo);
+      --radio-btn: 10px;
+      --fondo-modal: var(--tarjetas);
+      --filtro-cristal: none;
     }
-
-    await db.collection("inventario").add({ 
-      nombre, precio, categoria, stock: 0, tallas: tallasArray, imagenes: urlsImagenes 
-    });
-
-    document.getElementById("nuevo-nombre").value = ""; document.getElementById("nuevo-precio").value = "";
-    document.getElementById("nuevas-tallas").value = ""; document.getElementById("nueva-imagen-file").value = "";
     
-    notificar("✅ Prenda creada con éxito", "exito");
-    cargarInventarioSPA(); cargarPrendas();
-  } catch (error) { notificar("❌ Error guardando prenda", "error"); 
-  } finally { btnGuardar.innerText = "💾 Guardar Prenda"; btnGuardar.disabled = false; }
-}
-
-async function eliminarPrendaAdmin(id) {
-  if(!confirm("¿Seguro que deseas eliminar esta prenda por completo?")) return;
-  try { 
-      await db.collection("inventario").doc(id).delete(); 
-      notificar("🗑️ Prenda eliminada"); 
-      cargarInventarioSPA(); 
-      cargarPrendas();
-  } catch (error) { notificar("❌ Error eliminando", "error"); }
-}
-
-// ==========================================
-// ✏️ MODAL: EDITAR INFORMACIÓN DE PRENDA
-// ==========================================
-let prendaEditandoInfoId = null;
-
-function abrirEdicionInfo(id) {
-  const prenda = prendas.find(p => p.id === id); if(!prenda) return;
-  prendaEditandoInfoId = id;
-  document.getElementById("edit-nombre").value = prenda.nombre;
-  document.getElementById("edit-precio").value = prenda.precio;
-  document.getElementById("edit-categoria").value = prenda.categoria || "Unisex";
-  document.getElementById("edit-imagen-file").value = ""; 
-  document.getElementById("modal-editar").classList.add("modal-activo");
-}
-
-function cerrarModalEditar() { 
-    document.getElementById("modal-editar").classList.remove("modal-activo"); 
-    prendaEditandoInfoId = null; 
-}
-
-async function guardarEdicionInfo() {
-  const nuevoNombre = document.getElementById("edit-nombre").value.trim();
-  const nuevoPrecio = Number(document.getElementById("edit-precio").value);
-  const nuevaCategoria = document.getElementById("edit-categoria").value;
-  const archivosFotos = document.getElementById("edit-imagen-file").files;
-
-  if(!nuevoNombre || !nuevoPrecio) return notificar("⚠️ Llena ambos campos", "advertencia");
-  
-  const btnGuardar = document.getElementById("btn-guardar-edicion");
-  btnGuardar.innerText = "⏳ Guardando..."; btnGuardar.disabled = true;
-
-  try {
-    const prenda = prendas.find(p => p.id === prendaEditandoInfoId);
-    let tallasActualizadas = [];
-    if (prenda && prenda.tallas) tallasActualizadas = prenda.tallas.map(t => ({...t, precio: nuevoPrecio}));
+    body { font-family: var(--fuente-principal) !important; padding-bottom: 90px !important; transition: background 0.3s; }
     
-    let urlsFinales = prenda.imagenes || (prenda.imagen ? [prenda.imagen] : []); 
-
-    if (archivosFotos.length > 0) {
-      urlsFinales = []; 
-      notificar(`📸 Subiendo ${Math.min(archivosFotos.length, 4)} nuevas imágenes...`, "exito");
-      for (let i = 0; i < archivosFotos.length; i++) {
-         if (i >= 4) break; 
-         const formData = new FormData();
-         formData.append("image", archivosFotos[i]);
-         const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: formData });
-         const data = await response.json();
-         if (data.success) urlsFinales.push(data.data.url);
-      }
+    /* 🚨 CSS CLAVE PARA LOS MODALES (No lo borres) */
+    .modal-oculto { display: none; }
+    .modal-activo { 
+      display: flex !important; 
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.6); z-index: 2000; 
+      justify-content: center; align-items: center; 
     }
+    .modal-contenido { width: 90%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 
-    await db.collection("inventario").doc(prendaEditandoInfoId).update({ 
-      nombre: nuevoNombre, precio: nuevoPrecio, categoria: nuevaCategoria, tallas: tallasActualizadas, imagenes: urlsFinales 
-    });
+    /* DISEÑO DE TARJETAS */
+    .producto-card { border-radius: var(--radio-tarjeta) !important; box-shadow: var(--sombra-tarjeta) !important; border: var(--borde-tarjeta) !important; padding: 15px; margin-bottom: 15px; background: var(--tarjetas); }
 
-    notificar("✅ Información actualizada", "exito");
-    cerrarModalEditar(); cargarInventarioSPA(); cargarPrendas();
-  } catch(error) { notificar("❌ Error al actualizar", "error"); 
-  } finally { btnGuardar.innerText = "💾 Guardar"; btnGuardar.disabled = false; }
-}
+    .nav-inferior { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--nav-bg) !important; backdrop-filter: var(--filtro-cristal); -webkit-backdrop-filter: var(--filtro-cristal); box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: flex-start; align-items: center; padding: 10px 5px 15px 5px; z-index: 1000; overflow-x: auto; white-space: nowrap; border-radius: 20px 20px 0 0; }
+    .nav-inferior button { background: transparent; color: var(--nav-texto) !important; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; padding: 5px 12px; min-width: 70px; transition: all 0.3s ease; font-family: inherit; }
+    .nav-inferior button .icono-nav { font-size: 22px; margin-bottom: 4px; }
+    .nav-inferior button:hover, .nav-inferior button:active { color: var(--nav-activo) !important; background-color: var(--nav-bg-activo) !important; }
+    
+    .productos.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .whatsapp-flotante { bottom: 100px !important; background-color: var(--color-wa) !important; }
+  </style>
+</head>
+<body>
 
-// ==========================================
-// 📦 MODAL: EDITAR STOCK / TECLADO
-// ==========================================
-let prendaEditandoId = null; 
-let tallaEditando = null; 
-let cantidadTeclado = "0";
+<header class="header-container">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <img id="logo-tienda" src="" alt="Logo" style="display: none; height: 40px; border-radius: 8px; object-fit: contain;">
+    <h1 id="titulo-tienda">✨ LUDAVA</h1>
+  </div>
+  <button id="btn-tema" class="btn-tema" onclick="toggleTema()">🌙</button>
+</header>
 
-function abrirEdicionStock(id) {
-  prendaEditandoId = id; const prenda = prendas.find(p => p.id === id); if (!prenda) return;
-  document.getElementById("modal-stock-titulo").innerText = `${prenda.nombre}`; 
-  document.getElementById("modal-paso-tallas").style.display = "block"; 
-  document.getElementById("modal-paso-teclado").style.display = "none";
-  const contenedorTallas = document.getElementById("modal-tallas-botones"); contenedorTallas.innerHTML = "";
-  if(prenda.tallas && prenda.tallas.length > 0) { 
-      prenda.tallas.forEach(t => { 
-          const btn = document.createElement("button"); 
-          btn.innerText = `T${t.talla}`; 
-          btn.onclick = () => seleccionarTallaTeclado(t.talla); 
-          contenedorTallas.appendChild(btn); 
-      });
-  } else { contenedorTallas.innerHTML = "<p>No hay tallas.</p>"; }
-  document.getElementById("modal-stock").classList.add("modal-activo");
-}
+<nav class="nav-inferior">
+  <button onclick="navegarSPA('vista-tienda')"><span class="icono-nav">🏠</span><span>Tienda</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-ventas')"><span class="icono-nav">📈</span><span>Ventas</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-clientes')"><span class="icono-nav">👥</span><span>Clientes</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-historial')"><span class="icono-nav">📚</span><span>Historial</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-tallas')"><span class="icono-nav">📊</span><span>Tallas</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-gastos')"><span class="icono-nav">💸</span><span>Gastos</span></button>
+  <button class="admin-only" style="display:none;" onclick="navegarSPA('vista-inventario')"><span class="icono-nav">📦</span><span>Almacén</span></button>
+  <button class="admin-only" style="display:none; color: var(--principal);" onclick="abrirModalDiseno()"><span class="icono-nav">🎨</span><span>Diseño</span></button>
+  <button id="btn-login" onclick="window.location.href='login.html'"><span class="icono-nav">🔒</span><span>Ingresar</span></button>
+  <button id="btn-salir" class="admin-only" style="display:none; color:#e74c3c;" onclick="cerrarSesion()"><span class="icono-nav">🚪</span><span>Salir</span></button>
+</nav>
 
-function seleccionarTallaTeclado(talla) { 
-    tallaEditando = talla; cantidadTeclado = "0"; 
-    document.getElementById("pantalla-cantidad").innerText = cantidadTeclado; 
-    document.getElementById("talla-seleccionada-txt").innerText = `${talla}`; 
-    document.getElementById("modal-paso-tallas").style.display = "none"; 
-    document.getElementById("modal-paso-teclado").style.display = "block"; 
-}
+<div id="vista-tienda" class="pantalla pantalla-activa">
+  <section id="lista-prendas" class="productos"><p>Cargando...</p></section>
+  <div id="total">Total: S/ 0.00</div>
+  <div class="acciones">
+    <button class="btn-finalizar" onclick="finalizarVenta()">Enviar Pedido 🚀</button>
+  </div>
+</div>
 
-function teclear(valor) { 
-    if (valor === 'C') cantidadTeclado = "0"; 
-    else { 
-        if (cantidadTeclado === "0") cantidadTeclado = String(valor); 
-        else cantidadTeclado += String(valor); 
-    } 
-    if(cantidadTeclado.length > 4) cantidadTeclado = cantidadTeclado.slice(0, 4); 
-    document.getElementById("pantalla-cantidad").innerText = cantidadTeclado; 
-}
+<div id="vista-inventario" class="pantalla">
+  <h2>📦 Almacén Central</h2>
+  <div class="producto-card">
+    <h3>➕ Nueva Prenda</h3>
+    <input type="text" id="nuevo-nombre" placeholder="Nombre">
+    <input type="number" id="nuevo-precio" placeholder="Precio">
+    <select id="nuevo-categoria" style="width:100%; padding:10px; margin:10px 0;"><option value="Niñas">Niñas 🎀</option><option value="Niños">Niños 🧢</option><option value="Bebés">Bebés 🍼</option></select>
+    <input type="text" id="nuevas-tallas" placeholder="S, M, L">
+    <input type="file" id="nueva-imagen-file" multiple>
+    <button onclick="guardarNuevaPrenda()" style="width:100%; background:var(--exito); color:white; padding:12px; border:none; margin-top:10px; font-weight:bold; border-radius:10px;">💾 Guardar en Inventario</button>
+  </div>
+  <div id="admin-inventario"></div>
+  <h3 style="margin-top:30px;">🕵️ Historial de Movimientos</h3>
+  <div id="historial-movimientos" style="max-height: 300px; overflow-y: auto; background: var(--tarjetas); padding: 10px; border-radius:10px;"></div>
+</div>
 
-function cerrarModalStock() { 
-    document.getElementById("modal-stock").classList.remove("modal-activo"); 
-    prendaEditandoId = null; tallaEditando = null; 
-}
+<div id="vista-ventas" class="pantalla"><h2>📈 Reporte de Ventas</h2><div id="kpis-ventas"></div></div>
+<div id="vista-historial" class="pantalla"><h2>📚 Historial de Recibos</h2><ul id="ventasDia"></ul></div>
 
-async function confirmarStockTeclado() {
-  const cantidad = parseInt(cantidadTeclado); 
-  if (isNaN(cantidad) || cantidad <= 0) return notificar("⚠️ Ingresa una cantidad mayor a 0", "advertencia");
-  const btnConfirmar = document.getElementById("btn-confirmar-teclado"); 
-  btnConfirmar.innerText = "⏳"; btnConfirmar.disabled = true;
-  try { 
-      await ajustarStock(prendaEditandoId, tallaEditando, cantidad); 
-      notificar(`✅ ${cantidad} agregados a la T${tallaEditando}`, "exito"); 
-      cerrarModalStock(); cargarInventarioSPA(); cargarPrendas();       
-  } catch (error) { notificar("❌ Error: " + error.message, "error"); 
-  } finally { btnConfirmar.innerText = "✔"; btnConfirmar.disabled = false; }
-}
+<div id="modal-editar" class="modal-oculto">
+  <div class="modal-contenido form-inventario">
+    <h3 style="color:var(--principal)">✏️ Editar Prenda</h3>
+    <input type="text" id="edit-nombre">
+    <input type="number" id="edit-precio">
+    <select id="edit-categoria"><option value="Niñas">Niñas</option><option value="Niños">Niños</option><option value="Bebés">Bebés</option></select>
+    <p style="font-size:12px; margin-top:10px;">Cambiar Fotos:</p>
+    <input type="file" id="edit-imagen-file" multiple>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button onclick="cerrarModalEditar()" style="flex:1; background:#95a5a6; color:white; border:none; padding:12px; border-radius:10px;">❌ Cancelar</button>
+      <button id="btn-guardar-edicion" onclick="guardarEdicionInfo()" style="flex:1; background:var(--exito); color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">💾 Guardar</button>
+    </div>
+  </div>
+</div>
 
-// ==========================================
-// 🕵️‍♂️ HISTORIAL DE MOVIMIENTOS
-// ==========================================
-async function registrarMovimiento(prendaNombre, talla, cantidad, tipo) {
-  try { 
-      await db.collection("movimientos").add({ 
-          prendaNombre, talla, cantidad, tipo, 
-          usuario: localStorage.getItem("usuarioActivo") || "Desconocido", 
-          fechaServidor: firebase.firestore.FieldValue.serverTimestamp(), 
-          fechaTexto: new Date().toLocaleDateString("es-PE"), 
-          hora: new Date().toLocaleTimeString("es-PE") 
-      }); 
-  } catch (e) {}
-}
+<div id="modal-stock" class="modal-oculto">
+  <div class="modal-contenido">
+    <h3 id="modal-stock-titulo">Cargar Stock</h3>
+    <div id="modal-paso-tallas">
+      <div id="modal-tallas-botones" class="botones-grid"></div>
+      <button onclick="cerrarModalStock()" style="margin-top:20px; width:100%; padding:12px; background:#95a5a6; color:white; border:none; border-radius:10px;">❌ Cancelar</button>
+    </div>
+    <div id="modal-paso-teclado" style="display:none;">
+      <div class="pantalla-teclado" id="pantalla-cantidad" style="background:var(--fondo); padding:15px; font-size:24px; text-align:center; border-radius:10px; margin-bottom:15px;">0</div>
+      <div class="teclado-numerico" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+        <button onclick="teclear(1)">1</button><button onclick="teclear(2)">2</button><button onclick="teclear(3)">3</button>
+        <button onclick="teclear(4)">4</button><button onclick="teclear(5)">5</button><button onclick="teclear(6)">6</button>
+        <button onclick="teclear(7)">7</button><button onclick="teclear(8)">8</button><button onclick="teclear(9)">9</button>
+        <button onclick="teclear('C')" style="background:#e74c3c; color:white;">C</button><button onclick="teclear(0)">0</button>
+        <button id="btn-confirmar-teclado" onclick="confirmarStockTeclado()" style="background:var(--exito); color:white;">✔</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-async function cargarHistorialMovimientosSPA() {
-  const div = document.getElementById("historial-movimientos"); if (!div) return;
-  try {
-    const snap = await db.collection("movimientos").orderBy("fechaServidor", "desc").limit(50).get();
-    if (snap.empty) return div.innerHTML = "<p style='text-align:center; color:#888;'>No hay movimientos registrados.</p>";
-    div.innerHTML = snap.docs.map(doc => {
-      const m = doc.data(); const color = m.tipo === "suma" ? "#2ecc71" : "#e74c3c"; const signo = m.tipo === "suma" ? "+" : "-";
-      return `<div style="font-size:13px; padding:10px; border-bottom:1px solid var(--borde); display:flex; justify-content:space-between; align-items:center; color:var(--texto);"><div><strong>${m.fechaTexto} - ${m.hora}</strong><br><span>👕 ${m.prendaNombre} (Talla: ${m.talla})</span><br><small style="color:#888;">👤 Por: ${m.usuario}</small></div><span style="color:${color}; font-weight:bold; font-size: 16px;">${signo}${m.cantidad}</span></div>`;
-    }).join("");
-  } catch (e) {}
-}
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBtNWOs53cdTm0SYUZe_qCQb4OC-_VdcMQ",
+    authDomain: "frutisha-store.firebaseapp.com",
+    projectId: "inventario-ab270",
+    storageBucket: "frutisha-store.appspot.com",
+    messagingSenderId: "15388676345",
+    appId: "1:15388676345:web:72c8e22a2aece1d4151228"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script src="core.js"></script>
+<script src="diseno.js"></script>
+<script src="tienda.js"></script>
+<script src="ventas.js"></script>
+<script src="inventario.js"></script>
+
+<script>
+  const usuario = localStorage.getItem("usuarioActivo");
+  const rol = localStorage.getItem("rolActivo");
+  if (rol === "admin") {
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = "flex");
+      document.getElementById("btn-login").style.display = "none";
+  }
+  function cerrarSesion() { if(confirm("¿Salir?")) { localStorage.clear(); window.location.href = "index.html"; } }
+  function toggleTema() {
+    document.body.classList.toggle("dark-mode");
+    localStorage.setItem("temaFrutisha", document.body.classList.contains("dark-mode") ? "oscuro" : "claro");
+    if (typeof cargarConfiguracion === "function") cargarConfiguracion();
+  }
+</script>
+</body>
+</html>
