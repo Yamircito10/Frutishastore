@@ -2,6 +2,10 @@
 // LUDAVA STORE - VENTAS, REPORTES Y GASTOS (ventas.js)
 // ==========================================
 
+// Variables globales para destruir gráficos viejos al recargar
+let chartVentasDia = null;
+let chartMetodosPago = null;
+
 // 📄 GENERADOR DE CATÁLOGO PDF
 async function descargarCatalogoPDF() {
   if (prendas.length === 0) return notificar("⚠️ No hay prendas en el catálogo", "advertencia");
@@ -89,7 +93,6 @@ function generarPDFRecibo(productos, totalVenta, metodoPago, fechaSale, horaSale
   doc.setFontSize(10); doc.setFont("helvetica", "italic"); doc.setTextColor(100, 100, 100); doc.text("¡Gracias por tu compra! Etiquétanos en tu video de", 74, finalY + 28, { align: "center" });
   doc.setFont("helvetica", "bold"); doc.setTextColor(93, 173, 226); doc.text("TikTok @ludava36", 74, finalY + 34, { align: "center" });
 
-  // 🎯 AQUÍ PEGAS TU CÓDIGO QR GIGANTE DE NUEVO
   let miCodigoQR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAFoAWgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD9U6KKKACiiigAopKbux9fegB9FMUhuQc/TpT6ACiiigAooooAKKKKACiiqGua3p/hzS7jUtVv7fS9Otl3z3d3KsUUS+rOxAA+tAF+isPwj4w0PxzpKap4d1rT9f0tyVS8025SeIkHkblYgkVsyMVXigB9Fcpq3xM8KaL4qtPDmoeKdHsNduhmDS7i+jjuZfpGTuP4etWPF/j7w38PtNTUPE3iLTPDtizCMXOr3kdvGWPRQzsATwfU0AdHRVPTNQttVtYryzuY7u0nQSRTwuHjkU9GVgSpB9quUAFFMkYqBj1rlvEHxO8J+FdasNI1nxTo+k6pqA/0Sxvr6OCef08uNmDN36elAHWUVz3i3xtoPgXSJNU8S67p/h7TIyEe91O5S3hVj2LOQPTv3rS0bWrHX7C3vtOvbe/sbhPMhubWVZI5V/vKykgj3BNAF+iimSNjHfJxigB9Fct4m+JXhXwTfWFr4h8TaToc+oNstIdSvY4GuD2EYZhnv+VX/EHi7RvCejy6zrmsWOj6PEoaS+v7lIIEz0JdiBz9aANqisrw/wCJNL8Wabb6noup2mr6XcKWiu7GZZopOequpII+laUjAKDkgZ7d/agB9Fcm3xO8Jx+Ll8LSeKdHj8TMu4aP9ui+147nytxb07d66hGO7n8s/wAqAJKKKKACiikY4oAWimbjnv8ATilXPc5+goAdRRRQAUUUUAFFFFABRRTX4XPPHPFACTEheM/hXkv7QH7UHgD9mfwuNZ8a6wLd5lJs9Mtf3t3eMOoiTPT/AGmIUY69Kyf2vP2otD/ZT+E934l1FRfaxcN9l0jSw217u4IyOf4UUZLN2A7kgH4T/ZS/Y18T/tmeK3+On7QF7dahpOoy+bp2is5jW9RTxwD+7tgBhVXBbGc45YAm1L9vf9pj9qjVrvTfgN8P5dD0ZW8s6n9mW4ljycAvPKBDGf8AZAb6+tiL9ir9tXx8v2zxH8bP7HmkO5rdfEN3lT9LdNg/Div058MeG9H8I6PaaPoem2uk6XZx+Xb2VlCsUUK9gEAGP61r0AfldP8Asmftz/C9ftvhn4unxIYxv+zf25LIWx22XUew/iam8Lf8FNPjF+z/AOJLfw3+0T8OLpYyQv8AaVtbfZLlh/fVeYZh1+4y1+pe0ZzjmuY+I3w18L/Fbwvc+HfF2h2Wv6Rcja1reRhgDg4ZT1Vh2ZcEUAZ3wf8AjP4O+OnhODxL4J1yHXNKlA3Oh2yQsf4JIz8yMOeCB+PWu5r8hPjF8F/H3/BMP4oW3xQ+FuoXesfDC+uFjvNPunZ4wrni3uccEHB2TYyDgHrz+nfwL+NHh74//DPR/G3hmcyabqEQJhdgZLaUcSQyY6OrZB/A96APQKKKKAEopH6D6+tfiJ4x/ba/aPsf2vtRtYNX1aO4tfETadb+D44nNo0QnKJAYB94soHzn5j1DUAft3JnaQDgngV8i/8ABTT4GePPjx8AYNJ8BLJf31jqcd7daPHMEa+iCOu1csFJVmVwCf4T34r5g/4KpftPfGX4X/F7w94d8L65qng7w5/ZkV7FPpjmM3s5YiQNKPvBMKNvTnJHIr7r/Ys+IHiz4pfsz+BvE3jeIp4jv7MvNI0YjNwiyusU5UAAeYio/ACndkADAoA+df8AglH+zl8SvgX4d8a33jyzuNAtdckt2stEuZFZ1aMPvnYKSFLBlGOvHavvaZtqZ/pnpzwO9ch8ZPEGt+EfhP4w1rwxYDUvENhpVzc2FntLedOkTMi4HXJAr8of+CfP7Xvxz+IX7WGleH9e8R6t4v0XWPtH9rWF9l4bFFRm85BjEOxwo4wDu2kZK4AMz9pr9g74+eL/ANrbxBqukaJe6xY61rBvrDxJHcAQ20LSAx72JzEYuOPReK9o/wCCm/7J/wAXPivc/D3WPCVjdeOLDSNJXTLqzs3BkS4yC04Rj8yyAAFh02814N+1B+2h+0F4V/a88Q6dpmv6roqaPq5ttM8OWyf6NNCGAj3xY/e+aoBy2T83FftF4fubu/0XTrrULX7FfzW0clxbZz5MhUFkz32kkZ/xoA8E/YD+D3jD4G/s26B4X8bvjWY5Z7j7L5vmm0jdgUhLZIyB2XgZxX0dXzH/AMFFPip45+Df7MOta/8AD/zbbVvtMFtPqNvFvewtnJDzL2BB2ruI4356gGvlz/gmD+018Z/iXo/xRtdevNS8c2WjaUb/AEy81PdNKL3DbLbzerCTGdpJI25GATQB+nkmdvAJ+lfjn+3J+w58cfiN+1bruu+H9Du/FWj69cRyWGpw3CiKzQKAIpCzfuwhB56enWsP9jv9sz4/eNf2uvD2l6t4i1bxLa61qJg1TQrkkW9vCSfMdI8Yh8sDPy4+7tP3q/aTywpc7dvH3uvQnH5f1oA/Nb/gob+yb8XPiV8J/g/b+HftPjebwtpqWGrWVrKN8lwUiQXaoSPMztZSRyOvQmvoD/gmr8EfG/wH/Z3TQ/HStaajd6hNfwaW0qyNZRMqL5bEEgEsrMQOhY55rx3/AIK1/tAfFH4N6T4G0/wPqd94Y0XVmuHvta05tkrTRldkHmYygwWY4ILY9Aa9e/4Jm/F7x78Zv2cYtY+IEk19fw6hLaWmqXK4kvrdVQiRj0Yhmdd3fZzQB9aVHNnZwdvv2HvTL6SSG1leFPMlVcomcbj2GfevxK+EX7bX7RWt/tfaNZ32vateyX+vrYX3hGVP9EiiM22SJYMfIY1ycj5xs5Y4OQD0r/go5+xr8afip+0pceKPDGgXfi/w/qtvbwWjWsqkaeUjVGSRSRsG7L5HBz616T+2d+yL8YPHH7Ivwg8NaPJN4p13wjBs1vTbeYNJcuY1CyAswEhjwygcn5yR3r9I1++SV56Zz24/kSa+GP8AgrB8cviP8Gfhf4TPgK9u9EtdVv5YtS1qx+WWHYqNFEHxlN5Lnd/0zx3oA3P+CXPwD8efAX4M61aeO4JNLuNV1EXlpo00yySWkflhSzBWIUuQTt7Y96+zJPuj6ivi3/glX8aviJ8aPgnrdz4+vLrWV0zU/smnaze/NNcx7Azqz4+cox++ck7sZ4r7VbHBJxzQB+J2r/sCftC3H7WN1eRafeTxTa8dSTxmt0otjCZd4m35yCE/5Z4zzt6V+1dvndyS5I+8e/8A9b/GvxI1j9tj9oy3/a/uLVNV1SO6i8RnTo/BqxkWnlmbYIDDjBLKP9Yfmz8wav26iByCVAO0AkD9Pw/rQBLTXzxg4OaJCVXj1FfMf7dH7Ylh+yZ8NlmtfI1Dxpq++HR9PmbKrjG64lGc7EB4HG5sD1IAOo/aW/bG+HX7LGirP4r1JrnWJkL2ehaeQ95ccddpOEXP8TEDn8K+FW/bL/a2/a4upovgx4Jbwr4bZ/LTUoYA+0Hu95OBGW9kUY9+tdB+x7+wDqXxi1I/Gv8AaFe617U9aK31loeouR5qt84muV/hQ/wwgAAc4HCj9M9L0uz0ezt7KxtYLKyt02Q29vGI441HQKoACge1AH5dr+w3+2Z4yUXuu/HJtNuWG4wr4gvMA/SJQn5VHJ+zV+3b8H/9O8M/E9vGMUHz/ZV1o3BkxyVEd2u09OnWv1UwPSigD8wfh3/wVP8AH/wl8VQ+E/2jPh7eaRPuwdUsrJ7WdV6F2t3+WVf9qIgegPSv0Z+HvxE8OfFTwtZeJPCes2mvaHeLmK7s33oT3U91YdCpAIPUCsr4wfBXwX8cfCU/h7xr4ftNb06QYUzRjzbc8gPE4+ZGGTyD354zX5b+I/DXxF/4JO/Ge317QLq68UfB3Xrjy7m2mON4AJMcg6JcKuSknR8HtkUAfsHRXMfDf4gaJ8UvBmkeK/Dd8NR0PVbdbm1uB1ZT2I/hKnKkHkFSD0rp6ACiiigApkihlx+vp/kU+ua+JniM+D/hz4o15eG0vS7q9H1jhZx/6DQB+WXjq1m/4KFf8FGf+EVlke5+HHgZ5Y5xGx2NbwSL5/tunnIjz124/u1+sdvawaXZQWttCsNtDEkMUUQ2qqKMAAAYAA4+n0r83v8Agir4VW58K/E/xxcr5uo6lqcNgZ25OERpX59zMufoK+/fitrUmh+E5zAdlxcfuEYdRkHP6ZrWlTdWahHdnFjMTHB4eeIntFXPCP2rv24/Dn7NehHCDVdXmDJZ2kbj96y8E57IDgbj1JGM1+Z3jn/gq58ffE1/LJpOv2fhazJ/d29hYQyFR6F5UYsfcYrwr9pb4pXfxY+MHiLWp5JJLVbl7ayVjxHBGxVAPTgZ/GvLSxbdz+Va1+SMvZ0tl+ZhgKdWVNVsQ7ylrb+Xsj7G8F/8FVfj54f1KOTV/EVt4itAQXt7zT4Yywz6xqp/Kv0r/ZQ/bu8OftFWltp95EukeIZOFi35jmYdQv8Adb0U9cV+BvzccnNep/s9+Nb3wr8RtOFvdSQi4kCoysVKSA5Rhjoc9/QmuCTcdT7PLY0MXVWDxC0nomt0+l+68j+inxz4M0f4j+DdZ8M6/aJqOj6tbSWl1bt/EjLg4z0cdQfUA1+aH7APiDVf2Uf2wvG/7POv3TnSNSndtNeThWmRPMhlXPH763647qo7V+jnwf8AG7fET4Y+G/EcgUT31nHJMq9BKBtcfTcDX5yf8FKI1+FX7cHwP+I1lmGa4a189l43G3uwGye/yShfoMdK13SZ41alPD1ZUp7xbT9VofqjHnvn/OK4r44fFSx+CPwl8UeOtShlubPQ7NrloIfvyNkKij0yzKM9s5rto8kZP+eK5X4sQ+Frn4ceIYfHAtj4QezkGqteHES2+07i2Dn6Y5yRigxPi39i/wD4Ka337THxgk8AeI/CVroVzfQTTaZdabM8oBiVneOVX77ATvHHy4xyK8v8Tf8ABVbw5pf7TksY+Fmk3WiWN+dLfxJIgOs7FfY0iNt4XK5EeenFei/sCaL+yZa/FTW5/g/qGrX3jOO3kNuviQssiWrEb/sqsihlztyTl8H0LVy3i7w7+xO37YzDU768Txi2rbrqxDSf2IdQ35AkO0bW8wcru2Z4I5oA/RbWvCWg+M4bddc0bT9at4WEsMOpWkc4ifAIYBwQrD1HqPSttEWNFRFCqowFUYAHpTIVCYUcDAwP/rflUtAHM/EvxxZfDP4f+IfF2opJLYaHYT6jPHCMu6RRs5Ue5xjmvz6/Y3/4KQaX8Wv2hR4RuPhlofhL/hJpJEtdS0aMLcyyIGkH2khfnyoY7s8Ee9fo34g0Wy8SaLfaTqVrFe6bfQvbXNtMMpLE6lWUjuCCRXzn8E/+CfHwg+APxHm8beF9M1CXWv3v2Qahd+fDYhxz5K7B2yAzFiASAeaBO9tD6Au/B+galr1trV3ounXesWoxb6hPaRvcQ/7khG5fwNbHA4Ar5x8eft+fBb4b/FU/D/W/FDwa8s629y8Vs8tvbSMcbJJF4UjPPp3r0D4p/tBeEfg/HYPr+oMXvyTbwWsZmkkUfxAL/D7mi6Suzpw+FrYqqqOHi5S7I9KurSC+t5Le6hjuLeVSkkUqhkdSMEEHgggkVT8P+FtG8J2IstD0mx0ayDFxbafbJBGGPVtqADJwOaoeCPHGkfEDw/a61ol2t7YXKlo5F46HBGD0IPFdAvXPakrboyqQlSm6dRWa6GPZ+D9B0nWLzWLDQ9Ns9XvT/pN/BaRxzznr+8kA3NzjqTXwD+05/wAFWbn4G/HzU/A+g+DLfWtL0OZbbVLq8uXimlk27nEIHygLnG5s5NfotL93OcDvk4r5h+M3/BPH4OfG/wFC/hx+l/y"; 
   try { doc.addImage(miCodigoQR, 'JPEG', 59, finalY + 38, 30, 30); } catch (error) {}
 
@@ -150,36 +153,107 @@ async function enviarWhatsApp() {
 }
 
 // ==========================================
-// 📊 REPORTES Y KIPs
+// 📊 REPORTES Y DASHBOARD VISUAL (NIVEL WALL STREET)
 // ==========================================
 async function cargarReporteVentasSPA() { 
   const div = document.getElementById("kpis-ventas");
+  div.innerHTML = "<p style='text-align:center;'>⏳ Analizando finanzas...</p>";
   try {
-    const snapVentas = await db.collection("ventas").get();
+    const snapVentas = await db.collection("ventas").orderBy("fechaServidor", "asc").get();
     const snapGastos = await db.collection("gastos").get();
-    let totalVentas = 0; let totalGastos = 0; let ventasPorDia = {}; let resumenPagos = { "Efectivo": 0, "Yape/Plin": 0, "Tarjeta": 0, "Pedido Web": 0 }; 
+    
+    let totalVentas = 0; let totalGastos = 0; 
+    let ventasPorDia = {}; 
+    let resumenPagos = { "Efectivo": 0, "Yape/Plin": 0, "Tarjeta": 0, "Pedido Web": 0 }; 
+    
     snapVentas.forEach(doc => {
-      let v = doc.data(); totalVentas += v.total; let fecha = v.fechaTexto || "Sin fecha";
+      let v = doc.data(); 
+      totalVentas += v.total; 
+      let fecha = v.fechaTexto || "Sin fecha";
       ventasPorDia[fecha] = (ventasPorDia[fecha] || 0) + v.total;
-      let metodo = v.metodoPago || "Efectivo"; if(resumenPagos[metodo] !== undefined) resumenPagos[metodo] += v.total;
+      let metodo = v.metodoPago || "Efectivo"; 
+      if(resumenPagos[metodo] !== undefined) resumenPagos[metodo] += v.total;
     });
+    
     snapGastos.forEach(doc => { totalGastos += doc.data().monto; });
-    let gananciaNeta = totalVentas - totalGastos; let colorGanancia = gananciaNeta >= 0 ? "#27ae60" : "#e74c3c";
+    
+    let gananciaNeta = totalVentas - totalGastos; 
+    let colorGanancia = gananciaNeta >= 0 ? "#27ae60" : "#e74c3c";
+    
+    // 1. Tarjetas de KPI principales
     let html = `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center;">
                   <div style="background: #3498db; color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><h4 style="margin:0; font-size:12px;">Ingresos</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(totalVentas)}</h2></div>
                   <div style="background: #e74c3c; color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><h4 style="margin:0; font-size:12px;">Egresos</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(totalGastos)}</h2></div>
                   <div style="background: ${colorGanancia}; color: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><h4 style="margin:0; font-size:12px;">Ganancia</h4><h2 style="margin:5px 0 0 0;">${formatearSoles(gananciaNeta)}</h2></div>
                 </div>`;
-    html += `<h3>🏦 Cuadre de Caja (Total)</h3>
-             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; text-align: center;">
-                <div style="background: white; padding: 15px; border-radius: 10px; border-top: 4px solid #f1c40f;"><div style="font-size: 20px;">💵</div><div style="font-size: 11px; color: #888;">EFECTIVO</div><div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Efectivo"])}</div></div>
-                <div style="background: white; padding: 15px; border-radius: 10px; border-top: 4px solid #9b59b6;"><div style="font-size: 20px;">📱</div><div style="font-size: 11px; color: #888;">YAPE/PLIN</div><div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Yape/Plin"])}</div></div>
-                <div style="background: white; padding: 15px; border-radius: 10px; border-top: 4px solid #3498db;"><div style="font-size: 20px;">💳</div><div style="font-size: 11px; color: #888;">TARJETA</div><div style="font-size: 14px; font-weight: bold; color: #2ecc71;">${formatearSoles(resumenPagos["Tarjeta"])}</div></div>
+                
+    // 2. Gráfico de Ventas por Día
+    html += `<div style="background: var(--tarjetas); padding: 15px; border-radius: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.05); margin-bottom: 20px;">
+               <h3 style="text-align:center; color: var(--principal); margin-top:0;">📊 Evolución de Ventas</h3>
+               <canvas id="chartVentasDia" height="200"></canvas>
              </div>`;
-    html += `<h3>💰 Resumen por Día</h3><ul style="list-style:none; padding:0;">`;
-    for (let fecha in ventasPorDia) html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; color: #333;"><strong>📅 ${fecha}</strong> <span style="color:#d63384; font-weight:bold;">${formatearSoles(ventasPorDia[fecha])}</span></li>`;
-    div.innerHTML = html + `</ul>`;
-  } catch (e) { div.innerHTML = "<p>Error cargando ventas.</p>"; }
+             
+    // 3. Gráfico de Métodos de Pago
+    html += `<div style="background: var(--tarjetas); padding: 15px; border-radius: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.05); margin-bottom: 20px;">
+               <h3 style="text-align:center; color: var(--principal); margin-top:0;">💳 ¿Cómo te pagan?</h3>
+               <canvas id="chartMetodosPago" height="200"></canvas>
+             </div>`;
+             
+    // 4. Lista detallada por día (como la tenías antes)
+    html += `<h3>💰 Detalle por Día</h3><ul style="list-style:none; padding:0;">`;
+    // Invertimos el orden para ver el día más reciente arriba en la lista
+    let fechasInvertidas = Object.keys(ventasPorDia).reverse();
+    for (let fecha of fechasInvertidas) {
+        html += `<li style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"><strong>📅 ${fecha}</strong> <span style="color:#d63384; font-weight:bold;">${formatearSoles(ventasPorDia[fecha])}</span></li>`;
+    }
+    html += `</ul>`;
+    
+    div.innerHTML = html;
+
+    // 🚀 DIBUJAR LOS GRÁFICOS CON LA LIBRERÍA
+    const ctxDia = document.getElementById('chartVentasDia');
+    if (ctxDia) {
+      if (chartVentasDia) chartVentasDia.destroy();
+      chartVentasDia = new Chart(ctxDia, {
+        type: 'line',
+        data: {
+          labels: Object.keys(ventasPorDia), // Eje X (Fechas)
+          datasets: [{
+            label: 'Ingresos (S/)',
+            data: Object.values(ventasPorDia), // Eje Y (Montos)
+            borderColor: '#ff7eb3',
+            backgroundColor: 'rgba(255, 126, 179, 0.2)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4, // Curvas suaves
+            pointBackgroundColor: '#fff',
+            pointBorderColor: '#ff7eb3',
+            pointRadius: 4
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+    }
+
+    const ctxMetodo = document.getElementById('chartMetodosPago');
+    if (ctxMetodo) {
+      if (chartMetodosPago) chartMetodosPago.destroy();
+      chartMetodosPago = new Chart(ctxMetodo, {
+        type: 'doughnut',
+        data: {
+          labels: ['Efectivo', 'Yape/Plin', 'Tarjeta', 'Web'],
+          datasets: [{
+            data: [resumenPagos["Efectivo"], resumenPagos["Yape/Plin"], resumenPagos["Tarjeta"], resumenPagos["Pedido Web"]],
+            backgroundColor: ['#f1c40f', '#9b59b6', '#3498db', '#2ecc71'],
+            borderWidth: 2,
+            hoverOffset: 4
+          }]
+        },
+        options: { responsive: true, cutout: '70%' }
+      });
+    }
+
+  } catch (e) { div.innerHTML = "<p>Error cargando el Dashboard de Ventas.</p>"; console.log(e); }
 }
 
 async function cargarHistorialSPA() {
