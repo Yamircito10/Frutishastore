@@ -264,6 +264,7 @@
     appId: "1:15388676345:web:72c8e22a2aece1d4151228"
   };
   firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth(); // 🔐 EL WALKIE-TALKIE DEL GUARDIA
   const db = firebase.firestore();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -289,9 +290,16 @@
       if (btnLogin) btnLogin.style.display = "none";
   }
 
+  // 🚨 AHORA EL BOTÓN SALIR CIERRA LA SESIÓN OFICIAL DE LA NUBE
   function cerrarSesion() {
-    if(confirm("¿Seguro que quieres salir?")) { localStorage.clear(); window.location.href = "index.html"; }
+    if(confirm("¿Seguro que quieres salir?")) { 
+        auth.signOut().then(() => {
+            localStorage.clear(); 
+            window.location.href = "index.html"; 
+        });
+    }
   }
+
   function cargarTema() {
     const tema = localStorage.getItem("temaFrutisha");
     if (tema === "oscuro") document.body.classList.add("dark-mode");
